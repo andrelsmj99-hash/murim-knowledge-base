@@ -1,0 +1,103 @@
+"""
+Unit of Work — owns a SQLAlchemy session and exposes all repositories.
+
+Use cases receive a ``UnitOfWork`` instead of individual repositories, which
+keeps session/transaction management centralized.
+"""
+from __future__ import annotations
+
+from types import TracebackType
+from typing import Optional, Type
+
+from sqlalchemy.orm import Session, sessionmaker
+
+from app.models import SessionLocal as default_session_factory
+from app.repositories import (
+    CharacterRepository,
+    LocationRepository,
+    NovelRepository,
+    OrganizationRepository,
+)
+from app.core.interfaces import (
+    ICharacterRepository,
+    ILocationRepository,
+    INovelRepository,
+    IOrganizationRepository,
+)
+
+
+class UnitOfWork:
+    """
+    Concrete UoW that lazily instantiates repositories on first access
+    and exposes :meth:`commit` / :meth:`rollback` helpers.
+
+    Usable as a context manager::
+
+        with UnitOfWork() as uow:
+            uow.novels.add_chapter(chapter)
+            uow.commit()
+    """
+
+    session: Session
+
+    def __init__(self, session_factory: Optional[sessionmaker] = None) -> None:
+        self._session_factory = session_factory or default_session_factory
+        self._characters: Optional[ICharacterRepository] = None
+        self._novels: Optional[INovelRepository] = None
+        self._organizations: Optional[IOrganizationRepository] = None
+        self._locations: Optional[ILocationRepository] = None
+
+    # --- context manager -------------------------------------------------
+
+    def __enter__(self) -> "UnitOfWork":
+        self.session = self._session_factory()
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc: Optional[BaseException],
+        tb: Optional[TracebackType],
+    ) -> None:
+        try:
+            if exc_type is not None:
+                self.rollback()
+        finally:
+            self.session.close()
+
+    # --- repository accessors -------------------------------------------
+
+    @property
+    def characters(self) -> ICharacterRepository:
+        if self._characters is None:
+            self._characters = CharacterRepository(self.session)
+        return self._characters
+
+    @property
+    def novels(self) -> INovelRepository:
+        if self._novels is None:
+            self._novels = NovelRepository(self.session)
+        return self._novels
+
+    @property
+    def organizations(self) -> IOrganizationRepository:
+        if self._organizations is None:
+            self._organizations = OrganizationRepository(self.session)
+        return self._organizations
+
+    @property
+    def locations(self) -> ILocationRepository:
+        if self._locations is None:
+            self._locations = LocationRepository(self.session)
+        return self._locations
+
+    # --- transaction control --------------------------------------------
+
+    def commit(self) -> None:
+        self.session.commit()
+
+    def rollback(self) -> None:
+        self.session.rollback()
+
+    def flush(self) -> None:
+        self.session.flush()

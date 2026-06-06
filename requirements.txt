@@ -1,0 +1,38 @@
+# Web Framework & API
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+sqlalchemy>=2.0.0
+alembic>=1.12.0
+psycopg2-binary>=2.9.9
+
+# Scraping
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=5.0.0
+tenacity>=8.2.3
+
+# NLP
+spacy>=3.7.0
+transformers>=4.35.0
+sentence-transformers>=2.2.2
+en-core-web-lg @ https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.7.1/en_core_web_lg-3.7.1-py3-none-any.whl
+
+# Dashboard
+streamlit>=1.28.0
+plotly>=5.18.0
+networkx>=3.2.1
+
+# Data Processing
+pandas>=2.1.0
+numpy>=1.26.0
+scikit-learn>=1.3.0
+python-dotenv>=1.0.0
+rapidfuzz>=3.0.0
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+httpx>=0.25.0

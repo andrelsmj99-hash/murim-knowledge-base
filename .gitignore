@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual Environment
+.venv/
+venv/
+
+# Environment
+.env
+.env.*
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# Build
+build/
+dist/
+*.egg-info/
+
+# Cache
+.pytest_cache/
+.mypy_cache/
+
+# OpenCode
+.local/
+.config/
+
+# Data
+data/raw/*
+data/processed/*
+data/exports/*
