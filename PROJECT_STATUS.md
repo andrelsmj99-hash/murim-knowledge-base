@@ -609,7 +609,7 @@ murim_knowledge_base/
 **Arquivos modificados:**
 - `PROJECT_STATUS.md` — auditoria de docs registrada, README marcado como concluído no backlog
 
-**Resultado:** Documentação base versionada. Estrutura pronta para receber materiais de worldbuilding.
+**Resultado:** Documentação base versionada. Estrutura pronta para receber materiais de worldbuilding. **Commit:** `9dea16b`.
 
 ---
 
