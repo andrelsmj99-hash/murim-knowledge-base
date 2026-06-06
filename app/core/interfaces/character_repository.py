@@ -4,7 +4,7 @@ Character repository contract.
 from __future__ import annotations
 
 import abc
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from app.core.entities import Character
 from app.core.interfaces.repository import IRepository
@@ -60,3 +60,19 @@ class ICharacterRepository(IRepository[Character], abc.ABC):
     @abc.abstractmethod
     def unlink_organization(self, character_id: str, organization_id: str) -> bool:
         """Remove a character-organization association. Returns True if unlinked, False if not found."""
+
+    @abc.abstractmethod
+    def add_relationship(
+        self, character_id: str, related_character_id: str, relationship_type: str
+    ) -> bool:
+        """Add a relationship between two characters. Returns True if created, False if character(s) not found or duplicate."""
+
+    @abc.abstractmethod
+    def get_relationships(self, character_id: str) -> Dict[str, List[str]]:
+        """Return all relationships for a character, grouped by relationship_type."""
+
+    @abc.abstractmethod
+    def remove_relationship(
+        self, character_id: str, related_character_id: str, relationship_type: str
+    ) -> bool:
+        """Remove a specific relationship. Returns True if removed, False if not found."""

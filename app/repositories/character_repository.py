@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 import uuid as uuid_module
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
@@ -248,6 +248,68 @@ class CharacterRepository(ICharacterRepository):
         if o_orm is None or o_orm not in c_orm.organizations:
             return False
         c_orm.organizations.remove(o_orm)
+        self.session.flush()
+        return True
+
+    def add_relationship(
+        self, character_id: str, related_character_id: str, relationship_type: str
+    ) -> bool:
+        from app.models.character import Relationship as RelationshipORM
+        c_orm = self.session.get(CharacterORM, _to_uuid(character_id))
+        if c_orm is None:
+            return False
+        target_orm = self.session.get(CharacterORM, _to_uuid(related_character_id))
+        if target_orm is None:
+            return False
+        if character_id == related_character_id:
+            return False
+        existing = (
+            self.session.query(RelationshipORM)
+            .filter_by(
+                character_id=_to_uuid(character_id),
+                related_character_id=_to_uuid(related_character_id),
+                relationship_type=relationship_type,
+            )
+            .first()
+        )
+        if existing is not None:
+            return False
+        self.session.add(
+            RelationshipORM(
+                character_id=_to_uuid(character_id),
+                related_character_id=_to_uuid(related_character_id),
+                relationship_type=relationship_type,
+            )
+        )
+        self.session.flush()
+        return True
+
+    def get_relationships(self, character_id: str) -> Dict[str, List[str]]:
+        from app.models.character import Relationship as RelationshipORM
+        c_orm = self.session.get(CharacterORM, _to_uuid(character_id))
+        if c_orm is None:
+            return {}
+        result: Dict[str, List[str]] = {}
+        for rel in c_orm.relationships:
+            result.setdefault(rel.relationship_type, []).append(str(rel.related_character_id))
+        return result
+
+    def remove_relationship(
+        self, character_id: str, related_character_id: str, relationship_type: str
+    ) -> bool:
+        from app.models.character import Relationship as RelationshipORM
+        rel = (
+            self.session.query(RelationshipORM)
+            .filter_by(
+                character_id=_to_uuid(character_id),
+                related_character_id=_to_uuid(related_character_id),
+                relationship_type=relationship_type,
+            )
+            .first()
+        )
+        if rel is None:
+            return False
+        self.session.delete(rel)
         self.session.flush()
         return True
 

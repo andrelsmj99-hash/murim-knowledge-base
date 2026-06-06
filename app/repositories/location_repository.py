@@ -9,7 +9,7 @@ from typing import List, Optional
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
-from app.core.entities import Location
+from app.core.entities import Character, Location
 from app.core.interfaces import ILocationRepository
 from app.models.location import Location as LocationORM
 
@@ -94,6 +94,17 @@ class LocationRepository(ILocationRepository):
             .order_by(LocationORM.name)
         )
         return [_to_entity(l) for l in self.session.execute(stmt).scalars().all()]
+
+    def get_characters(self, location_id: str) -> List[Character]:
+        from app.models.character import Character as CharacterORM
+        from app.repositories.character_repository import _to_entity as _char_to_entity
+
+        stmt = (
+            select(CharacterORM)
+            .join(CharacterORM.locations)
+            .where(LocationORM.id == _to_uuid(location_id))
+        )
+        return [_char_to_entity(c) for c in self.session.execute(stmt).scalars().all()]
 
     # --- write ----------------------------------------------------------
 

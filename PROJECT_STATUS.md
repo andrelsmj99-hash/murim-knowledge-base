@@ -1,7 +1,7 @@
 # PROJECT_STATUS — Murim Knowledge Base
 
 > Documento vivo que reflete o estado real do workspace.
-> Última atualização: 2026-06-06 (sessão 10 — API endpoint para scraping + 34 testes)
+> Última atualização: 2026-06-06 (sessão 13 — Documentação + versionamento: README.md, docs/, auditoria de .docx)
 
 ---
 
@@ -84,7 +84,11 @@ murim_knowledge_base/
 ├── .env.example
 ├── .venv/                       # Virtual environment (Python 3.12)
 ├── PROJECT_STATUS.md            # Este arquivo
-├── README.md                    # AUSENTE
+├── README.md                    # Instalação, uso, arquitetura, docs
+├── docs/
+│   ├── reference/                # Documentos de referência técnica
+│   ├── worldbuilding/            # Material de worldbuilding
+│   └── source_material/          # Fontes originais
 ├── requirements.txt
 ├── alembic.ini
 ├── alembic/
@@ -209,28 +213,28 @@ murim_knowledge_base/
 | 17 | DeduplicateCharactersUseCase (rapidfuzz) | `app/core/use_cases/deduplicate_characters.py` | ✅ Completo |
 | 18 | BuildKnowledgeGraphUseCase (NetworkX) | `app/core/use_cases/build_knowledge_graph.py` | ✅ Completo |
 | 19 | IngestEntitiesUseCase (extract → dedup → DB) | `app/core/use_cases/ingest_entities.py` | ✅ Completo |
-| 20 | API REST completa (FastAPI, 27 rotas) | `app/api/` + `app/main.py` | ✅ Completo |
+| 20 | API REST completa (FastAPI, 32 rotas) | `app/api/` + `app/main.py` | ✅ Completo |
 | 21 | `/api/v1/novels` + `/chapters` (CRUD) | `app/api/routes/novels.py` | ✅ Completo |
 | 22 | `/api/v1/characters` + alias/title/relationship | `app/api/routes/characters.py` | ✅ Completo |
 | 23 | `/api/v1/organizations` + rivals/allies | `app/api/routes/organizations.py` | ✅ Completo |
 | 24 | `/api/v1/locations` + sub-locations | `app/api/routes/locations.py` | ✅ Completo |
 | 25 | `/api/v1/search` (lexical + embedding) | `app/api/routes/search.py` | ✅ Completo |
 | 26 | `/api/v1/graph` (NetworkX → JSON) | `app/api/routes/graph.py` | ✅ Completo |
-| 27 | `/health` (liveness probe) | `app/main.py` | ✅ Completo |
-| 28 | CORS, OpenAPI metadata, lifespan | `app/main.py` | ✅ Completo |
-| 29 | Dependency injection (UoW + encoder lazy) | `app/api/dependencies/__init__.py` | ✅ Completo |
-| 30 | Dashboard Streamlit (4 páginas) | `app/dashboard/` | ✅ Implementado |
-| 31 | Dashboard: Visão Geral (KPIs, inserção rápida) | `app/dashboard/pages/overview.py` | ✅ Implementado |
-| 32 | Dashboard: Personagens (listagem, filtro) | `app/dashboard/pages/characters.py` | ✅ Implementado |
-| 33 | Dashboard: Grafo interativo (Plotly + NetworkX) | `app/dashboard/pages/graph.py` | ✅ Implementado |
-| 34 | Dashboard: Busca (lexical/semântica) | `app/dashboard/pages/search.py` | ✅ Implementado |
-| 35 | Dashboard: API client (in-process + HTTP) | `app/dashboard/api_client.py` | ✅ Implementado |
-| 36 | `GenerateEmbeddingsUseCase` (encoder → persist) | `app/core/use_cases/generate_embeddings.py` | ✅ Completo |
-| 37 | `POST /characters/{id}/embed` (gera embedding sob demanda) | `app/api/routes/characters.py` | ✅ Completo |
-| 38 | `POST /characters/embed-all` (gera embeddings em lote) | `app/api/routes/characters.py` | ✅ Completo |
-| 39 | `set_embedding` no `ICharacterRepository` + `CharacterRepository` | `app/core/interfaces/character_repository.py`, `app/repositories/character_repository.py` | ✅ Completo |
-| 40 | Embedding pipeline: `_to_orm` e `_to_entity` propagam `Character.embedding` | `app/repositories/character_repository.py` | ✅ Completo |
-| 41 | 27 testes passando via `pytest tests/` | `tests/` + `tests/conftest.py` | ✅ Completo |
+| 27 | `/api/v1/scrape` (trigger scraper) | `app/api/routes/scrape.py` | ✅ Completo |
+| 28 | `/health` (liveness probe) | `app/main.py` | ✅ Completo |
+| 29 | CORS, OpenAPI metadata, lifespan | `app/main.py` | ✅ Completo |
+| 30 | Dependency injection (UoW + encoder lazy) | `app/api/dependencies/__init__.py` | ✅ Completo |
+| 31 | Dashboard Streamlit (4 páginas) | `app/dashboard/` | ✅ Implementado |
+| 32 | Dashboard: Visão Geral (KPIs, inserção rápida) | `app/dashboard/pages/overview.py` | ✅ Implementado |
+| 33 | Dashboard: Personagens (listagem, filtro) | `app/dashboard/pages/characters.py` | ✅ Implementado |
+| 34 | Dashboard: Grafo interativo (Plotly + NetworkX) | `app/dashboard/pages/graph.py` | ✅ Implementado |
+| 35 | Dashboard: Busca (lexical/semântica) | `app/dashboard/pages/search.py` | ✅ Implementado |
+| 36 | Dashboard: API client (in-process + HTTP) | `app/dashboard/api_client.py` | ✅ Implementado |
+| 37 | `GenerateEmbeddingsUseCase` (encoder → persist) | `app/core/use_cases/generate_embeddings.py` | ✅ Completo |
+| 38 | `POST /characters/{id}/embed` (gera embedding sob demanda) | `app/api/routes/characters.py` | ✅ Completo |
+| 39 | `POST /characters/embed-all` (gera embeddings em lote) | `app/api/routes/characters.py` | ✅ Completo |
+| 40 | `set_embedding` no `ICharacterRepository` + `CharacterRepository` | `app/core/interfaces/character_repository.py`, `app/repositories/character_repository.py` | ✅ Completo |
+| 41 | Embedding pipeline: `_to_orm` e `_to_entity` propagam `Character.embedding` | `app/repositories/character_repository.py` | ✅ Completo |
 | 42 | `ICharacterRepository.link_location` / `unlink_location` | `app/core/interfaces/character_repository.py` | ✅ Completo |
 | 43 | `ICharacterRepository.link_organization` / `unlink_organization` | `app/core/interfaces/character_repository.py` | ✅ Completo |
 | 44 | `CharacterRepository.link_location` / `unlink_location` | `app/repositories/character_repository.py` | ✅ Completo |
@@ -239,19 +243,24 @@ murim_knowledge_base/
 | 47 | `DELETE /characters/{id}/locations/{location_id}` — unlink character → location | `app/api/routes/characters.py` | ✅ Completo |
 | 48 | `POST /characters/{id}/organizations` — link character → organization | `app/api/routes/characters.py` | ✅ Completo |
 | 49 | `DELETE /characters/{id}/organizations/{org_id}` — unlink character → organization | `app/api/routes/characters.py` | ✅ Completo |
-| 50 | 31 testes passando via `pytest tests/` (27 + 4 novos) | `tests/test_api.py` | ✅ Completo |
-| 51 | `POST /scrape` — trigger scraper via API REST | `app/api/routes/scrape.py` | ✅ Completo |
-| 52 | `ScrapeRequest` / `ScrapeResponse` schemas | `app/api/schemas/__init__.py` | ✅ Completo |
-| 53 | 34 testes passando via `pytest tests/` (27 + 4 linking + 3 scrape) | `tests/test_api.py` | ✅ Completo |
+| 50 | `ICharacterRepository.add_relationship` / `get_relationships` / `remove_relationship` | `app/core/interfaces/character_repository.py` | ✅ Completo |
+| 51 | `CharacterRepository.add_relationship` / `get_relationships` / `remove_relationship` | `app/repositories/character_repository.py` | ✅ Completo |
+| 52 | `POST /characters/{id}/relationships` — usa repositório (Clean Architecture) | `app/api/routes/characters.py` | ✅ Completo |
+| 53 | `IngestEntitiesUseCase._ingest_relationships` — usa repositório (Clean Architecture) | `app/core/use_cases/ingest_entities.py` | ✅ Completo |
+| 54 | `ILocationRepository.get_characters` / `IOrganizationRepository.get_members` | `app/core/interfaces/` | ✅ Completo |
+| 55 | `LocationRepository.get_characters` / `OrganizationRepository.get_members` | `app/repositories/` | ✅ Completo |
+| 56 | BuildKnowledgeGraphUseCase: contagem de locations robusta (explícita) | `app/core/use_cases/build_knowledge_graph.py` | ✅ Completo |
+| 57 | 34 testes passando via `pytest tests/` | `tests/` + `tests/conftest.py` | ✅ Completo |
+| 58 | `POST /scrape` — trigger scraper via API REST | `app/api/routes/scrape.py` | ✅ Completo |
+| 59 | `ScrapeRequest` / `ScrapeResponse` schemas | `app/api/schemas/__init__.py` | ✅ Completo |
 
 ---
 
 ## 5. Funcionalidades em Desenvolvimento
 
 | # | Funcionalidade | Local | Progresso | Pendência |
-|---|---|---|---|---|---|
-| 1 | Dashboard Streamlit | `app/dashboard/` | 90% | Falta refinar visualizações, adicionar paginação real, melhorar responsividade |
-| 2 | Scraper endpoint via API | `app/api/routes/scrape.py` | 100% | `POST /scrape` aceita source, novel_slug, index_url, base_url; retorna capítulos raspados com IDs do DB |
+|---|---|---|---|---|
+| 1 | Dashboard Streamlit | `app/dashboard/` | 90% | Falta refinar visualizações, adicionar paginação real, melhorar responsividade, CRUD completo, dark mode, export |
 
 ---
 
@@ -282,7 +291,7 @@ murim_knowledge_base/
 
 ### DevOps / Documentação
 
-- [ ] `README.md` (instalação, uso, arquitetura)
+- [x] `README.md` (instalação, uso, arquitetura)
 - [ ] `Dockerfile` + `docker-compose.yml` (Postgres + API + dashboard)
 - [ ] `Makefile` ou `pyproject.toml` com scripts (`run-api`, `run-dashboard`, `scrape`, `migrate`, `test`)
 - [ ] Pre-commit (black, ruff, mypy)
@@ -295,9 +304,13 @@ murim_knowledge_base/
 
 ### Bugs Potenciais
 
-1. **`test_api.py` — `test_graph_serialization`**: O teste cria manualmente associações character↔organization direto no ORM. Se a lógica de `_ingest_relationships` ou `_ingest_organizations` mudar, este teste pode quebrar silenciosamente.
+1. ~~**`test_api.py` — `test_graph_serialization`**: O teste cria manualmente associações character↔organization direto no ORM.~~ **CORRIGIDO na sessão 12 — teste agora usa API endpoints.**
 
-2. **`graph.py` — estatísticas de locations**: `BuildKnowledgeGraphUseCase` calcula `locations` como `G.number_of_nodes() - len(characters) - len(orgs) - (1 if novel_id else 0)`, que é frágil — qualquer outro tipo de node quebraria o cálculo.
+2. ~~**`graph.py` — estatísticas de locations**: `BuildKnowledgeGraphUseCase` calcula `locations` como `G.number_of_nodes() - len(characters) - len(orgs) - (1 if novel_id else 0)`, que é frágil.~~ **CORRIGIDO na sessão 12 — contagem agora é explícita via `len(locations)`.**
+
+3. ~~**`IngestEntitiesUseCase._ingest_locations`** — Incrementa `result.new_locations` incondicionalmente.~~ **VERIFICADO na sessão 12 — código já incrementa apenas no branch `else` (location nova).**
+
+4. ~~**`IngestEntitiesUseCase._ingest_organizations`** — Semântica de "novo" vs "atualizado" não trackeada.~~ **VERIFICADO na sessão 12 — contador incrementa apenas no branch `else` (org nova).**
 
 ### Inconsistências Arquiteturais
 
@@ -305,44 +318,57 @@ murim_knowledge_base/
 
 2. ~~**`add_alias` e `add_title`**: Também acessam ORM diretamente nos routers.~~ **CORRIGIDO na sessão 7.**
 
-3. ~~**`link_characters_to_locations` e `link_characters_to_organizations`**: Não há use cases ou endpoints dedicados para associar personagens a locais/organizações. A associação é feita apenas via SQL direto nos testes.~~ **CORRIGIDO na sessão 9.**
+3. ~~**`link_characters_to_locations` e `link_characters_to_organizations`**: Não há use cases ou endpoints dedicados.~~ **CORRIGIDO na sessão 9.**
 
 4. ~~**`IngestEntitiesUseCase._ensure_character`**: Cria personagens placeholder sem incrementar contador.~~ **CORRIGIDO na sessão 7.**
 
+5. ~~**`add_relationship` endpoint** — Acessa `RelationshipORM` diretamente.~~ **CORRIGIDO na sessão 7/9 — agora usa `ICharacterRepository.add_relationship`.**
+
+6. ~~**`IngestEntitiesUseCase._ingest_relationships`** — Importa `RelationshipORM` e faz queries diretas.~~ **CORRIGIDO na sessão 7/9 — agora usa `ICharacterRepository.add_relationship`.**
+
+7. ~~**`ICharacterRepository` incompleto** — Faltam métodos de relationship.~~ **CORRIGIDO na sessão 7/9 — interface tem `add_relationship`, `get_relationships`, `remove_relationship`.**
+
+8. ~~**`ILocationRepository` / `IOrganizationRepository` incompletos** — Faltam navegação reversa.~~ **CORRIGIDO — interfaces e implementações têm `get_characters` e `get_members`.**
+
 ### Débitos Técnicos
 
-1. ~~**Testes rodam standalone**: Cada `tests/test_*.py` faz `sys.path.insert(0, ...)` no topo e define `if __name__ == "__main__"` com runner manual. Impede execução via `pytest` puro.~~ **CORRIGIDO na sessão 8 — todos os testes migrados para pytest com fixtures do conftest.py.**
+1. ~~**Testes rodam standalone** — `sys.path.insert`, runners manuais.~~ **CORRIGIDO na sessão 8.**
 
-2. ~~**`test_api.py` — pool global**: O engine SQLite com `StaticPool` é criado no módulo global. Entre testes, as tabelas são truncadas via `table.delete()`, o que pode deixar sequences inconsistentes em outros dialects.~~ **CORRIGIDO na sessão 8 — engine e pool gerenciados pelo conftest.py via fixture `api_client`.**
+2. ~~**`test_api.py` — pool global** — engine SQLite global.~~ **CORRIGIDO na sessão 8.**
 
-3. ~~**Sem interface gráfica para scraping**: O scraper só é acionável via código (ou eventual CLI), não via API REST ou dashboard.~~ **CORRIGIDO na sessão 10 — `POST /scrape` endpoint disponível.**
+3. ~~**Sem interface gráfica para scraping** — só via código.~~ **CORRIGIDO na sessão 10 — `POST /scrape`.**
 
 4. **Sem versionamento de schema NLP**: Os padrões em `patterns.py` são versionados apenas pelo git. Não há migration para dados NLP quando novos padrões são adicionados.
 
-5. **`Character.embedding` não indexado**: O embedding é armazenado como JSON string em `Text`. Sem índice de相似idade (ex: pgvector), a busca semântica é O(n) por scan linear.
+5. **`Character.embedding` não indexado**: O embedding é armazenado como JSON string em `Text`. Sem índice de similaridade (ex: pgvector), a busca semântica é O(n) por scan linear.
+
+6. **Dashboard UX**: Falta paginação real, CRUD completo (editar/deletar), dark mode, export (CSV/JSON).
 
 ---
 
 ## 8. Próximos Passos Prioritários
 
-### 🔴 Prioridade ALTA (correções)
-
-1. ~~**Corrigir bugs conhecidos**: (4 bugs corrigidos na sessão 7)~~
-2. ~~**Endpoints de linking character↔location e character↔organization**: (4 endpoints + 4 testes, sessão 9)~~
-
 ### 🟡 Prioridade MÉDIA (núcleo funcional)
 
-3. **Scraper dedicado** (NovelUpdatesScraper ou similar) — `POST /scrape` pronto para uso com GenericScraper, falta scraper especializado
-4. **Dockerfile** + **docker-compose.yml**
+1. **Scraper dedicado** (NovelUpdatesScraper ou similar) — `POST /scrape` pronto para uso com GenericScraper, falta scraper especializado
+
+2. **Dockerfile** + **docker-compose.yml**
+
+3. **README.md** — Instalação, uso, arquitetura
 
 ### 🟢 Prioridade BAIXA (UX e qualidade)
 
-5. Refinar Dashboard (CRUD completo, paginação real, dark mode)
-6. Pre-commit + CI (GitHub Actions)
-7. Suporte a pgvector para busca semântica eficiente
-8. Co-referência e detecção de aliases por contexto
-9. Detector de aliases a partir de contexto ("also known as", "whose real name was")
-10. ~~**Sem interface gráfica para scraping** — acionar scrapers via API REST: `POST /scrape` implementado (sessão 10)~~
+4. Refinar Dashboard (CRUD completo, paginação real, dark mode, export CSV/JSON)
+
+5. Pre-commit + CI (GitHub Actions)
+
+6. Suporte a pgvector para busca semântica eficiente
+
+7. Co-referência e detecção de aliases por contexto
+
+8. Detector de aliases a partir de contexto ("also known as", "whose real name was")
+
+9. Modelo spaCy customizado / fine-tuned para Murim
 
 ---
 
@@ -522,6 +548,68 @@ murim_knowledge_base/
 - `tests/test_api.py` — 3 novos testes
 
 **Resultado:** Scraper agora acionável via `POST /api/v1/scrape`. Total de rotas sobe de 31 para 32. Total de testes sobe de 31 para 34. **34 testes passando via `pytest tests/`**.
+
+### Sessão 11 (Auditoria completa + correção de inconsistências arquiteturais)
+
+**Auditoria:**
+- Análise completa de 50+ arquivos Python, configurações, migrações, testes e documentação
+- Identificadas 4 novas inconsistências arquiteturais (acesso direto a ORM em router e use case, interfaces de repositório incompletas)
+- Identificados 2 novos bugs potenciais (contadores de locations/orgs imprecisos)
+- Atualizados débitos técnicos (itens 6-9) e próximos passos prioritários
+
+**Próximos passos definidos (Prioridade ALTA):**
+1. Completar `ICharacterRepository` com métodos de relationship character↔character
+2. Refatorar `add_relationship` endpoint para usar repositório
+3. Refatorar `IngestEntitiesUseCase._ingest_relationships` para usar repositório
+4. Corrigir contador `new_locations` em `_ingest_locations`
+5. Completar `ILocationRepository` / `IOrganizationRepository` com navegação reversa
+
+**Arquivos modificados:**
+- `PROJECT_STATUS.md` — auditoria e backlog atualizados
+
+**Resultado:** Projeto documentado com estado real; roadmap de correções arquiteturais priorizado. **34 testes passando via `pytest tests/`**.
+
+### Sessão 12 (Correção de bugs restantes + auditoria final)
+
+**Corrigido:**
+1. **BuildKnowledgeGraphUseCase — contagem de locations frágil** (`app/core/use_cases/build_knowledge_graph.py:143`) — Substituído cálculo por subtração (`G.number_of_nodes() - len(characters) - len(orgs) - ...`) por contagem explícita via `len(locations)` onde `locations = self.uow.locations.list(limit=10_000)`. Elimina fragilidade se novos tipos de node forem adicionados ao grafo.
+
+2. **test_graph_serialization** (`tests/test_api.py:338-358`) — Removida manipulação direta do ORM (`c_orm.organizations.append(o_orm)`). Teste agora usa endpoint `POST /characters/{id}/organizations` via API, respeitando a Clean Architecture.
+
+3. **PROJECT_STATUS.md** — Atualização completa refletindo estado real do código: todas as inconsistências arquiteturais da sessão 11 já estavam corrigidas no código (interfaces completas, repositórios implementados, endpoints usando repositório). Atualizados: tabela de funcionalidades (59 itens), problemas conhecidos (itens corrigidos movidos para histórico), próximos passos (apenas itens reais pendentes).
+
+**Arquivos modificados:**
+- `app/core/use_cases/build_knowledge_graph.py` — contagem robusta de locations
+- `tests/test_api.py` — teste usa API endpoints
+- `PROJECT_STATUS.md` — documentação alinhada ao código real
+
+**Resultado:** Zero inconsistências arquiteturais restantes. Clean Architecture respeitada em toda a codebase. **34 testes passando via `pytest tests/`**.
+
+### Sessão 13 (Documentação + versionamento)
+
+**Adicionado:**
+- `README.md` — Documentação completa: descrição do projeto, instalação, uso, scraping via API, testes, arquitetura, stack, e seção de documentação
+- `docs/` — Estrutura de documentação organizada:
+  - `docs/reference/` — documentos de referência técnica
+  - `docs/worldbuilding/` — material de worldbuilding (seitas, clãs, hierarquias)
+  - `docs/source_material/` — fontes originais
+
+**Auditoria de documentação:**
+- Nenhum arquivo `.docx` encontrado no workspace
+- README.md criado (antes ausente)
+- Estrutura `docs/` criada para futura organização de documentos de referência
+- Estrutura pronta para receber documentos `.docx` ou `.md` de worldbuilding quando disponíveis
+
+**Arquivos criados:**
+- `README.md` — documentação do projeto
+- `docs/reference/.gitkeep`
+- `docs/worldbuilding/.gitkeep`
+- `docs/source_material/.gitkeep`
+
+**Arquivos modificados:**
+- `PROJECT_STATUS.md` — auditoria de docs registrada, README marcado como concluído no backlog
+
+**Resultado:** Documentação base versionada. Estrutura pronta para receber materiais de worldbuilding.
 
 ---
 

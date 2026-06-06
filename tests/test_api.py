@@ -336,19 +336,17 @@ def test_search_lexical_fallback(api_client) -> None:
 
 
 def test_graph_serialization(api_client) -> None:
-    client, session_factory = api_client
+    client, _ = api_client
     client.post("/api/v1/novels", json={"title": "Foo", "language": "en"})
     c = client.post("/api/v1/characters", json={"name": "Lin Lei"}).json()
     o = client.post("/api/v1/organizations", json={"name": "Mount Hua Sect", "type": "Sect"}).json()
 
-    from app.models.character import Character as CharacterORM
-    from app.models.organization import Organization as OrganizationORM
-    import uuid as _uuid
-    with session_factory() as s:
-        c_orm = s.get(CharacterORM, _uuid.UUID(c["id"]))
-        o_orm = s.get(OrganizationORM, _uuid.UUID(o["id"]))
-        c_orm.organizations.append(o_orm)
-        s.commit()
+    # Link character to organization via API
+    r_link = client.post(
+        f"/api/v1/characters/{c['id']}/organizations",
+        json={"organization_id": o["id"]},
+    )
+    assert r_link.status_code == 201
 
     r = client.get("/api/v1/graph")
     assert r.status_code == 200

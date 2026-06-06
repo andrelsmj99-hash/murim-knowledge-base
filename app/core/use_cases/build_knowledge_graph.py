@@ -94,7 +94,8 @@ class BuildKnowledgeGraphUseCase:
                     )
 
         # --- locations ---------------------------------------------------
-        for l in self.uow.locations.list(limit=10_000):
+        locations = self.uow.locations.list(limit=10_000)
+        for l in locations:
             G.add_node(
                 f"loc:{l.id}",
                 kind="location",
@@ -125,6 +126,7 @@ class BuildKnowledgeGraphUseCase:
                     )
 
         # --- novel hub ---------------------------------------------------
+        novel_node_added = False
         if novel_id is not None:
             novel = self.uow.novels.get(novel_id)
             if novel is not None:
@@ -134,13 +136,14 @@ class BuildKnowledgeGraphUseCase:
                     title=novel.title,
                     author=novel.author,
                 )
+                novel_node_added = True
                 for c in characters:
                     G.add_edge(f"novel:{novel.id}", f"char:{c.id}", kind="has_character")
 
         stats = GraphStats(
             characters=len(characters),
             organizations=len(orgs),
-            locations=G.number_of_nodes() - len(characters) - len(orgs) - (1 if novel_id else 0),
+            locations=len(locations),
             relationships=sum(1 for _, _, d in G.edges(data=True) if d.get("kind", "").startswith(("rel_", "rival", "ally"))),
         )
         logger.info(

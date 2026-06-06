@@ -6,7 +6,7 @@ from __future__ import annotations
 import abc
 from typing import List, Optional
 
-from app.core.entities import Location
+from app.core.entities import Character, Location
 from app.core.interfaces.repository import IRepository
 
 
@@ -28,3 +28,7 @@ class ILocationRepository(IRepository[Location], abc.ABC):
     @abc.abstractmethod
     def get_sub_locations(self, location_id: str) -> List[Location]:
         """Return the direct children of a location in the hierarchy."""
+
+    @abc.abstractmethod
+    def get_characters(self, location_id: str) -> List[Character]:
+        """Return all characters associated with this location."""

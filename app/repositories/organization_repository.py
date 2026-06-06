@@ -9,7 +9,7 @@ from typing import List, Optional
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
-from app.core.entities import Organization
+from app.core.entities import Character, Organization
 from app.core.interfaces import IOrganizationRepository
 from app.models.organization import Organization as OrganizationORM
 from app.models.organization import OrganizationRelationship as OrganizationRelationshipORM
@@ -133,6 +133,17 @@ class OrganizationRepository(IOrganizationRepository):
             .limit(limit)
         )
         return [_to_entity(o) for o in self.session.execute(stmt).scalars().all()]
+
+    def get_members(self, org_id: str) -> List[Character]:
+        from app.models.character import Character as CharacterORM
+        from app.repositories.character_repository import _to_entity as _char_to_entity
+
+        stmt = (
+            select(CharacterORM)
+            .join(CharacterORM.organizations)
+            .where(OrganizationORM.id == _to_uuid(org_id))
+        )
+        return [_char_to_entity(c) for c in self.session.execute(stmt).scalars().all()]
 
     # --- write ----------------------------------------------------------
 

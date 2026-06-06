@@ -6,7 +6,7 @@ from __future__ import annotations
 import abc
 from typing import List, Optional
 
-from app.core.entities import Organization
+from app.core.entities import Character, Organization
 from app.core.interfaces.repository import IRepository
 
 
@@ -32,3 +32,7 @@ class IOrganizationRepository(IRepository[Organization], abc.ABC):
     @abc.abstractmethod
     def search_by_name(self, query: str, *, limit: int = 20) -> List[Organization]:
         """Substring / case-insensitive search by name."""
+
+    @abc.abstractmethod
+    def get_members(self, org_id: str) -> List[Character]:
+        """Return all characters who are members of this organization."""

@@ -176,11 +176,15 @@ class IngestEntitiesUseCase:
         org_index: Dict[str, str],
     ) -> None:
         for match in extraction.locations:
-            loc = self.uow.locations.upsert(
-                Location(name=match.canonical, type=match.type)
-            )
-            result.new_locations += 1
-            result.location_ids.append(loc.id)
+            existing = self.uow.locations.get_by_name_type(match.canonical, match.type)
+            if existing is not None:
+                result.location_ids.append(existing.id)
+            else:
+                loc = self.uow.locations.upsert(
+                    Location(name=match.canonical, type=match.type)
+                )
+                result.new_locations += 1
+                result.location_ids.append(loc.id)
 
     # ---------------------------------------------------------- rels
 
@@ -190,9 +194,6 @@ class IngestEntitiesUseCase:
         result: IngestEntitiesResult,
         char_index: Dict[str, str],
     ) -> None:
-        import uuid as uuid_module
-        from app.models.character import Relationship as RelationshipORM
-
         for rel in extraction.relationships:
             src_key = canonicalize_name(rel.source)
             tgt_key = canonicalize_name(rel.target)
@@ -200,28 +201,12 @@ class IngestEntitiesUseCase:
             tgt_id = char_index.get(tgt_key) or self._ensure_character(tgt_key, rel.target, result=result)
             if src_id == tgt_id:
                 continue
-            src_uuid = uuid_module.UUID(src_id)
-            tgt_uuid = uuid_module.UUID(tgt_id)
 
-            existing = self.uow.session.query(RelationshipORM).filter_by(
-                character_id=src_uuid,
-                related_character_id=tgt_uuid,
-                relationship_type=rel.relationship_type,
-            ).first()
-            if existing is not None:
-                continue
-            self.uow.session.add(
-                RelationshipORM(
-                    character_id=src_uuid,
-                    related_character_id=tgt_uuid,
-                    relationship_type=rel.relationship_type,
-                )
-            )
-            self.uow.session.flush()
-            result.new_relationships += 1
-            char = self.uow.characters.get(src_id)
-            if char is not None:
-                char.relationships.setdefault(rel.relationship_type, []).append(tgt_id)
+            if self.uow.characters.add_relationship(src_id, tgt_id, rel.relationship_type):
+                result.new_relationships += 1
+                char = self.uow.characters.get(src_id)
+                if char is not None:
+                    char.relationships.setdefault(rel.relationship_type, []).append(tgt_id)
 
     def _ensure_character(self, canonical_key: str, surface: str, *, result: IngestEntitiesResult) -> str:
         """Create a placeholder character on-the-fly when only seen in a relationship."""

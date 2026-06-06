@@ -182,33 +182,17 @@ def add_relationship(
     payload: CharacterRelationshipCreate,
     uow: UnitOfWork = Depends(get_uow),
 ) -> CharacterRead:
-    from app.models.character import Relationship as RelORM
-    import uuid as _uuid
-
     if uow.characters.get(character_id) is None:
         raise HTTPException(status_code=404, detail="Character not found")
     if uow.characters.get(payload.related_character_id) is None:
         raise HTTPException(status_code=404, detail="Related character not found")
     if character_id == payload.related_character_id:
         raise HTTPException(status_code=400, detail="Cannot relate a character to itself")
-    existing = (
-        uow.session.query(RelORM)
-        .filter_by(
-            character_id=_uuid.UUID(character_id),
-            related_character_id=_uuid.UUID(payload.related_character_id),
-            relationship_type=payload.relationship_type,
-        )
-        .first()
-    )
-    if existing is None:
-        uow.session.add(
-            RelORM(
-                character_id=_uuid.UUID(character_id),
-                related_character_id=_uuid.UUID(payload.related_character_id),
-                relationship_type=payload.relationship_type,
-            )
-        )
-        uow.commit()
+    if not uow.characters.add_relationship(
+        character_id, payload.related_character_id, payload.relationship_type
+    ):
+        raise HTTPException(status_code=409, detail="Relationship already exists")
+    uow.commit()
     return _to_read(uow.characters.get(character_id))
 
 
