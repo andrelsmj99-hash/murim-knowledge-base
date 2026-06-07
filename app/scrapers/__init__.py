@@ -20,6 +20,7 @@ from app.core.use_cases import IngestChapterUseCase
 from app.scrapers.base import BaseScraper
 from app.scrapers.generic import GenericScraper
 from app.scrapers.novelbin import NovelBinScraper
+from app.scrapers.novelfire import NovelFireScraper
 from app.scrapers.novelupdates import NovelUpdatesScraper
 
 logger = logging.getLogger(__name__)
@@ -29,6 +30,7 @@ _REGISTRY: dict[str, type[BaseScraper]] = {
     "generic": GenericScraper,
     "novelbin": NovelBinScraper,
     "novelupdates": NovelUpdatesScraper,
+    "novelfire": NovelFireScraper,
 }
 
 
