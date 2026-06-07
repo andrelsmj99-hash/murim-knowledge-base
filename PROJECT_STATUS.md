@@ -1,7 +1,7 @@
 # PROJECT_STATUS — Murim Knowledge Base
 
 > Documento vivo que reflete o estado real do workspace.
-> Última atualização: 2026-06-07 (sessão 16 — Linting fixes: ruff auto-fixes, mypy, tests passing)
+> Última atualização: 2026-06-07 (sessão 20 — Character Archetype Classification System)
 
 ---
 
@@ -36,17 +36,17 @@ O sistema permite:
 ```
 app/
 ├── core/                  # Domínio (regras de negócio puras)
-│   ├── entities/          # Dataclasses: Character, Novel, Chapter, Location, Organization
-│   ├── interfaces/        # Contratos: IRepository, ICharacterRepository, INovelRepository, ILocationRepository, IOrganizationRepository
-│   ├── use_cases/         # 5 use cases implementados
+│   ├── entities/          # Dataclasses: Character, Novel, Chapter, Location, Organization, CharacterArchetype
+│   ├── interfaces/        # Contratos: IRepository, ICharacterRepository, IChapterRepository, INovelRepository, ILocationRepository, IOrganizationRepository
+│   ├── use_cases/         # 7 use cases implementados
 │   └── unit_of_work.py    # UnitOfWork (context manager)
-├── repositories/          # Adapters SQLAlchemy (4 implementados)
+├── repositories/          # Adapters SQLAlchemy (5 implementados)
 ├── models/                # ORM (11 tabelas) + Base + Engine
 ├── scrapers/              # BaseScraper + GenericScraper + registry
-├── processing/            # 6 módulos NLP (patterns, ner, title/loc/org detectors, rel extractor)
+├── processing/            # 7 módulos NLP (patterns, ner, title/loc/org detectors, rel extractor, archetype classifier)
 ├── api/                   # HTTP layer
-│   ├── routes/            # 6 routers (27 rotas)
-│   ├── schemas/           # Pydantic DTOs (25+ schemas)
+│   ├── routes/            # 6 routers (35 rotas)
+│   ├── schemas/           # Pydantic DTOs (28+ schemas)
 │   └── dependencies/      # get_uow + encoder lazy
 ├── dashboard/             # Streamlit (4 páginas implementadas)
 └── utils/                 # Config + logging
@@ -58,7 +58,7 @@ app/
 alembic/                  # Migration (1 versão, 11 tabelas)
 data/{raw,processed,exports,progress}/
 logs/                     # Logs rotativos (10MB, 5 backups)
-tests/                    # 3 suítes + conftest.py (34 testes, pytest puro)
+tests/                    # 4 suítes + conftest.py (50 testes, pytest puro)
 ```
 
 ### Stack Tecnológica
@@ -104,6 +104,7 @@ murim_knowledge_base/
 │   │   ├── entities/
 │   │   │   ├── __init__.py
 │   │   │   ├── character.py     # Character, Alias, Relationship
+│   │   │   ├── archetype.py     # CharacterArchetype, NarrativeRole, CombatStyle, PersonalityTrait
 │   │   │   ├── location.py      # Location
 │   │   │   ├── novel.py         # Novel, Chapter
 │   │   │   └── organization.py  # Organization, OrganizationRelationship
@@ -111,20 +112,24 @@ murim_knowledge_base/
 │   │   │   ├── __init__.py
 │   │   │   ├── repository.py            # IRepository[T] genérico
 │   │   │   ├── character_repository.py  # ICharacterRepository
+│   │   │   ├── chapter_repository.py    # IChapterRepository
 │   │   │   ├── location_repository.py   # ILocationRepository
 │   │   │   ├── novel_repository.py      # INovelRepository
 │   │   │   └── organization_repository.py # IOrganizationRepository
 │   │   ├── use_cases/
 │   │   │   ├── __init__.py
 │   │   │   ├── build_knowledge_graph.py    # NetworkX graph builder
+│   │   │   ├── classify_character_archetype.py  # Archetype classification
 │   │   │   ├── deduplicate_characters.py   # rapidfuzz dedup
 │   │   │   ├── extract_entities.py         # NLP pipeline controller
+│   │   │   ├── generate_embeddings.py      # Embedding generation
 │   │   │   ├── ingest_chapter.py           # Scraper → DB
 │   │   │   └── ingest_entities.py          # Extract → Dedup → DB
 │   │   └── unit_of_work.py
 │   ├── repositories/
 │   │   ├── __init__.py
 │   │   ├── character_repository.py
+│   │   ├── chapter_repository.py
 │   │   ├── location_repository.py
 │   │   ├── novel_repository.py
 │   │   └── organization_repository.py
@@ -149,12 +154,12 @@ murim_knowledge_base/
 │   │   └── relationship_extractor.py # Extrator de relacionamentos
 │   ├── api/
 │   │   ├── __init__.py
-│   │   ├── schemas/__init__.py  # 25+ Pydantic schemas
+│   │   ├── schemas/__init__.py  # 28+ Pydantic schemas
 │   │   ├── dependencies/__init__.py  # get_uow + encoder lazy
 │   │   └── routes/
 │   │       ├── __init__.py      # api_router agregador
 │   │       ├── novels.py        # /novels + /novels/{id}/chapters (6 rotas)
-│   │       ├── characters.py    # /characters + aliases/titles/relationships (8 rotas)
+│   │       ├── characters.py    # /characters + aliases/titles/relationships/archetypes (11 rotas)
 │   │       ├── organizations.py # /organizations + rivals/allies (6 rotas)
 │   │       ├── locations.py     # /locations + sub-locations (4 rotas)
 │   │       ├── search.py        # /search (lexical + semantic) (1 rota)
@@ -185,7 +190,8 @@ murim_knowledge_base/
     ├── conftest.py              # Fixtures compartilhadas (sqlite_session_factory, sqlite_uow, sample_chapter, api_client)
     ├── test_pipeline.py         # 5 testes (persistência + scraper)
     ├── test_nlp.py              # 12 testes (NLP pipeline)
-    └── test_api.py              # 10 testes (API REST)
+    ├── test_api.py              # 17 testes (API REST)
+    └── test_archetype.py        # 16 testes (archetype classification)
 ```
 
 ---
@@ -203,17 +209,17 @@ murim_knowledge_base/
 | 7 | Scraper base: retry, rate-limit, progresso | `app/scrapers/base.py` | ✅ Completo |
 | 8 | GenericScraper configurável | `app/scrapers/generic.py` | ✅ Completo |
 | 9 | Registry / factory de scrapers | `app/scrapers/__init__.py` | ✅ Completo |
-| 10 | 5 entidades de domínio + canonical keys | `app/core/entities/` | ✅ Completo |
-| 11 | 5 interfaces de repositório | `app/core/interfaces/` | ✅ Completo |
+| 10 | 6 entidades de domínio + canonical keys | `app/core/entities/` | ✅ Completo |
+| 11 | 6 interfaces de repositório | `app/core/interfaces/` | ✅ Completo |
 | 12 | UnitOfWork context manager | `app/core/unit_of_work.py` | ✅ Completo |
-| 13 | 4 repositórios SQLAlchemy concretos | `app/repositories/` | ✅ Completo |
+| 13 | 5 repositórios SQLAlchemy concretos | `app/repositories/` | ✅ Completo |
 | 14 | IngestChapterUseCase com idempotência | `app/core/use_cases/ingest_chapter.py` | ✅ Completo |
-| 15 | Pipeline NLP completo (6 módulos) | `app/processing/` | ✅ Completo |
+| 15 | Pipeline NLP completo (7 módulos) | `app/processing/` | ✅ Completo |
 | 16 | ExtractEntitiesUseCase (NÃO toca DB) | `app/core/use_cases/extract_entities.py` | ✅ Completo |
 | 17 | DeduplicateCharactersUseCase (rapidfuzz) | `app/core/use_cases/deduplicate_characters.py` | ✅ Completo |
 | 18 | BuildKnowledgeGraphUseCase (NetworkX) | `app/core/use_cases/build_knowledge_graph.py` | ✅ Completo |
 | 19 | IngestEntitiesUseCase (extract → dedup → DB) | `app/core/use_cases/ingest_entities.py` | ✅ Completo |
-| 20 | API REST completa (FastAPI, 32 rotas) | `app/api/` + `app/main.py` | ✅ Completo |
+| 20 | API REST completa (FastAPI, 35 rotas) | `app/api/` + `app/main.py` | ✅ Completo |
 | 21 | `/api/v1/novels` + `/chapters` (CRUD) | `app/api/routes/novels.py` | ✅ Completo |
 | 22 | `/api/v1/characters` + alias/title/relationship | `app/api/routes/characters.py` | ✅ Completo |
 | 23 | `/api/v1/organizations` + rivals/allies | `app/api/routes/organizations.py` | ✅ Completo |
@@ -270,6 +276,19 @@ murim_knowledge_base/
 | 74 | Dashboard: inserção rápida de Localizações | `app/dashboard/pages/overview.py` | ✅ Completo |
 | 75 | Dashboard: dark mode (auto-detect Streamlit theme) | `app/dashboard/main.py`, `app/dashboard/pages/graph.py` | ✅ Completo |
 | 76 | Dashboard: filtro por tipo no Grafo | `app/dashboard/pages/graph.py` | ✅ Completo |
+| 77 | `CharacterArchetype` domain entity (enums: NarrativeRole, CombatStyle, PersonalityTrait) | `app/core/entities/archetype.py` | ✅ Completo |
+| 78 | `ArchetypeClassifier` NLP classifier (keyword-based) | `app/nlp/archetype_classifier.py` | ✅ Completo |
+| 79 | `IChapterRepository` interface (get_by_novel, get_chapters_by_character, search_by_content) | `app/core/interfaces/chapter_repository.py` | ✅ Completo |
+| 80 | `ChapterRepository` SQLAlchemy implementation | `app/repositories/chapter_repository.py` | ✅ Completo |
+| 81 | `ClassifyCharacterArchetype` use case | `app/core/use_cases/classify_character_archetype.py` | ✅ Completo |
+| 82 | `ClassifyAllCharacters` batch use case | `app/core/use_cases/classify_character_archetype.py` | ✅ Completo |
+| 83 | `POST /characters/{id}/classify` — classify single character | `app/api/routes/characters.py` | ✅ Completo |
+| 84 | `GET /characters/{id}/archetype` — get previously classified archetype | `app/api/routes/characters.py` | ✅ Completo |
+| 85 | `POST /characters/classify-all` — batch classify all characters | `app/api/routes/characters.py` | ✅ Completo |
+| 86 | `ArchetypeResponse` / `ClassifyAllResponse` Pydantic schemas | `app/api/schemas/__init__.py` | ✅ Completo |
+| 87 | `set_archetype` on `ICharacterRepository` + `CharacterRepository` | `app/core/interfaces/character_repository.py`, `app/repositories/character_repository.py` | ✅ Completo |
+| 88 | `chapters` property on `UnitOfWork` | `app/core/unit_of_work.py` | ✅ Completo |
+| 89 | 16 archetype tests (unit + integration + API) | `tests/test_archetype.py` | ✅ Completo |
 
 ---
 
@@ -765,6 +784,51 @@ curl -X POST http://localhost:8000/api/v1/scrape \
 - `requirements.txt` — pgvector mantido
 
 **Resultado:** 5 scrapers disponíveis (generic, novelbin, novelupdates, novelfire, wuxiaworld). **34 testes passando**. Ruff clean.
+
+### Sessão 20 (Character Archetype Classification System)
+
+**Adicionado:**
+- **Entidade**: `CharacterArchetype` dataclass com enums `NarrativeRole`, `CombatStyle`, `PersonalityTrait` (`app/core/entities/archetype.py`)
+- **Interface**: `IChapterRepository` — `get_by_novel`, `get_chapters_by_character`, `search_by_content` (`app/core/interfaces/chapter_repository.py`)
+- **Interface**: `set_archetype` adicionado ao `ICharacterRepository`
+- **Repositório**: `ChapterRepository` — implementação SQLAlchemy de `IChapterRepository` (`app/repositories/chapter_repository.py`)
+- **Use Case**: `ClassifyCharacterArchetype` — classifica um personagem usando `ArchetypeClassifier` + `IChapterRepository` para buscar capítulos, persiste via `set_archetype`
+- **Use Case**: `ClassifyAllCharacters` — classifica todos os personagens de um novel em batch
+- **Classifier**: `ArchetypeClassifier` — NLP keyword-based classifier para archetype (`app/nlp/archetype_classifier.py`)
+- **API**: 3 novos endpoints (`app/api/routes/characters.py`):
+  - `POST /characters/{id}/classify` — classifica um personagem
+  - `GET /characters/{id}/archetype` — retorna archetype previamente classificado
+  - `POST /characters/classify-all` — classifica todos os personagens
+- **Schemas**: `ArchetypeResponse`, `ClassifyAllResponse` (`app/api/schemas/__init__.py`)
+- **Migração**: `c1a2b3c4d5e6_add_archetype_column_to_characters.py` — adiciona coluna `archetype` ao banco
+- **Unit of Work**: `chapters` property adicionada ao `UnitOfWork`
+
+**Testes (16 novos):**
+- Unit tests: 6 (vazio, dominante, combat style, narrative role, personality trait, low confidence)
+- Integration tests: 4 (use case classify, classify all, already classified, not found)
+- API tests: 6 (endpoint classify, archetype get, classify-all, not found, no chapters, empty corpus)
+
+**Arquivos criados:**
+- `app/core/entities/archetype.py`
+- `app/core/interfaces/chapter_repository.py`
+- `app/repositories/chapter_repository.py`
+- `app/core/use_cases/classify_character_archetype.py`
+- `app/nlp/archetype_classifier.py`
+- `tests/test_archetype.py`
+- `alembic/versions/c1a2b3c4d5e6_add_archetype_column_to_characters.py`
+
+**Arquivos modificados:**
+- `app/core/interfaces/__init__.py` — exporta `IChapterRepository`
+- `app/core/interfaces/character_repository.py` — adicionado `set_archetype`
+- `app/core/entities/__init__.py` — exporta `CharacterArchetype`
+- `app/core/unit_of_work.py` — adiciona `ChapterRepository` como `uow.chapters`
+- `app/repositories/__init__.py` — exporta `ChapterRepository`
+- `app/repositories/character_repository.py` — implementa `set_archetype`
+- `app/models/character.py` — corrigido erro de sintaxe
+- `app/api/routes/characters.py` — 3 novos endpoints
+- `app/api/schemas/__init__.py` — schemas de archetype
+
+**Resultado:** Character archetype classification system completo. 50 testes passando via `pytest tests/`. Ruff clean. **Commit:** `0b6aa67`.
 
 ---
 
