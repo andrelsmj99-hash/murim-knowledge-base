@@ -2,11 +2,12 @@
 Character models for the knowledge base.
 """
 import uuid
-from sqlalchemy import Column, String, Integer, ForeignKey, Table, Text, UniqueConstraint
-from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import UUID
-from .base import Base
 
+from sqlalchemy import Column, ForeignKey, Integer, String, Table, Text, UniqueConstraint
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
+
+from .base import Base
 
 # ---------------------------------------------------------------------------
 # Association tables (many-to-many)

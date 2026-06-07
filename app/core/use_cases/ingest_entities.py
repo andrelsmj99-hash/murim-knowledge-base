@@ -14,10 +14,8 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
 
 from app.core.entities import (
-    Alias,
     Character,
     Location,
     Organization,
@@ -26,9 +24,6 @@ from app.core.unit_of_work import UnitOfWork
 from app.core.use_cases.deduplicate_characters import DeduplicateCharactersUseCase
 from app.core.use_cases.extract_entities import ChapterExtraction
 from app.processing import (
-    LocationMatch,
-    OrgMatch,
-    RelationshipHit,
     canonicalize_name,
 )
 
@@ -44,9 +39,9 @@ class IngestEntitiesResult:
     new_organizations: int = 0
     new_locations: int = 0
     new_relationships: int = 0
-    character_ids: List[str] = field(default_factory=list)
-    organization_ids: List[str] = field(default_factory=list)
-    location_ids: List[str] = field(default_factory=list)
+    character_ids: list[str] = field(default_factory=list)
+    organization_ids: list[str] = field(default_factory=list)
+    location_ids: list[str] = field(default_factory=list)
 
 
 class IngestEntitiesUseCase:
@@ -56,7 +51,7 @@ class IngestEntitiesUseCase:
         self,
         uow: UnitOfWork,
         *,
-        dedup: Optional[DeduplicateCharactersUseCase] = None,
+        dedup: DeduplicateCharactersUseCase | None = None,
     ) -> None:
         self.uow = uow
         self.dedup = dedup or DeduplicateCharactersUseCase()
@@ -79,16 +74,16 @@ class IngestEntitiesUseCase:
         self,
         extraction: ChapterExtraction,
         result: IngestEntitiesResult,
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         # Build candidate Character objects from mentions
-        freq: Dict[str, int] = {}
+        freq: dict[str, int] = {}
         for m in extraction.character_mentions:
             key = m.canonical or canonicalize_name(m.surface)
             if not key:
                 continue
             freq[key] = freq.get(key, 0) + 1
 
-        candidates: List[Character] = []
+        candidates: list[Character] = []
         for key, count in freq.items():
             candidates.append(
                 Character(
@@ -99,7 +94,7 @@ class IngestEntitiesUseCase:
             )
 
         # Attach titles to candidates
-        title_map: Dict[str, List[str]] = {}
+        title_map: dict[str, list[str]] = {}
         for t in extraction.titles:
             _, bare = _split_title_context(t.context)
             key = bare.lower() if bare else ""
@@ -115,7 +110,7 @@ class IngestEntitiesUseCase:
         dedup = self.dedup.execute(candidates)
 
         # Upsert against the DB
-        index: Dict[str, str] = {}
+        index: dict[str, str] = {}
         for cand in dedup.canonical_characters:
             existing = self.uow.characters.get_by_canonical_name(cand.canonical_name)
             if existing is not None:
@@ -147,9 +142,9 @@ class IngestEntitiesUseCase:
         self,
         extraction: ChapterExtraction,
         result: IngestEntitiesResult,
-        char_index: Dict[str, str],
-    ) -> Dict[str, str]:
-        seen: Dict[str, str] = {}
+        char_index: dict[str, str],
+    ) -> dict[str, str]:
+        seen: dict[str, str] = {}
         for match in extraction.organizations:
             key = match.canonical.lower()
             if not key or key in seen:
@@ -172,8 +167,8 @@ class IngestEntitiesUseCase:
         self,
         extraction: ChapterExtraction,
         result: IngestEntitiesResult,
-        char_index: Dict[str, str],
-        org_index: Dict[str, str],
+        char_index: dict[str, str],
+        org_index: dict[str, str],
     ) -> None:
         for match in extraction.locations:
             existing = self.uow.locations.get_by_name_type(match.canonical, match.type)
@@ -192,7 +187,7 @@ class IngestEntitiesUseCase:
         self,
         extraction: ChapterExtraction,
         result: IngestEntitiesResult,
-        char_index: Dict[str, str],
+        char_index: dict[str, str],
     ) -> None:
         for rel in extraction.relationships:
             src_key = canonicalize_name(rel.source)

@@ -3,10 +3,8 @@ Domain entities for Organizations and their inter-org relationships.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional
-
 import uuid as uuid_module
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -26,15 +24,15 @@ class Organization:
     id: str = field(default_factory=lambda: str(uuid_module.uuid4()))
     name: str = ""
     type: str = ""  # "Sect", "Clan", "Guild", "Alliance", "Cult"
-    description: Optional[str] = None
+    description: str | None = None
 
-    parent_org_id: Optional[str] = None
-    subsidiary_ids: List[str] = field(default_factory=list)
-    headquarters_id: Optional[str] = None
-    member_ids: List[str] = field(default_factory=list)
+    parent_org_id: str | None = None
+    subsidiary_ids: list[str] = field(default_factory=list)
+    headquarters_id: str | None = None
+    member_ids: list[str] = field(default_factory=list)
 
     # Grouped by relationship_type
-    relationships: Dict[str, List[str]] = field(default_factory=dict)
+    relationships: dict[str, list[str]] = field(default_factory=dict)
 
     def add_relationship(self, target_id: str, relationship_type: str) -> None:
         bucket = self.relationships.setdefault(relationship_type, [])

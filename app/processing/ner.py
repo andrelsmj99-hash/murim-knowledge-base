@@ -13,9 +13,8 @@ results against the pattern tables in :mod:`app.processing.patterns`.
 from __future__ import annotations
 
 import logging
-import re
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Iterable, List, Optional, Set
 
 from app.processing.patterns import (
     NAME_TOKEN_PATTERN,
@@ -42,10 +41,10 @@ class CharacterMention:
 class ExtractedEntities:
     """All candidate entities discovered in a chunk of text."""
 
-    character_mentions: List[CharacterMention] = field(default_factory=list)
-    person_entities: List[str] = field(default_factory=list)  # spaCy PERSON only
+    character_mentions: list[CharacterMention] = field(default_factory=list)
+    person_entities: list[str] = field(default_factory=list)  # spaCy PERSON only
 
-    def unique_canonicals(self) -> Set[str]:
+    def unique_canonicals(self) -> set[str]:
         return {m.canonical for m in self.character_mentions}
 
 
@@ -58,7 +57,7 @@ _SPACY_NLP = None
 _SPACY_LOAD_ATTEMPTED = False
 
 
-def _load_spacy(model_name: str) -> Optional[object]:
+def _load_spacy(model_name: str) -> object | None:
     """Load spaCy once; return ``None`` on any failure."""
     global _SPACY_NLP, _SPACY_LOAD_ATTEMPTED
     if _SPACY_LOAD_ATTEMPTED:
@@ -147,7 +146,7 @@ _NON_NAME_WORDS: frozenset[str] = frozenset({
 
 def _regex_mentions(text: str, *, min_name_tokens: int) -> Iterable[CharacterMention]:
     """Yield candidate character mentions using capitalization + patterns."""
-    seen_spans: Set[tuple[int, int]] = set()
+    seen_spans: set[tuple[int, int]] = set()
     for match in NAME_TOKEN_PATTERN.finditer(text):
         if match.start() == match.end():
             continue
@@ -175,12 +174,12 @@ def _regex_mentions(text: str, *, min_name_tokens: int) -> Iterable[CharacterMen
         )
 
 
-def _dedup_overlapping(mentions: List[CharacterMention]) -> List[CharacterMention]:
+def _dedup_overlapping(mentions: list[CharacterMention]) -> list[CharacterMention]:
     """Remove duplicate / nested mentions, keeping the longest surface."""
     if not mentions:
         return mentions
     sorted_ms = sorted(mentions, key=lambda m: (m.start, -(m.end - m.start)))
-    kept: List[CharacterMention] = []
+    kept: list[CharacterMention] = []
     last_end = -1
     for m in sorted_ms:
         if m.start >= last_end:

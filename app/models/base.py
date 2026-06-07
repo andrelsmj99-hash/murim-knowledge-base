@@ -6,8 +6,7 @@ database URL, removing duplication with ``os.getenv`` and ensuring consistency
 across the application (including Alembic).
 """
 from sqlalchemy import create_engine
-from sqlalchemy.engine import URL
-from sqlalchemy.orm import declarative_base, sessionmaker, Session
+from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
 from app.utils.config import settings
 

@@ -3,8 +3,6 @@
 """
 from __future__ import annotations
 
-from typing import List
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies import get_encoder, get_uow
@@ -21,7 +19,6 @@ from app.api.schemas import (
     PageMeta,
     TitleCreate,
 )
-from app.core.entities import Alias as EntityAlias
 from app.core.entities import Character
 from app.core.interfaces import ICharacterRepository
 from app.core.unit_of_work import UnitOfWork

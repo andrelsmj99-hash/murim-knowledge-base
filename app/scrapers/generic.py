@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup, FeatureNotFound
@@ -62,8 +62,8 @@ class GenericScraper(BaseScraper):
         novel_slug: str,
         index_url: str,
         base_url: str,
-        ingest_use_case: Optional[IngestChapterUseCase] = None,
-        selectors: Optional[Dict[str, str]] = None,
+        ingest_use_case: IngestChapterUseCase | None = None,
+        selectors: dict[str, str] | None = None,
         reverse_chapter_list: bool = True,
         **kwargs: Any,
     ) -> None:
@@ -82,14 +82,14 @@ class GenericScraper(BaseScraper):
         return urljoin(self.base_url + "/", href.lstrip("/"))
 
     @staticmethod
-    def _parse_chapter_number(text: str) -> Optional[int]:
+    def _parse_chapter_number(text: str) -> int | None:
         """Extract the first integer from a string like 'Chapter 12' or 'Ch. 12 - …'."""
         match = re.search(r"\d+", text or "")
         return int(match.group()) if match else None
 
     # ----------------------------------------------------------- abstract impl
 
-    def get_novel_metadata(self) -> Dict[str, Any]:
+    def get_novel_metadata(self) -> dict[str, Any]:
         """Best-effort novel metadata extraction; callers can override it."""
         response = self._make_request(self.index_url)
         soup = _parse(response.text)
@@ -107,12 +107,12 @@ class GenericScraper(BaseScraper):
             "language": "en",
         }
 
-    def get_chapter_list(self) -> List[Dict[str, Any]]:
+    def get_chapter_list(self) -> list[dict[str, Any]]:
         response = self._make_request(self.index_url)
         soup = _parse(response.text)
 
         container = soup.select_one(self.selectors["chapter_list_container"]) or soup
-        chapters: List[Dict[str, Any]] = []
+        chapters: list[dict[str, Any]] = []
         seen_numbers: set[int] = set()
 
         # Many novel sites list chapters newest-first; reverse so we ingest
@@ -139,7 +139,7 @@ class GenericScraper(BaseScraper):
             )
         return chapters
 
-    def get_chapter_content(self, chapter_info: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def get_chapter_content(self, chapter_info: dict[str, Any]) -> dict[str, Any] | None:
         url = chapter_info["url"]
         response = self._make_request(url)
         soup = _parse(response.text)
@@ -171,7 +171,7 @@ class GenericScraper(BaseScraper):
 
     # ----------------------------------------------------------- persistence
 
-    def scrape_novel(self, resume: bool = True) -> List[Dict[str, Any]]:
+    def scrape_novel(self, resume: bool = True) -> list[dict[str, Any]]:
         """
         Materialize all chapters and persist them to the DB if a use case was
         injected. Falls back to plain iteration when ``ingest_use_case`` is

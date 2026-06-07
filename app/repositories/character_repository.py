@@ -6,9 +6,9 @@ domain entity in :mod:`app.core.entities.character`.
 """
 from __future__ import annotations
 
+import builtins
 import json
 import uuid as uuid_module
-from typing import Dict, List, Optional
 
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
@@ -16,7 +16,8 @@ from sqlalchemy.orm import Session
 from app.core.entities import Alias as EntityAlias
 from app.core.entities import Character
 from app.core.interfaces import ICharacterRepository
-from app.models.character import Alias, Character as CharacterORM
+from app.models.character import Alias
+from app.models.character import Character as CharacterORM
 
 
 def _to_uuid(value: str) -> uuid_module.UUID:
@@ -32,7 +33,7 @@ def _to_entity(orm: CharacterORM) -> Character:
     ]
     titles = [t.title for t in orm.titles]
     org_ids = [str(o.id) for o in orm.organizations]
-    loc_ids = [str(l.id) for l in orm.locations]
+    loc_ids = [str(loc.id) for loc in orm.locations]
     relationships: dict[str, list[str]] = {}
     for rel in orm.relationships:
         relationships.setdefault(rel.relationship_type, []).append(str(rel.related_character_id))
@@ -87,11 +88,11 @@ class CharacterRepository(ICharacterRepository):
 
     # --- read -----------------------------------------------------------
 
-    def get(self, entity_id: str) -> Optional[Character]:
+    def get(self, entity_id: str) -> Character | None:
         orm = self.session.get(CharacterORM, _to_uuid(entity_id))
         return _to_entity(orm) if orm else None
 
-    def list(self, *, limit: int = 100, offset: int = 0) -> List[Character]:
+    def list(self, *, limit: int = 100, offset: int = 0) -> builtins.list[Character]:
         stmt = select(CharacterORM).order_by(CharacterORM.name).limit(limit).offset(offset)
         return [_to_entity(c) for c in self.session.execute(stmt).scalars().all()]
 
@@ -99,13 +100,13 @@ class CharacterRepository(ICharacterRepository):
         from sqlalchemy import func
         return int(self.session.scalar(select(func.count(CharacterORM.id))) or 0)
 
-    def get_by_canonical_name(self, canonical_name: str) -> Optional[Character]:
+    def get_by_canonical_name(self, canonical_name: str) -> Character | None:
         key = _canonical_name(canonical_name)
         stmt = select(CharacterORM).where(CharacterORM.canonical_name == key)
         orm = self.session.execute(stmt).scalar_one_or_none()
         return _to_entity(orm) if orm else None
 
-    def get_by_alias(self, alias_value: str) -> Optional[Character]:
+    def get_by_alias(self, alias_value: str) -> Character | None:
         stmt = (
             select(CharacterORM)
             .join(Alias, Alias.character_id == CharacterORM.id)
@@ -115,7 +116,7 @@ class CharacterRepository(ICharacterRepository):
         orm = self.session.execute(stmt).scalar_one_or_none()
         return _to_entity(orm) if orm else None
 
-    def search_by_name(self, query: str, *, limit: int = 20) -> List[Character]:
+    def search_by_name(self, query: str, *, limit: int = 20) -> builtins.list[Character]:
         if not query:
             return []
         pattern = f"%{query.lower()}%"
@@ -159,11 +160,11 @@ class CharacterRepository(ICharacterRepository):
         self,
         character_id: str,
         *,
-        name: Optional[str] = None,
-        gender: Optional[str] = None,
-        description: Optional[str] = None,
-        first_appearance: Optional[str] = None,
-    ) -> Optional[Character]:
+        name: str | None = None,
+        gender: str | None = None,
+        description: str | None = None,
+        first_appearance: str | None = None,
+    ) -> Character | None:
         orm = self.session.get(CharacterORM, _to_uuid(character_id))
         if orm is None:
             return None
@@ -226,7 +227,7 @@ class CharacterRepository(ICharacterRepository):
         self.session.flush()
         return True
 
-    def link_organization(self, character_id: str, organization_id: str, role: Optional[str] = None) -> bool:
+    def link_organization(self, character_id: str, organization_id: str, role: str | None = None) -> bool:
         from app.models.organization import Organization as OrganizationORM
         c_orm = self.session.get(CharacterORM, _to_uuid(character_id))
         if c_orm is None:
@@ -284,12 +285,11 @@ class CharacterRepository(ICharacterRepository):
         self.session.flush()
         return True
 
-    def get_relationships(self, character_id: str) -> Dict[str, List[str]]:
-        from app.models.character import Relationship as RelationshipORM
+    def get_relationships(self, character_id: str) -> dict[str, builtins.list[str]]:
         c_orm = self.session.get(CharacterORM, _to_uuid(character_id))
         if c_orm is None:
             return {}
-        result: Dict[str, List[str]] = {}
+        result: dict[str, list[str]] = {}
         for rel in c_orm.relationships:
             result.setdefault(rel.relationship_type, []).append(str(rel.related_character_id))
         return result
@@ -315,11 +315,11 @@ class CharacterRepository(ICharacterRepository):
 
 
 # Re-export the JSON helper so callers can store the embedding column.
-def dump_embedding(vector: List[float]) -> str:
+def dump_embedding(vector: list[float]) -> str:
     return json.dumps(vector)
 
 
-def load_embedding(blob: Optional[str]) -> Optional[List[float]]:
+def load_embedding(blob: str | None) -> list[float] | None:
     if not blob:
         return None
     return json.loads(blob)

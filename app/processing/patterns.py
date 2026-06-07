@@ -14,9 +14,8 @@ the code — we can:
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
-from typing import Dict, List, Pattern, Tuple
-
+from dataclasses import dataclass
+from re import Pattern
 
 # ---------------------------------------------------------------------------
 # Data containers
@@ -29,7 +28,7 @@ class TitlePattern:
 
     title: str
     category: str  # "rank", "respect", "family", "cultivation"
-    aliases: Tuple[str, ...] = ()
+    aliases: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -38,7 +37,7 @@ class OrgPattern:
 
     name: str
     type: str  # "Sect", "Clan", "Guild", "Alliance", "Cult", "Pavilion", "Palace"
-    aliases: Tuple[str, ...] = ()
+    aliases: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -47,7 +46,7 @@ class LocationPattern:
 
     name: str
     type: str  # "City", "Mountain", "Sect Grounds", "Valley", "Forest", "Kingdom", "River"
-    aliases: Tuple[str, ...] = ()
+    aliases: tuple[str, ...] = ()
 
 
 @dataclass
@@ -56,14 +55,14 @@ class RelationshipPhrase:
 
     relationship_type: str
     pattern: Pattern[str]
-    groups: Tuple[int, int]  # which capture groups hold (source_name, target_name)
+    groups: tuple[int, int]  # which capture groups hold (source_name, target_name)
 
 
 # ---------------------------------------------------------------------------
 # Titles (Murim honorifics)
 # ---------------------------------------------------------------------------
 
-TITLES: List[TitlePattern] = [
+TITLES: list[TitlePattern] = [
     # Cultivation ranks
     TitlePattern("Mortal", "rank", ("common mortal",)),
     TitlePattern("Martial Artist", "rank", ("martial artist",)),
@@ -113,7 +112,7 @@ TITLES: List[TitlePattern] = [
 # ---------------------------------------------------------------------------
 
 # Common suffix words that mark an organization.
-ORG_SUFFIXES: Tuple[str, ...] = (
+ORG_SUFFIXES: tuple[str, ...] = (
     "Sect",
     "Clan",
     "Family",
@@ -147,7 +146,7 @@ ORG_SUFFIXES: Tuple[str, ...] = (
 
 # Seed organizations (canonical examples — the extractor will also pick up
 # any "<Name> + suffix" pattern at runtime).
-ORG_PATTERNS: List[OrgPattern] = [
+ORG_PATTERNS: list[OrgPattern] = [
     OrgPattern("Mount Hua Sect", "Sect", ("Mount Hua", "Mount Hua Sword Sect")),
     OrgPattern("Shaolin Temple", "Temple", ("Shaolin",)),
     OrgPattern("Wudang Sect", "Sect", ("Wudang",)),
@@ -168,7 +167,7 @@ ORG_PATTERNS: List[OrgPattern] = [
 # Location types
 # ---------------------------------------------------------------------------
 
-LOCATION_PATTERNS: List[LocationPattern] = [
+LOCATION_PATTERNS: list[LocationPattern] = [
     LocationPattern("Mount Hua", "Mountain", ("Mount Huashan",)),
     LocationPattern("Mount Kunlun", "Mountain", ("Kunlun Mountain",)),
     LocationPattern("Mount Emei", "Mountain",),
@@ -188,7 +187,7 @@ LOCATION_PATTERNS: List[LocationPattern] = [
 # ---------------------------------------------------------------------------
 
 # (relationship_type, regex with two capture groups, group indices)
-_RELATIONSHIP_TEMPLATES: List[Tuple[str, str, Tuple[int, int]]] = [
+_RELATIONSHIP_TEMPLATES: list[tuple[str, str, tuple[int, int]]] = [
     ("master", r"(?P<s1>[\w\s]+?)\s+(?:is|was)\s+the\s+master\s+of\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| and|\s*$)", (1, 2)),
     ("master", r"(?P<s1>[\w\s]+?)'s\s+disciple\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| and|\s*$)", (1, 2)),
     ("disciple", r"(?P<s1>[\w\s]+?)\s+(?:is|was)\s+(?:a|the)\s+disciple\s+of\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| and|\s*$)", (1, 2)),
@@ -201,7 +200,7 @@ _RELATIONSHIP_TEMPLATES: List[Tuple[str, str, Tuple[int, int]]] = [
     ("parent", r"(?P<s1>[\w\s]+?)'s\s+(?:son|daughter)\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| and|\s*$)", (1, 2)),
 ]
 
-RELATIONSHIP_PHRASES: List[RelationshipPhrase] = [
+RELATIONSHIP_PHRASES: list[RelationshipPhrase] = [
     RelationshipPhrase(rel_type, re.compile(pattern, re.IGNORECASE), groups)
     for rel_type, pattern, groups in _RELATIONSHIP_TEMPLATES
 ]
@@ -223,9 +222,9 @@ NAME_TOKEN_PATTERN = re.compile(
 # ---------------------------------------------------------------------------
 
 
-def _title_lookup() -> Dict[str, TitlePattern]:
+def _title_lookup() -> dict[str, TitlePattern]:
     """Map a normalized title string back to its pattern."""
-    out: Dict[str, TitlePattern] = {}
+    out: dict[str, TitlePattern] = {}
     for pat in TITLES:
         keys = {pat.title.lower(), *(a.lower() for a in pat.aliases)}
         for k in keys:
@@ -233,11 +232,11 @@ def _title_lookup() -> Dict[str, TitlePattern]:
     return out
 
 
-TITLE_LOOKUP: Dict[str, TitlePattern] = _title_lookup()
+TITLE_LOOKUP: dict[str, TitlePattern] = _title_lookup()
 
 
-def _org_lookup() -> Dict[str, OrgPattern]:
-    out: Dict[str, OrgPattern] = {}
+def _org_lookup() -> dict[str, OrgPattern]:
+    out: dict[str, OrgPattern] = {}
     for pat in ORG_PATTERNS:
         keys = {pat.name.lower(), *(a.lower() for a in pat.aliases)}
         for k in keys:
@@ -245,11 +244,11 @@ def _org_lookup() -> Dict[str, OrgPattern]:
     return out
 
 
-ORG_LOOKUP: Dict[str, OrgPattern] = _org_lookup()
+ORG_LOOKUP: dict[str, OrgPattern] = _org_lookup()
 
 
-def _location_lookup() -> Dict[str, LocationPattern]:
-    out: Dict[str, LocationPattern] = {}
+def _location_lookup() -> dict[str, LocationPattern]:
+    out: dict[str, LocationPattern] = {}
     for pat in LOCATION_PATTERNS:
         keys = {pat.name.lower(), *(a.lower() for a in pat.aliases)}
         for k in keys:
@@ -257,7 +256,7 @@ def _location_lookup() -> Dict[str, LocationPattern]:
     return out
 
 
-LOCATION_LOOKUP: Dict[str, LocationPattern] = _location_lookup()
+LOCATION_LOOKUP: dict[str, LocationPattern] = _location_lookup()
 
 
 # ---------------------------------------------------------------------------
@@ -288,16 +287,16 @@ def is_org_suffix(word: str) -> bool:
     return word.lower() in {s.lower() for s in ORG_SUFFIXES}
 
 
-def all_title_keys() -> List[str]:
+def all_title_keys() -> list[str]:
     """Return the lowercase list of all title keys for matching."""
     return list(TITLE_LOOKUP.keys())
 
 
-def all_org_keys() -> List[str]:
+def all_org_keys() -> list[str]:
     return list(ORG_LOOKUP.keys())
 
 
-def all_location_keys() -> List[str]:
+def all_location_keys() -> list[str]:
     return list(LOCATION_LOOKUP.keys())
 
 
@@ -306,9 +305,9 @@ def all_location_keys() -> List[str]:
 # ---------------------------------------------------------------------------
 
 
-def titles_by_category() -> Dict[str, List[str]]:
+def titles_by_category() -> dict[str, list[str]]:
     """Group title names by category — useful for stat reporting."""
-    out: Dict[str, List[str]] = {}
+    out: dict[str, list[str]] = {}
     for pat in TITLES:
         out.setdefault(pat.category, []).append(pat.title)
     return out

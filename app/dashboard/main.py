@@ -30,7 +30,7 @@ _ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
-from app.dashboard import api_client
+from app.dashboard import api_client  # noqa: E402
 from app.dashboard.pages import characters, graph, overview, search  # noqa: E402
 
 # ---------------------------------------------------------------------------
@@ -42,7 +42,23 @@ st.set_page_config(
     page_icon="📘",
     layout="wide",
     initial_sidebar_state="expanded",
-    menu_items=None,
+    menu_items={
+        "About": "Murim Knowledge Base — Extração e visualização de conhecimento de web-novels Murim / Wuxia.",
+    },
+)
+
+st.markdown(
+    """
+    <style>
+    [data-testid="stAppViewContainer"] {
+        font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+    .st-emotion-cache-1jicfl2 {
+        padding-top: 2rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
 )
 
 # Configure API client (in-process by default, remote via env var)

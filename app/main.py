@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -62,7 +62,7 @@ def create_app() -> FastAPI:
         return HealthResponse(
             status="ok",
             app=settings.app_name,
-            time=datetime.now(timezone.utc),
+            time=datetime.now(UTC),
         ).model_dump(mode="json")
 
     app.include_router(api_router, prefix="/api/v1")

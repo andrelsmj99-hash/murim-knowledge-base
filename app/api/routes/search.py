@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Query
 
@@ -26,7 +25,7 @@ router = APIRouter()
 def _cosine(a: list[float], b: list[float]) -> float:
     if not a or not b or len(a) != len(b):
         return 0.0
-    dot = sum(x * y for x, y in zip(a, b))
+    dot = sum(x * y for x, y in zip(a, b, strict=False))
     na = math.sqrt(sum(x * x for x in a))
     nb = math.sqrt(sum(y * y for y in b))
     if not na or not nb:
@@ -42,7 +41,7 @@ def search(
     uow: UnitOfWork = Depends(get_uow),
     encoder=Depends(get_encoder),
 ) -> SearchResponse:
-    query_vec: Optional[list[float]] = None
+    query_vec: list[float] | None = None
     if semantic:
         query_vec = encoder.encode(q)
 

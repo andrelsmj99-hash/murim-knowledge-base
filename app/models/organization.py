@@ -2,9 +2,11 @@
 Organization models for the knowledge base.
 """
 import uuid
-from sqlalchemy import Column, String, Text, ForeignKey, UniqueConstraint
-from sqlalchemy.orm import relationship, foreign, remote
+
+from sqlalchemy import Column, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
+
 from .base import Base
 from .character import character_organizations
 

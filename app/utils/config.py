@@ -5,8 +5,9 @@ The .env file is resolved relative to the project root so it works regardless
 of the current working directory used to launch the process.
 """
 from pathlib import Path
-from pydantic_settings import BaseSettings, SettingsConfigDict
+
 from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Project root: <repo>/app/utils/config.py -> parents[2] == <repo>
 PROJECT_ROOT = Path(__file__).resolve().parents[2]

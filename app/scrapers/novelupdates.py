@@ -15,7 +15,8 @@ This scraper extracts:
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
+import re
+from typing import Any
 
 from bs4 import BeautifulSoup, FeatureNotFound
 
@@ -23,7 +24,7 @@ from app.scrapers.base import BaseScraper
 
 logger = logging.getLogger(__name__)
 
-NOVELUPDATES_SELECTORS: Dict[str, str] = {
+NOVELUPDATES_SELECTORS: dict[str, str] = {
     "title": ".seriestitlenu, .series-title h1, h1",
     "author": "#authtag a, a[href*='authtag']",
     "genres": "#seriesgenre a, .genre a, a[href*='genre']",
@@ -67,7 +68,7 @@ class NovelUpdatesScraper(BaseScraper):
         super().__init__(novel_slug, **kwargs)
         self.series_url = f"https://www.novelupdates.com/series/{novel_slug}/"
 
-    def get_novel_metadata(self) -> Dict[str, Any]:
+    def get_novel_metadata(self) -> dict[str, Any]:
         response = self._make_request(self.series_url)
         soup = _parse(response.text)
 
@@ -79,13 +80,13 @@ class NovelUpdatesScraper(BaseScraper):
         rank_el = soup.select_one(NOVELUPDATES_SELECTORS["rank"])
         rating_el = soup.select_one(NOVELUPDATES_SELECTORS["rating"])
 
-        genres: List[str] = []
+        genres: list[str] = []
         for tag in soup.select(NOVELUPDATES_SELECTORS["genres"]):
             genre = tag.get_text(strip=True)
             if genre:
                 genres.append(genre)
 
-        metadata: Dict[str, Any] = {
+        metadata: dict[str, Any] = {
             "title": title_el.get_text(strip=True) if title_el else self.novel_slug,
             "author": author_el.get_text(strip=True) if author_el else None,
             "genre": ", ".join(genres) if genres else None,
@@ -111,15 +112,16 @@ class NovelUpdatesScraper(BaseScraper):
 
         return metadata
 
-    def get_chapter_list(self) -> List[Dict[str, Any]]:
+    def get_chapter_list(self) -> list[dict[str, Any]]:
         logger.warning(
             "NovelUpdates does not host chapters. Use a content scraper (e.g. NovelBinScraper) "
             "for chapter content."
         )
         return []
 
-    def get_chapter_content(self, chapter_info: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def get_chapter_content(self, chapter_info: dict[str, Any]) -> dict[str, Any] | None:
         raise NotImplementedError(
             "NovelUpdates does not host chapter content. "
             "Use a content scraper (e.g. NovelBinScraper) for chapter content."
         )
+

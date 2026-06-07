@@ -3,10 +3,9 @@
 """
 from __future__ import annotations
 
-from typing import List
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from app.api.dependencies import get_uow
 from app.api.schemas import (
     ChapterCreate,
     ChapterDetail,
@@ -19,7 +18,6 @@ from app.api.schemas import (
 from app.core.entities import Chapter, Novel
 from app.core.interfaces import INovelRepository
 from app.core.unit_of_work import UnitOfWork
-from app.api.dependencies import get_uow
 
 router = APIRouter()
 
@@ -35,7 +33,7 @@ def list_novels(
     uow: UnitOfWork = Depends(get_uow),
 ) -> Page:
     repo = _uow_novels(uow)
-    items: List[NovelRead] = [NovelRead.model_validate(n) for n in repo.list(limit=limit, offset=offset)]
+    items: list[NovelRead] = [NovelRead.model_validate(n) for n in repo.list(limit=limit, offset=offset)]
     return Page(items=items, meta=PageMeta(total=repo.count(), limit=limit, offset=offset))
 
 

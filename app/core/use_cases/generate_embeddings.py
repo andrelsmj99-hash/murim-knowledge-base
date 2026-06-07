@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable, List, Optional
 
 from app.core.unit_of_work import UnitOfWork
 
@@ -14,12 +14,12 @@ logger = logging.getLogger(__name__)
 class EmbeddingResult:
     character_id: str
     success: bool
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
 class GenerateEmbeddingsResult:
-    results: List[EmbeddingResult] = field(default_factory=list)
+    results: list[EmbeddingResult] = field(default_factory=list)
 
     @property
     def success_count(self) -> int:
@@ -31,7 +31,7 @@ class GenerateEmbeddingsResult:
 
 
 class GenerateEmbeddingsUseCase:
-    def __init__(self, uow: UnitOfWork, encoder: Callable[[str], Optional[List[float]]]) -> None:
+    def __init__(self, uow: UnitOfWork, encoder: Callable[[str], list[float] | None]) -> None:
         self.uow = uow
         self.encoder = encoder
 
@@ -57,7 +57,7 @@ class GenerateEmbeddingsUseCase:
 
     def execute_all(self, *, force: bool = False) -> GenerateEmbeddingsResult:
         all_chars = self.uow.characters.list(limit=10_000)
-        results: List[EmbeddingResult] = []
+        results: list[EmbeddingResult] = []
         for c in all_chars:
             if not force and c.embedding is not None:
                 continue

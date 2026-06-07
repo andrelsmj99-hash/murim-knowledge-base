@@ -7,10 +7,9 @@ wire format can evolve independently of the persistence model.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
-
 
 # ---------------------------------------------------------------------------
 # Common
@@ -34,7 +33,7 @@ class PageMeta(BaseModel):
 class Page(BaseModel):
     """Generic paginated wrapper: ``{items, meta}``."""
 
-    items: List[Any]
+    items: list[Any]
     meta: PageMeta
 
 
@@ -70,31 +69,31 @@ class CharacterRead(ORMBase):
     id: str
     name: str
     canonical_name: str
-    gender: Optional[str] = None
-    description: Optional[str] = None
-    first_appearance: Optional[str] = None
+    gender: str | None = None
+    description: str | None = None
+    first_appearance: str | None = None
     appearance_frequency: int = 0
-    aliases: List[AliasRead] = Field(default_factory=list)
-    titles: List[str] = Field(default_factory=list)
-    organizations: List[str] = Field(default_factory=list)
-    locations: List[str] = Field(default_factory=list)
-    relationships: Dict[str, List[str]] = Field(default_factory=dict)
+    aliases: list[AliasRead] = Field(default_factory=list)
+    titles: list[str] = Field(default_factory=list)
+    organizations: list[str] = Field(default_factory=list)
+    locations: list[str] = Field(default_factory=list)
+    relationships: dict[str, list[str]] = Field(default_factory=dict)
     has_embedding: bool = False
 
 
 class CharacterCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
-    canonical_name: Optional[str] = None
-    gender: Optional[str] = None
-    description: Optional[str] = None
-    first_appearance: Optional[str] = None
+    canonical_name: str | None = None
+    gender: str | None = None
+    description: str | None = None
+    first_appearance: str | None = None
 
 
 class CharacterUpdate(BaseModel):
-    name: Optional[str] = None
-    gender: Optional[str] = None
-    description: Optional[str] = None
-    first_appearance: Optional[str] = None
+    name: str | None = None
+    gender: str | None = None
+    description: str | None = None
+    first_appearance: str | None = None
 
 
 class CharacterRelationshipCreate(BaseModel):
@@ -108,7 +107,7 @@ class CharacterLocationLink(BaseModel):
 
 class CharacterOrganizationLink(BaseModel):
     organization_id: str = Field(..., min_length=36, max_length=36)
-    role: Optional[str] = Field(None, max_length=100)
+    role: str | None = Field(None, max_length=100)
 
 
 # ---------------------------------------------------------------------------
@@ -120,9 +119,9 @@ class ChapterRead(ORMBase):
     id: str
     novel_id: str
     chapter_number: int
-    title: Optional[str] = None
+    title: str | None = None
     word_count: int = 0
-    snippet: Optional[str] = None
+    snippet: str | None = None
 
 
 class ChapterDetail(ChapterRead):
@@ -131,7 +130,7 @@ class ChapterDetail(ChapterRead):
 
 class ChapterCreate(BaseModel):
     chapter_number: int = Field(..., ge=0)
-    title: Optional[str] = None
+    title: str | None = None
     content: str = Field(..., min_length=1)
 
 
@@ -143,20 +142,20 @@ class ChapterCreate(BaseModel):
 class NovelRead(ORMBase):
     id: str
     title: str
-    author: Optional[str] = None
-    genre: Optional[str] = None
-    description: Optional[str] = None
-    source_url: Optional[str] = None
+    author: str | None = None
+    genre: str | None = None
+    description: str | None = None
+    source_url: str | None = None
     language: str = "en"
     total_chapters: int = 0
 
 
 class NovelCreate(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
-    author: Optional[str] = None
-    genre: Optional[str] = None
-    description: Optional[str] = None
-    source_url: Optional[str] = None
+    author: str | None = None
+    genre: str | None = None
+    description: str | None = None
+    source_url: str | None = None
     language: str = "en"
 
 
@@ -169,21 +168,21 @@ class OrganizationRead(ORMBase):
     id: str
     name: str
     type: str
-    description: Optional[str] = None
-    parent_org_id: Optional[str] = None
-    headquarters_id: Optional[str] = None
-    subsidiary_ids: List[str] = Field(default_factory=list)
-    member_ids: List[str] = Field(default_factory=list)
-    rival_ids: List[str] = Field(default_factory=list)
-    ally_ids: List[str] = Field(default_factory=list)
+    description: str | None = None
+    parent_org_id: str | None = None
+    headquarters_id: str | None = None
+    subsidiary_ids: list[str] = Field(default_factory=list)
+    member_ids: list[str] = Field(default_factory=list)
+    rival_ids: list[str] = Field(default_factory=list)
+    ally_ids: list[str] = Field(default_factory=list)
 
 
 class OrganizationCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     type: str = Field(..., min_length=1, max_length=100)
-    description: Optional[str] = None
-    parent_org_id: Optional[str] = None
-    headquarters_id: Optional[str] = None
+    description: str | None = None
+    parent_org_id: str | None = None
+    headquarters_id: str | None = None
 
 
 class OrganizationRelationshipCreate(BaseModel):
@@ -200,22 +199,22 @@ class LocationRead(ORMBase):
     id: str
     name: str
     type: str
-    description: Optional[str] = None
-    region: Optional[str] = None
-    realm: Optional[str] = None
-    parent_location_id: Optional[str] = None
-    sub_location_ids: List[str] = Field(default_factory=list)
-    character_ids: List[str] = Field(default_factory=list)
-    organization_ids: List[str] = Field(default_factory=list)
+    description: str | None = None
+    region: str | None = None
+    realm: str | None = None
+    parent_location_id: str | None = None
+    sub_location_ids: list[str] = Field(default_factory=list)
+    character_ids: list[str] = Field(default_factory=list)
+    organization_ids: list[str] = Field(default_factory=list)
 
 
 class LocationCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     type: str = Field(..., min_length=1, max_length=100)
-    description: Optional[str] = None
-    region: Optional[str] = None
-    realm: Optional[str] = None
-    parent_location_id: Optional[str] = None
+    description: str | None = None
+    region: str | None = None
+    realm: str | None = None
+    parent_location_id: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -228,33 +227,33 @@ class SearchHit(BaseModel):
     name: str
     kind: str  # "character" | "organization" | "location" | "novel"
     score: float = 1.0
-    snippet: Optional[str] = None
+    snippet: str | None = None
 
 
 class SearchResponse(BaseModel):
     query: str
     total: int
-    hits: List[SearchHit]
+    hits: list[SearchHit]
 
 
 class GraphNode(BaseModel):
     id: str
     kind: str
     label: str
-    attrs: Dict[str, Any] = Field(default_factory=dict)
+    attrs: dict[str, Any] = Field(default_factory=dict)
 
 
 class GraphEdge(BaseModel):
     source: str
     target: str
     kind: str
-    attrs: Dict[str, Any] = Field(default_factory=dict)
+    attrs: dict[str, Any] = Field(default_factory=dict)
 
 
 class GraphResponse(BaseModel):
-    nodes: List[GraphNode]
-    edges: List[GraphEdge]
-    stats: Dict[str, int] = Field(default_factory=dict)
+    nodes: list[GraphNode]
+    edges: list[GraphEdge]
+    stats: dict[str, int] = Field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
@@ -277,24 +276,24 @@ class HealthResponse(BaseModel):
 class ScrapeRequest(BaseModel):
     source: str = "generic"
     novel_slug: str = Field(..., min_length=1, max_length=255)
-    index_url: Optional[str] = None
-    base_url: Optional[str] = None
-    domain: Optional[str] = None
+    index_url: str | None = None
+    base_url: str | None = None
+    domain: str | None = None
     reverse_chapter_list: bool = True
     resume: bool = True
 
 
 class ScrapeChapterItem(BaseModel):
     chapter_number: int
-    title: Optional[str] = None
-    db_chapter_id: Optional[str] = None
+    title: str | None = None
+    db_chapter_id: str | None = None
     skipped: bool = False
 
 
 class ScrapeResponse(BaseModel):
     novel_slug: str
-    novel_title: Optional[str] = None
-    novel_id: Optional[str] = None
+    novel_title: str | None = None
+    novel_id: str | None = None
     total: int
-    chapters: List[ScrapeChapterItem] = Field(default_factory=list)
-    errors: List[str] = Field(default_factory=list)
+    chapters: list[ScrapeChapterItem] = Field(default_factory=list)
+    errors: list[str] = Field(default_factory=list)

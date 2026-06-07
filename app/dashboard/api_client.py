@@ -8,14 +8,13 @@ streamlit local), ou via HTTP quando ``API_BASE_URL`` está configurado.
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
-_API_BASE: Optional[str] = None
+_API_BASE: str | None = None
 
 
-def configure(*, api_base_url: Optional[str] = None) -> None:
+def configure(*, api_base_url: str | None = None) -> None:
     global _API_BASE
     _API_BASE = api_base_url
 
@@ -23,7 +22,7 @@ def configure(*, api_base_url: Optional[str] = None) -> None:
 def _url(path: str) -> str:
     if _API_BASE is None:
         raise RuntimeError("API client not configured. Call configure() first.")
-    return f"{_API_BASE.rstrip('/')}/{path.lstrip('/')}")
+    return f"{_API_BASE.rstrip('/')}/{path.lstrip('/')}"
 
 
 # In-process shortcut湖北客户端 (fastest option for local dashboards)
@@ -34,14 +33,15 @@ def _get_client():
     if _client is None:
         # Lazy import so the dashboard can start without
         # instantiating the full app if we only hit HTTP.
-        from app.main import create_app
         from fastapi.testclient import TestClient
+
+        from app.main import create_app
 
         _client = TestClient(create_app())
     return _client
 
 
-def get(path: str, *, params: Optional[dict] = None) -> dict:
+def get(path: str, *, params: dict | None = None) -> dict:
     """GET a JSON endpoint."""
     if _API_BASE is not None:
         import requests
@@ -56,7 +56,7 @@ def get(path: str, *, params: Optional[dict] = None) -> dict:
     return r.json()
 
 
-def post(path: str, *, json: Optional[dict] = None) -> dict:
+def post(path: str, *, json: dict | None = None) -> dict:
     """POST a JSON endpoint."""
     if _API_BASE is not None:
         import requests
@@ -69,7 +69,7 @@ def post(path: str, *, json: Optional[dict] = None) -> dict:
     return r.json()
 
 
-def patch(path: str, *, json: Optional[dict] = None) -> dict:
+def patch(path: str, *, json: dict | None = None) -> dict:
     """PATCH a JSON endpoint."""
     if _API_BASE is not None:
         import requests

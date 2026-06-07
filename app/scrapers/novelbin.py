@@ -7,8 +7,8 @@ web-novels. It hosts complete translated novels with a consistent HTML structure
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
-from urllib.parse import urljoin, urlparse
+from typing import Any
+from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup, FeatureNotFound
 
@@ -16,7 +16,7 @@ from app.scrapers.base import BaseScraper
 
 logger = logging.getLogger(__name__)
 
-NOVELBIN_SELECTORS: Dict[str, str] = {
+NOVELBIN_SELECTORS: dict[str, str] = {
     "novel_title": "h3.title, h1.title, .novel-title, h2",
     "novel_author": ".author a, a[href*='author-'], .info-meta span:contains('Author')",
     "novel_description": ".desc-text, .description, .summary, .short-description",
@@ -40,7 +40,7 @@ class NovelBinScraper(BaseScraper):
     def __init__(
         self,
         novel_slug: str,
-        index_url: Optional[str] = None,
+        index_url: str | None = None,
         domain: str = "novelbin.com",
         **kwargs: Any,
     ) -> None:
@@ -55,13 +55,13 @@ class NovelBinScraper(BaseScraper):
         return urljoin(self._base_url + "/", href.lstrip("/"))
 
     @staticmethod
-    def _extract_number(text: str) -> Optional[int]:
+    def _extract_number(text: str) -> int | None:
         import re
 
         match = re.search(r"(\d+)", text or "")
         return int(match.group(1)) if match else None
 
-    def get_novel_metadata(self) -> Dict[str, Any]:
+    def get_novel_metadata(self) -> dict[str, Any]:
         response = self._make_request(self.index_url)
         soup = _parse(response.text)
 
@@ -78,7 +78,7 @@ class NovelBinScraper(BaseScraper):
             "language": "en",
         }
 
-    def get_chapter_list(self) -> List[Dict[str, Any]]:
+    def get_chapter_list(self) -> list[dict[str, Any]]:
         response = self._make_request(self.index_url)
         soup = _parse(response.text)
 
@@ -90,7 +90,7 @@ class NovelBinScraper(BaseScraper):
         anchors = list(container.select(NOVELBIN_SELECTORS["chapter_list_item"]))
         anchors = list(reversed(anchors))
 
-        chapters: List[Dict[str, Any]] = []
+        chapters: list[dict[str, Any]] = []
         seen: set[int] = set()
 
         for anchor in anchors:
@@ -111,7 +111,7 @@ class NovelBinScraper(BaseScraper):
             )
         return chapters
 
-    def get_chapter_content(self, chapter_info: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def get_chapter_content(self, chapter_info: dict[str, Any]) -> dict[str, Any] | None:
         import re
 
         url = chapter_info["url"]

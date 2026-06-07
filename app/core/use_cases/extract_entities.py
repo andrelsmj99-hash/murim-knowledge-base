@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import List, Optional
 
 from app.processing import (
     CharacterMention,
@@ -33,12 +32,12 @@ logger = logging.getLogger(__name__)
 class ChapterExtraction:
     """All entities found in a single chapter."""
 
-    chapter_id: Optional[str] = None
-    character_mentions: List[CharacterMention] = field(default_factory=list)
-    titles: List[TitleMatch] = field(default_factory=list)
-    organizations: List[OrgMatch] = field(default_factory=list)
-    locations: List[LocationMatch] = field(default_factory=list)
-    relationships: List[RelationshipHit] = field(default_factory=list)
+    chapter_id: str | None = None
+    character_mentions: list[CharacterMention] = field(default_factory=list)
+    titles: list[TitleMatch] = field(default_factory=list)
+    organizations: list[OrgMatch] = field(default_factory=list)
+    locations: list[LocationMatch] = field(default_factory=list)
+    relationships: list[RelationshipHit] = field(default_factory=list)
 
     def canonical_characters(self) -> set[str]:
         return {m.canonical for m in self.character_mentions if m.canonical}
@@ -47,7 +46,7 @@ class ChapterExtraction:
         return {o.canonical.lower() for o in self.organizations if o.canonical}
 
     def canonical_locations(self) -> set[str]:
-        return {l.canonical.lower() for l in self.locations if l.canonical}
+        return {loc.canonical.lower() for loc in self.locations if loc.canonical}
 
     def relationship_count(self) -> int:
         return len(self.relationships)
@@ -63,7 +62,7 @@ class ExtractEntitiesUseCase:
         self,
         text: str,
         *,
-        chapter_id: Optional[str] = None,
+        chapter_id: str | None = None,
     ) -> ChapterExtraction:
         """
         :param text: full chapter content.
@@ -103,9 +102,9 @@ class ExtractEntitiesUseCase:
 
     @staticmethod
     def _attach_titles(
-        mentions: List[CharacterMention],
-        titles: List[TitleMatch],
-    ) -> List[CharacterMention]:
+        mentions: list[CharacterMention],
+        titles: list[TitleMatch],
+    ) -> list[CharacterMention]:
         """Make sure the canonical name does not include a leading title."""
         for m in mentions:
             _, bare = split_title_from_name(m.surface)

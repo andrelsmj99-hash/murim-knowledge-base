@@ -4,8 +4,6 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock
 
-import pytest
-
 from app.core.entities import Chapter, Novel
 from app.core.use_cases import IngestChapterUseCase
 from app.scrapers import get_scraper_class, list_sources

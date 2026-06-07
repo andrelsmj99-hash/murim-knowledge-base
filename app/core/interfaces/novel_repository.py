@@ -4,7 +4,6 @@ Novel and Chapter repository contract.
 from __future__ import annotations
 
 import abc
-from typing import List, Optional
 
 from app.core.entities import Chapter, Novel
 from app.core.interfaces.repository import IRepository
@@ -14,7 +13,7 @@ class INovelRepository(IRepository[Novel], abc.ABC):
     """Persistence operations for :class:`Novel` and its chapters."""
 
     @abc.abstractmethod
-    def get_by_title_author(self, title: str, author: Optional[str]) -> Optional[Novel]:
+    def get_by_title_author(self, title: str, author: str | None) -> Novel | None:
         """Find a novel by its unique (title, author) key."""
 
     @abc.abstractmethod
@@ -26,7 +25,7 @@ class INovelRepository(IRepository[Novel], abc.ABC):
         """Insert a chapter for an existing novel (or no-op if duplicate)."""
 
     @abc.abstractmethod
-    def get_chapters(self, novel_id: str, *, limit: int = 1000, offset: int = 0) -> List[Chapter]:
+    def get_chapters(self, novel_id: str, *, limit: int = 1000, offset: int = 0) -> list[Chapter]:
         """Return chapters for a novel, ordered by chapter number."""
 
     @abc.abstractmethod

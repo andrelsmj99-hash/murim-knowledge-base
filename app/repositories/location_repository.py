@@ -3,8 +3,8 @@ SQLAlchemy implementation of :class:`ILocationRepository`.
 """
 from __future__ import annotations
 
+import builtins
 import uuid as uuid_module
-from typing import List, Optional
 
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
@@ -53,23 +53,23 @@ class LocationRepository(ILocationRepository):
 
     # --- read -----------------------------------------------------------
 
-    def get(self, entity_id: str) -> Optional[Location]:
+    def get(self, entity_id: str) -> Location | None:
         orm = self.session.get(LocationORM, _to_uuid(entity_id))
         return _to_entity(orm) if orm else None
 
-    def list(self, *, limit: int = 100, offset: int = 0) -> List[Location]:
+    def list(self, *, limit: int = 100, offset: int = 0) -> builtins.list[Location]:
         stmt = select(LocationORM).order_by(LocationORM.name).limit(limit).offset(offset)
-        return [_to_entity(l) for l in self.session.execute(stmt).scalars().all()]
+        return [_to_entity(loc) for loc in self.session.execute(stmt).scalars().all()]
 
     def count(self) -> int:
         return int(self.session.scalar(select(func.count(LocationORM.id))) or 0)
 
-    def get_by_name_type(self, name: str, type: str) -> Optional[Location]:
+    def get_by_name_type(self, name: str, type: str) -> Location | None:
         stmt = select(LocationORM).where(LocationORM.name == name, LocationORM.type == type)
         orm = self.session.execute(stmt).scalar_one_or_none()
         return _to_entity(orm) if orm else None
 
-    def search_by_name(self, query: str, *, limit: int = 20) -> List[Location]:
+    def search_by_name(self, query: str, *, limit: int = 20) -> builtins.list[Location]:
         if not query:
             return []
         pattern = f"%{query.lower()}%"
@@ -85,17 +85,17 @@ class LocationRepository(ILocationRepository):
             .order_by(LocationORM.name)
             .limit(limit)
         )
-        return [_to_entity(l) for l in self.session.execute(stmt).scalars().all()]
+        return [_to_entity(loc) for loc in self.session.execute(stmt).scalars().all()]
 
-    def get_sub_locations(self, location_id: str) -> List[Location]:
+    def get_sub_locations(self, location_id: str) -> builtins.list[Location]:
         stmt = (
             select(LocationORM)
             .where(LocationORM.parent_location_id == _to_uuid(location_id))
             .order_by(LocationORM.name)
         )
-        return [_to_entity(l) for l in self.session.execute(stmt).scalars().all()]
+        return [_to_entity(loc) for loc in self.session.execute(stmt).scalars().all()]
 
-    def get_characters(self, location_id: str) -> List[Character]:
+    def get_characters(self, location_id: str) -> builtins.list[Character]:
         from app.models.character import Character as CharacterORM
         from app.repositories.character_repository import _to_entity as _char_to_entity
 

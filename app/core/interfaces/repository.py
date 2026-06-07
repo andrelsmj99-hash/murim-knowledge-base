@@ -8,21 +8,16 @@ instantiated per Unit-of-Work.
 from __future__ import annotations
 
 import abc
-from typing import Generic, Iterable, List, Optional, TypeVar
+import builtins
+from collections.abc import Iterable
+from typing import TypeVar
 
 from sqlalchemy.orm import Session
-
-from app.core.entities import (
-    Character,
-    Location,
-    Novel,
-    Organization,
-)
 
 T = TypeVar("T")
 
 
-class IRepository(abc.ABC, Generic[T]):
+class IRepository[T](abc.ABC):
     """Generic CRUD contract shared by all repositories."""
 
     #: Class-level marker so subclasses can reference their entity type.
@@ -34,11 +29,11 @@ class IRepository(abc.ABC, Generic[T]):
     # --- read operations -------------------------------------------------
 
     @abc.abstractmethod
-    def get(self, entity_id: str) -> Optional[T]:
+    def get(self, entity_id: str) -> T | None:
         """Return a single entity by its primary key, or ``None``."""
 
     @abc.abstractmethod
-    def list(self, *, limit: int = 100, offset: int = 0) -> List[T]:
+    def list(self, *, limit: int = 100, offset: int = 0) -> builtins.list[T]:
         """Return a paginated list of entities."""
 
     @abc.abstractmethod
@@ -51,7 +46,7 @@ class IRepository(abc.ABC, Generic[T]):
     def add(self, entity: T) -> T:
         """Add a new entity to the session (does not commit)."""
 
-    def add_many(self, entities: Iterable[T]) -> List[T]:
+    def add_many(self, entities: Iterable[T]) -> builtins.list[T]:
         """Bulk-add entities. Default implementation calls ``add`` for each."""
         return [self.add(e) for e in entities]
 

@@ -1,9 +1,5 @@
 from __future__ import annotations
 
-from typing import List
-
-import pytest
-
 from app.core.entities import Character
 from app.core.use_cases import (
     BuildKnowledgeGraphUseCase,
@@ -78,7 +74,7 @@ def test_extract_entities_use_case(sample_chapter):
 
 
 def test_deduplicate_characters_use_case():
-    candidates: List[Character] = [
+    candidates: list[Character] = [
         Character(name="Lin Lei", canonical_name="lin lei", appearance_frequency=10),
         Character(name="Lin Lei", canonical_name="lin lei", appearance_frequency=5),
         Character(name="Yi Yun", canonical_name="yi yun", appearance_frequency=3),
@@ -135,6 +131,7 @@ def test_ingest_entities_idempotent(sqlite_session_factory, sample_chapter):
 
 def test_build_knowledge_graph_use_case(sqlite_session_factory, sample_chapter):
     import uuid as uuid_module
+
     from app.core.unit_of_work import UnitOfWork
     from app.models.character import Character as CharacterORM
     from app.models.organization import Organization as OrganizationORM

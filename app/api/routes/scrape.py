@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -19,7 +19,7 @@ def trigger_scrape(
     payload: ScrapeRequest,
     uow: UnitOfWork = Depends(get_uow),
 ) -> ScrapeResponse:
-    kwargs: Dict[str, Any] = {}
+    kwargs: dict[str, Any] = {}
     if payload.index_url:
         kwargs["index_url"] = payload.index_url
     if payload.base_url:
@@ -38,11 +38,11 @@ def trigger_scrape(
     except KeyError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
-    chapters: List[Dict[str, Any]] = scraper.scrape_novel(resume=payload.resume)
-    items: List[ScrapeChapterItem] = []
-    errors: List[str] = []
-    novel_id: Optional[str] = None
-    novel_title: Optional[str] = None
+    chapters: list[dict[str, Any]] = scraper.scrape_novel(resume=payload.resume)
+    items: list[ScrapeChapterItem] = []
+    errors: list[str] = []
+    novel_id: str | None = None
+    novel_title: str | None = None
 
     for ch in chapters:
         item = ScrapeChapterItem(

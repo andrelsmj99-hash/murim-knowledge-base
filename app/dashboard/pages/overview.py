@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import time
 
+import pandas as pd
 import plotly.express as px
 import streamlit as st
 
@@ -32,12 +33,17 @@ def show() -> None:
     except Exception:
         total_orgs = 0
     try:
+        locs = get("api/v1/locations", params={"limit": 1})
+        total_locs = locs["meta"]["total"]
+    except Exception:
+        total_locs = 0
+    try:
         graph_info = get("api/v1/graph")
         graph_size = graph_info["stats"]
     except Exception:
         graph_size = {"nodes": 0, "edges": 0}
 
-    kpi = st.columns(4)
+    kpi = st.columns(5)
     with kpi[0]:
         st.metric("Novels", f"{total_novels}")
     with kpi[1]:
@@ -45,18 +51,19 @@ def show() -> None:
     with kpi[2]:
         st.metric("Organizações", f"{total_orgs}")
     with kpi[3]:
+        st.metric("Localizações", f"{total_locs}")
+    with kpi[4]:
         st.metric("Grafo (nós)", f"{graph_size.get('nodes', 0)}")
 
     st.divider()
 
-    # ── Recent content ──
+    # ── Layout: gráfico + inserção ──
     col_left, col_right = st.columns([2, 1])
 
     with col_right:
         st.subheader("➕ Inserção Rápida")
         with st.form("quick_add"):
-            kind = st.selectbox("Tipo", ["Novel", "Personagem", "Organização"])
-            submitted = False
+            kind = st.selectbox("Tipo", ["Novel", "Personagem", "Organização", "Localização"])
             if kind == "Novel":
                 title = st.text_input("Título", key="qa_title")
                 if st.form_submit_button("Adicionar") and title:
@@ -88,6 +95,18 @@ def show() -> None:
                         st.rerun()
                     except Exception:
                         st.warning("Erro ao adicionar organização")
+            elif kind == "Localização":
+                name = st.text_input("Nome", key="qa_loc_name")
+                loc_type = st.text_input("Tipo (ex: City)", key="qa_loc_type")
+                region = st.text_input("Região (opcional)", key="qa_loc_region")
+                if st.form_submit_button("Adicionar") and name:
+                    try:
+                        post("api/v1/locations", json={"name": name, "type": loc_type or "Generic", "region": region or None})
+                        st.success("Localização adicionada!")
+                        time.sleep(0.5)
+                        st.rerun()
+                    except Exception:
+                        st.warning("Erro ao adicionar localização")
 
     with col_left:
         st.subheader("📊 Distribuição por Tipo (Grafo)")
@@ -97,34 +116,55 @@ def show() -> None:
             st.info("Nenhum dado no grafo. Ingeste capítulos ou entidades para visualizar.")
 
         st.subheader("📰 Dados Recentes")
-        tabs = st.tabs(["Novels", "Personagens", "Organizações"])
+        tabs = st.tabs(["Novels", "Personagens", "Organizações", "Localizações"])
 
-        # Novels
         with tabs[0]:
             try:
-                data = get("api/v1/novels", params={"limit": 5})
-                _render_table(data["items"], ["title", "author", "total_chapters"],
-                              ["Título", "Autor", "Chap."])
+                data = get("api/v1/novels", params={"limit": 10})
+                items = data.get("items", [])
+                if items:
+                    _render_table(items, ["title", "author", "total_chapters"], ["Título", "Autor", "Chap."])
+                    _export(items, "novels", ["title", "author", "total_chapters", "language", "genre"])
+                else:
+                    st.info("Nenhuma novel cadastrada.")
             except Exception:
                 st.info("Nenhuma novel cadastrada.")
 
-        # Characters
         with tabs[1]:
             try:
-                data = get("api/v1/characters", params={"limit": 5})
-                _render_table(data["items"], ["name", "canonical_name", "appearance_frequency"],
-                              ["Nome", "Canonical", "Freq."])
+                data = get("api/v1/characters", params={"limit": 10})
+                items = data.get("items", [])
+                if items:
+                    _render_table(items, ["name", "canonical_name", "appearance_frequency"], ["Nome", "Canonical", "Freq."])
+                    _export(items, "characters", ["name", "canonical_name", "appearance_frequency", "gender"])
+                else:
+                    st.info("Nenhum personagem cadastrado.")
             except Exception:
                 st.info("Nenhum personagem cadastrado.")
 
-        # Organizations
         with tabs[2]:
             try:
-                data = get("api/v1/organizations", params={"limit": 5})
-                _render_table(data["items"], ["name", "type"],
-                              ["Nome", "Tipo"])
+                data = get("api/v1/organizations", params={"limit": 10})
+                items = data.get("items", [])
+                if items:
+                    _render_table(items, ["name", "type"], ["Nome", "Tipo"])
+                    _export(items, "organizations", ["name", "type"])
+                else:
+                    st.info("Nenhuma organização cadastrada.")
             except Exception:
                 st.info("Nenhuma organização cadastrada.")
+
+        with tabs[3]:
+            try:
+                data = get("api/v1/locations", params={"limit": 10})
+                items = data.get("items", [])
+                if items:
+                    _render_table(items, ["name", "type", "region"], ["Nome", "Tipo", "Região"])
+                    _export(items, "locations", ["name", "type", "region", "realm"])
+                else:
+                    st.info("Nenhuma localização cadastrada.")
+            except Exception:
+                st.info("Nenhuma localização cadastrada.")
 
 
 def _render_graph_summary() -> None:
@@ -144,7 +184,19 @@ def _render_table(items, keys, labels):
     if not items:
         st.info("Sem dados.")
         return
-
-    import pandas as pd
-    rows = [{label: item.get(k, "") for k, label in zip(keys, labels)} for item in items]
+    rows = [{label: item.get(k, "") for k, label in zip(keys, labels, strict=False)} for item in items]
     st.dataframe(pd.DataFrame(rows), use_container_width=True)
+
+
+def _export(items, name, columns):
+    if not items:
+        return
+    df = pd.DataFrame([{col: item.get(col, "") for col in columns} for item in items])
+    csv_data = df.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        label=f"⬇ {name}.csv",
+        data=csv_data,
+        file_name=f"{name}.csv",
+        mime="text/csv",
+        key=f"export_{name}",
+    )

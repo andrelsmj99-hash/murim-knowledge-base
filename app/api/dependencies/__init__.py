@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import logging
 import threading
-from typing import Optional
 
 from app.core.unit_of_work import UnitOfWork
 from app.models.base import SessionLocal
@@ -71,7 +70,7 @@ class _Encoder:
                 self._model = None
         return self._model
 
-    def encode(self, text: str) -> Optional[list[float]]:
+    def encode(self, text: str) -> list[float] | None:
         model = self.get()
         if model is None:
             return None

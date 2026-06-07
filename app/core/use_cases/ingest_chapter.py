@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Optional
 
 from app.core.entities import Chapter, Novel
 from app.core.unit_of_work import UnitOfWork

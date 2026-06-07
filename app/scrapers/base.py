@@ -13,8 +13,9 @@ import json
 import logging
 import random
 import time
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional
+from typing import Any
 
 import requests
 from tenacity import (
@@ -47,8 +48,8 @@ class BaseScraper(abc.ABC):
     def __init__(
         self,
         novel_slug: str,
-        session: Optional[requests.Session] = None,
-        progress_dir: Optional[Path] = None,
+        session: requests.Session | None = None,
+        progress_dir: Path | None = None,
     ) -> None:
         self.novel_slug = novel_slug
         self.session = session or self._build_session()
@@ -57,7 +58,7 @@ class BaseScraper(abc.ABC):
         self.progress_dir.mkdir(parents=True, exist_ok=True)
         self.progress_file = self.progress_dir / f"progress_{self.source_name}_{novel_slug}.json"
 
-        self.chapters: List[Dict[str, Any]] = []
+        self.chapters: list[dict[str, Any]] = []
 
     # ------------------------------------------------------------------ session
 
@@ -103,23 +104,23 @@ class BaseScraper(abc.ABC):
     # --------------------------------------------------------- abstract methods
 
     @abc.abstractmethod
-    def get_chapter_list(self) -> List[Dict[str, Any]]:
+    def get_chapter_list(self) -> list[dict[str, Any]]:
         """Return a list of chapter descriptors: ``[{chapter_number, title, url}, ...]``."""
 
     @abc.abstractmethod
-    def get_chapter_content(self, chapter_info: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def get_chapter_content(self, chapter_info: dict[str, Any]) -> dict[str, Any] | None:
         """Return a full chapter payload or ``None`` if it cannot be scraped.
 
         Expected keys: ``chapter_number, title, content, word_count, url``.
         """
 
     @abc.abstractmethod
-    def get_novel_metadata(self) -> Dict[str, Any]:
+    def get_novel_metadata(self) -> dict[str, Any]:
         """Return novel-level metadata: ``{title, author, genre, description, source_url}``."""
 
     # ---------------------------------------------------------------- iteration
 
-    def iter_chapters(self, resume: bool = True) -> Iterator[Dict[str, Any]]:
+    def iter_chapters(self, resume: bool = True) -> Iterator[dict[str, Any]]:
         """Yield chapter payloads one by one, persisting progress after each."""
         logger.info("Starting scrape of '%s' from %s", self.novel_slug, self.source_name)
 
@@ -149,7 +150,7 @@ class BaseScraper(abc.ABC):
             self._save_progress(data)
             yield data
 
-    def scrape_novel(self, resume: bool = True) -> List[Dict[str, Any]]:
+    def scrape_novel(self, resume: bool = True) -> list[dict[str, Any]]:
         """Convenience wrapper that materializes all chapters into memory."""
         self.chapters = list(self.iter_chapters(resume=resume))
         logger.info("Scrape complete — %d chapter(s) collected.", len(self.chapters))
@@ -157,7 +158,7 @@ class BaseScraper(abc.ABC):
 
     # ------------------------------------------------------------ progress I/O
 
-    def _load_progress(self) -> Dict[str, Any]:
+    def _load_progress(self) -> dict[str, Any]:
         if not self.progress_file.exists():
             return {"processed_chapters": [], "last_chapter": None}
         try:
@@ -169,7 +170,7 @@ class BaseScraper(abc.ABC):
             logger.error("Could not load progress file %s: %s", self.progress_file, exc)
             return {"processed_chapters": [], "last_chapter": None}
 
-    def _save_progress(self, chapter_data: Dict[str, Any]) -> None:
+    def _save_progress(self, chapter_data: dict[str, Any]) -> None:
         try:
             progress = self._load_progress()
             number = chapter_data.get("chapter_number")

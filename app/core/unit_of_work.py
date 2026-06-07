@@ -7,22 +7,21 @@ keeps session/transaction management centralized.
 from __future__ import annotations
 
 from types import TracebackType
-from typing import Optional, Type
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.models import SessionLocal as default_session_factory
-from app.repositories import (
-    CharacterRepository,
-    LocationRepository,
-    NovelRepository,
-    OrganizationRepository,
-)
 from app.core.interfaces import (
     ICharacterRepository,
     ILocationRepository,
     INovelRepository,
     IOrganizationRepository,
+)
+from app.models import SessionLocal
+from app.repositories import (
+    CharacterRepository,
+    LocationRepository,
+    NovelRepository,
+    OrganizationRepository,
 )
 
 
@@ -40,24 +39,24 @@ class UnitOfWork:
 
     session: Session
 
-    def __init__(self, session_factory: Optional[sessionmaker] = None) -> None:
-        self._session_factory = session_factory or default_session_factory
-        self._characters: Optional[ICharacterRepository] = None
-        self._novels: Optional[INovelRepository] = None
-        self._organizations: Optional[IOrganizationRepository] = None
-        self._locations: Optional[ILocationRepository] = None
+    def __init__(self, session_factory: sessionmaker | None = None) -> None:
+        self._session_factory = session_factory or SessionLocal
+        self._characters: ICharacterRepository | None = None
+        self._novels: INovelRepository | None = None
+        self._organizations: IOrganizationRepository | None = None
+        self._locations: ILocationRepository | None = None
 
     # --- context manager -------------------------------------------------
 
-    def __enter__(self) -> "UnitOfWork":
+    def __enter__(self) -> UnitOfWork:
         self.session = self._session_factory()
         return self
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc: Optional[BaseException],
-        tb: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: TracebackType | None,
     ) -> None:
         try:
             if exc_type is not None:

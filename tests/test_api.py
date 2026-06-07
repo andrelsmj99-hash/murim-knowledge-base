@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import pytest
-
 
 def test_health(api_client) -> None:
     client, _ = api_client
@@ -142,7 +140,7 @@ def test_location_crud_and_hierarchy(api_client) -> None:
         json={"name": "Imperial City", "type": "City", "parent_location_id": realm["id"]},
     ).json()
     sub = client.get(f"/api/v1/locations/{realm['id']}/sub-locations").json()
-    assert any(l["id"] == city["id"] for l in sub)
+    assert any(loc["id"] == city["id"] for loc in sub)
 
 
 def test_character_location_linking(api_client) -> None:

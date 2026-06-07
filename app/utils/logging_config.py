@@ -4,7 +4,6 @@ Centralized logging configuration.
 Writes to console and to a rotating file inside ``logs/`` (resolved relative
 to the project root via :class:`app.utils.config.settings`).
 """
-import logging
 import sys
 from logging.config import dictConfig
 

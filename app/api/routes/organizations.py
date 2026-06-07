@@ -3,8 +3,6 @@
 """
 from __future__ import annotations
 
-from typing import List
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies import get_uow
@@ -72,15 +70,15 @@ def create_organization(
     return _to_read(created)
 
 
-@router.get("/{org_id}/rivals", response_model=List[OrganizationRead])
-def list_rivals(org_id: str, uow: UnitOfWork = Depends(get_uow)) -> List[OrganizationRead]:
+@router.get("/{org_id}/rivals", response_model=list[OrganizationRead])
+def list_rivals(org_id: str, uow: UnitOfWork = Depends(get_uow)) -> list[OrganizationRead]:
     if uow.organizations.get(org_id) is None:
         raise HTTPException(status_code=404, detail="Organization not found")
     return [_to_read(o) for o in uow.organizations.get_rivals(org_id)]
 
 
-@router.get("/{org_id}/allies", response_model=List[OrganizationRead])
-def list_allies(org_id: str, uow: UnitOfWork = Depends(get_uow)) -> List[OrganizationRead]:
+@router.get("/{org_id}/allies", response_model=list[OrganizationRead])
+def list_allies(org_id: str, uow: UnitOfWork = Depends(get_uow)) -> list[OrganizationRead]:
     if uow.organizations.get(org_id) is None:
         raise HTTPException(status_code=404, detail="Organization not found")
     return [_to_read(o) for o in uow.organizations.get_allies(org_id)]
@@ -96,8 +94,9 @@ def add_relationship(
     payload: OrganizationRelationshipCreate,
     uow: UnitOfWork = Depends(get_uow),
 ) -> OrganizationRead:
-    from app.models.organization import OrganizationRelationship as OrgRelORM
     import uuid as _uuid
+
+    from app.models.organization import OrganizationRelationship as OrgRelORM
 
     if uow.organizations.get(org_id) is None:
         raise HTTPException(status_code=404, detail="Organization not found")

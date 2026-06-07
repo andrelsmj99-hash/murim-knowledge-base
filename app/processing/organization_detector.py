@@ -13,10 +13,10 @@ that aliases map to a single canonical name.
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Dict, Iterable, List
 
-from app.processing.patterns import ORG_LOOKUP, ORG_SUFFIXES, OrgPattern
+from app.processing.patterns import ORG_LOOKUP, ORG_SUFFIXES
 
 
 @dataclass
@@ -39,12 +39,12 @@ _SUFFIX_REGEX = re.compile(
 )
 
 
-def detect_organizations(text: str) -> List[OrgMatch]:
+def detect_organizations(text: str) -> list[OrgMatch]:
     """Find organization mentions in ``text``."""
     if not text:
         return []
 
-    out: Dict[str, OrgMatch] = {}
+    out: dict[str, OrgMatch] = {}
 
     # 1. Lookup known orgs (longest first to avoid partial matches)
     sorted_keys = sorted(ORG_LOOKUP.keys(), key=len, reverse=True)
@@ -87,9 +87,9 @@ def detect_organizations(text: str) -> List[OrgMatch]:
     return sorted(out.values(), key=lambda o: o.start)
 
 
-def merge_aliases(matches: Iterable[OrgMatch]) -> Dict[str, OrgMatch]:
+def merge_aliases(matches: Iterable[OrgMatch]) -> dict[str, OrgMatch]:
     """Collapse matches that share the same canonical name."""
-    out: Dict[str, OrgMatch] = {}
+    out: dict[str, OrgMatch] = {}
     for m in matches:
         out.setdefault(m.canonical.lower(), m)
     return out

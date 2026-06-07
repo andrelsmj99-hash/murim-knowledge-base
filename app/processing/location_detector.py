@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Dict, List
 
 from app.processing.patterns import LOCATION_LOOKUP
 
@@ -61,12 +60,12 @@ _GEO_TYPE_REGEX = re.compile(
 )
 
 
-def detect_locations(text: str) -> List[LocationMatch]:
+def detect_locations(text: str) -> list[LocationMatch]:
     """Find location mentions in ``text``."""
     if not text:
         return []
 
-    out: Dict[tuple[int, int], LocationMatch] = {}
+    out: dict[tuple[int, int], LocationMatch] = {}
 
     # 1. Curated lookups
     sorted_keys = sorted(LOCATION_LOOKUP.keys(), key=len, reverse=True)

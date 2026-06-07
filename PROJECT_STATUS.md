@@ -1,7 +1,7 @@
 # PROJECT_STATUS — Murim Knowledge Base
 
 > Documento vivo que reflete o estado real do workspace.
-> Última atualização: 2026-06-06 (sessão 14 — Docker, CI/CD, scrapers dedicados, pre-commit)
+> Última atualização: 2026-06-06 (sessão 15 — Dashboard UX refinements: CRUD, paginação, export, dark mode)
 
 ---
 
@@ -263,6 +263,13 @@ murim_knowledge_base/
 | 67 | `NovelUpdatesScraper` — metadata scraper para novelupdates.com | `app/scrapers/novelupdates.py` | ✅ Completo |
 | 68 | Scraper registry atualizado (generic, novelbin, novelupdates) | `app/scrapers/__init__.py` | ✅ Completo |
 | 69 | `ScrapeRequest` suporta `index_url`, `base_url`, `domain` opcionais | `app/api/schemas/__init__.py`, `app/api/routes/scrape.py` | ✅ Completo |
+| 70 | Dashboard: busca por substring funcional em Personagens | `app/dashboard/pages/characters.py` | ✅ Completo |
+| 71 | Dashboard: CRUD completo (editar/deletar) via API | `app/dashboard/pages/characters.py` | ✅ Completo |
+| 72 | Dashboard: paginação real (page/offset/per-page) | `app/dashboard/pages/characters.py` | ✅ Completo |
+| 73 | Dashboard: export CSV em todas as páginas | `app/dashboard/pages/*.py` | ✅ Completo |
+| 74 | Dashboard: inserção rápida de Localizações | `app/dashboard/pages/overview.py` | ✅ Completo |
+| 75 | Dashboard: dark mode (auto-detect Streamlit theme) | `app/dashboard/main.py`, `app/dashboard/pages/graph.py` | ✅ Completo |
+| 76 | Dashboard: filtro por tipo no Grafo | `app/dashboard/pages/graph.py` | ✅ Completo |
 
 ---
 
@@ -270,7 +277,7 @@ murim_knowledge_base/
 
 | # | Funcionalidade | Local | Progresso | Pendência |
 |---|---|---|---|---|
-| 1 | Dashboard Streamlit | `app/dashboard/` | 90% | Falta refinar visualizações, adicionar paginação real, melhorar responsividade, CRUD completo, dark mode, export |
+| — | Nenhuma no momento | — | — | Todos os itens de alta/média prioridade concluídos |
 
 ---
 
@@ -294,11 +301,12 @@ murim_knowledge_base/
 
 ### Dashboard (UX)
 
-- [ ] Refinar página de Personagens com busca por substring funcional
-- [ ] Adicionar CRUD completo via dashboard (editar/deletar)
-- [ ] Paginação real nas listagens
-- [ ] Dark mode
-- [ ] Exportar dados (CSV, JSON)
+- [x] Refinar página de Personagens com busca por substring funcional
+- [x] Adicionar CRUD completo via dashboard (editar/deletar)
+- [x] Paginação real nas listagens
+- [x] Dark mode (auto-detect do tema Streamlit)
+- [x] Exportar dados (CSV, JSON)
+- [ ] Testes E2E para o dashboard (Playwright)
 
 ### DevOps / Documentação
 

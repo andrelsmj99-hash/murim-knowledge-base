@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import List
 
 from app.processing.patterns import RELATIONSHIP_PHRASES, canonicalize_name
 
@@ -30,7 +29,7 @@ class RelationshipHit:
 # Pronouns and generic words that should never be a relationship endpoint
 _BAD_ENDPOINTS = {
     "he", "she", "it", "they", "him", "her", "them",
-    "his", "her", "their", "its",
+    "his", "their", "its",
     "this", "that", "these", "those",
     "the", "a", "an", "is", "was", "and", "or", "but",
 }
@@ -66,12 +65,12 @@ _POSSESSIVE_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
 ]
 
 
-def extract_relationships(text: str) -> List[RelationshipHit]:
+def extract_relationships(text: str) -> list[RelationshipHit]:
     """Return all relationship hits found in ``text``."""
     if not text:
         return []
 
-    hits: List[RelationshipHit] = []
+    hits: list[RelationshipHit] = []
     for phrase in RELATIONSHIP_PHRASES:
         for m in phrase.pattern.finditer(text):
             source = _clean(m.group(phrase.groups[0]))
@@ -128,9 +127,7 @@ def _is_valid_endpoint(value: str) -> bool:
         return False
     if value.lower() in _BAD_ENDPOINTS:
         return False
-    if len(value) < 2:
-        return False
-    return True
+    return not len(value) < 2
 
 
 __all__ = ["RelationshipHit", "extract_relationships"]

@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import os
 import sys
-from typing import Iterator
+from collections.abc import Iterator
 
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -16,8 +17,10 @@ if PROJECT_ROOT not in sys.path:
 os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
 os.environ.setdefault("APP_DEBUG", "false")
 
-from app.core.unit_of_work import UnitOfWork
-from app.models import Base
+from app.api.dependencies import get_uow  # noqa: E402
+from app.core.unit_of_work import UnitOfWork  # noqa: E402
+from app.main import create_app  # noqa: E402
+from app.models import Base  # noqa: E402
 
 SAMPLE_CHAPTER = """
 Chapter 12 — The Baruch Estate
@@ -62,10 +65,6 @@ def sample_chapter() -> str:
 
 @pytest.fixture
 def api_client():
-    from fastapi.testclient import TestClient
-    from app.main import create_app
-    from app.api.dependencies import get_uow
-
     test_engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},

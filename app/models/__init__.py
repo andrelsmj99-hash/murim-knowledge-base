@@ -1,18 +1,18 @@
 """
 Models package — exposes ORM entities and base machinery.
 """
-from .base import Base, engine, SessionLocal, get_db
+from .base import Base, SessionLocal, engine, get_db
 from .character import (
-    Character,
     Alias,
-    Title,
+    Character,
     Relationship,
+    Title,
     character_locations,
     character_organizations,
 )
 from .location import Location
+from .novel import Chapter, Novel
 from .organization import Organization, OrganizationRelationship
-from .novel import Novel, Chapter
 
 __all__ = [
     "Base",

@@ -4,7 +4,6 @@ Character repository contract.
 from __future__ import annotations
 
 import abc
-from typing import Dict, List, Optional
 
 from app.core.entities import Character
 from app.core.interfaces.repository import IRepository
@@ -14,15 +13,15 @@ class ICharacterRepository(IRepository[Character], abc.ABC):
     """Persistence operations for :class:`Character` aggregates."""
 
     @abc.abstractmethod
-    def get_by_canonical_name(self, canonical_name: str) -> Optional[Character]:
+    def get_by_canonical_name(self, canonical_name: str) -> Character | None:
         """Look up a character by its deduplication key."""
 
     @abc.abstractmethod
-    def get_by_alias(self, alias_value: str) -> Optional[Character]:
+    def get_by_alias(self, alias_value: str) -> Character | None:
         """Resolve a character from any of its alias strings."""
 
     @abc.abstractmethod
-    def search_by_name(self, query: str, *, limit: int = 20) -> List[Character]:
+    def search_by_name(self, query: str, *, limit: int = 20) -> list[Character]:
         """Substring / case-insensitive search by name or canonical name."""
 
     @abc.abstractmethod
@@ -30,7 +29,7 @@ class ICharacterRepository(IRepository[Character], abc.ABC):
         """Return an existing character matched by ``canonical_name`` or add it."""
 
     @abc.abstractmethod
-    def update(self, character_id: str, *, name: Optional[str] = None, gender: Optional[str] = None, description: Optional[str] = None, first_appearance: Optional[str] = None) -> Optional[Character]:
+    def update(self, character_id: str, *, name: str | None = None, gender: str | None = None, description: str | None = None, first_appearance: str | None = None) -> Character | None:
         """Partial update of a character's scalar fields. Returns updated entity or None if not found."""
 
     @abc.abstractmethod
@@ -54,7 +53,7 @@ class ICharacterRepository(IRepository[Character], abc.ABC):
         """Remove a character-location association. Returns True if unlinked, False if not found."""
 
     @abc.abstractmethod
-    def link_organization(self, character_id: str, organization_id: str, role: Optional[str] = None) -> bool:
+    def link_organization(self, character_id: str, organization_id: str, role: str | None = None) -> bool:
         """Associate a character with an organization. Returns True if linked, False if not found."""
 
     @abc.abstractmethod
@@ -68,7 +67,7 @@ class ICharacterRepository(IRepository[Character], abc.ABC):
         """Add a relationship between two characters. Returns True if created, False if character(s) not found or duplicate."""
 
     @abc.abstractmethod
-    def get_relationships(self, character_id: str) -> Dict[str, List[str]]:
+    def get_relationships(self, character_id: str) -> dict[str, list[str]]:
         """Return all relationships for a character, grouped by relationship_type."""
 
     @abc.abstractmethod

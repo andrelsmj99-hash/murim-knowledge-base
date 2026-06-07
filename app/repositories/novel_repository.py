@@ -3,8 +3,8 @@ SQLAlchemy implementation of :class:`INovelRepository`.
 """
 from __future__ import annotations
 
+import builtins
 import uuid as uuid_module
-from typing import List, Optional
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -77,18 +77,18 @@ class NovelRepository(INovelRepository):
 
     # --- read -----------------------------------------------------------
 
-    def get(self, entity_id: str) -> Optional[Novel]:
+    def get(self, entity_id: str) -> Novel | None:
         orm = self.session.get(NovelORM, _to_uuid(entity_id))
         return _novel_to_entity(orm) if orm else None
 
-    def list(self, *, limit: int = 100, offset: int = 0) -> List[Novel]:
+    def list(self, *, limit: int = 100, offset: int = 0) -> builtins.list[Novel]:
         stmt = select(NovelORM).order_by(NovelORM.title).limit(limit).offset(offset)
         return [_novel_to_entity(n) for n in self.session.execute(stmt).scalars().all()]
 
     def count(self) -> int:
         return int(self.session.scalar(select(func.count(NovelORM.id))) or 0)
 
-    def get_by_title_author(self, title: str, author: Optional[str]) -> Optional[Novel]:
+    def get_by_title_author(self, title: str, author: str | None) -> Novel | None:
         stmt = select(NovelORM).where(NovelORM.title == title)
         if author:
             stmt = stmt.where(NovelORM.author == author)
@@ -97,7 +97,7 @@ class NovelRepository(INovelRepository):
         orm = self.session.execute(stmt).scalar_one_or_none()
         return _novel_to_entity(orm) if orm else None
 
-    def get_chapters(self, novel_id: str, *, limit: int = 1000, offset: int = 0) -> List[Chapter]:
+    def get_chapters(self, novel_id: str, *, limit: int = 1000, offset: int = 0) -> builtins.list[Chapter]:
         stmt = (
             select(ChapterORM)
             .where(ChapterORM.novel_id == _to_uuid(novel_id))

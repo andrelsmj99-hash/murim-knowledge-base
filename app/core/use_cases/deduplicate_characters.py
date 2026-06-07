@@ -15,10 +15,10 @@ Strategy:
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, List, Optional
 
-from app.core.entities import Alias, Character
+from app.core.entities import Character
 from app.processing import canonicalize_name
 
 logger = logging.getLogger(__name__)
@@ -28,9 +28,9 @@ logger = logging.getLogger(__name__)
 class DedupResult:
     """Result of deduplicating a batch of candidates."""
 
-    canonical_characters: List[Character] = field(default_factory=list)
+    canonical_characters: list[Character] = field(default_factory=list)
     # Map of input canonical -> kept canonical name (for traceability)
-    merge_map: Dict[str, str] = field(default_factory=dict)
+    merge_map: dict[str, str] = field(default_factory=dict)
 
 
 class DeduplicateCharactersUseCase:
@@ -46,8 +46,8 @@ class DeduplicateCharactersUseCase:
 
     def execute(self, candidates: Iterable[Character]) -> DedupResult:
         candidates = list(candidates)
-        clusters: List[List[Character]] = []
-        representatives: List[str] = []  # canonical_name of cluster head
+        clusters: list[list[Character]] = []
+        representatives: list[str] = []  # canonical_name of cluster head
 
         for cand in candidates:
             key = (cand.canonical_name or canonicalize_name(cand.name)).strip()
@@ -62,8 +62,8 @@ class DeduplicateCharactersUseCase:
             else:
                 clusters[cluster_idx].append(cand)
 
-        canonicals: List[Character] = []
-        merge_map: Dict[str, str] = {}
+        canonicals: list[Character] = []
+        merge_map: dict[str, str] = {}
         for cluster in clusters:
             merged = self._merge_cluster(cluster)
             canonicals.append(merged)
@@ -79,7 +79,7 @@ class DeduplicateCharactersUseCase:
 
     # ----------------------------------------------------------- internals
 
-    def _find_cluster(self, key: str, representatives: List[str]) -> Optional[int]:
+    def _find_cluster(self, key: str, representatives: list[str]) -> int | None:
         from rapidfuzz import fuzz
 
         for idx, rep in enumerate(representatives):
@@ -89,7 +89,7 @@ class DeduplicateCharactersUseCase:
                 return idx
         return None
 
-    def _merge_cluster(self, cluster: List[Character]) -> Character:
+    def _merge_cluster(self, cluster: list[Character]) -> Character:
         """Collapse a cluster of candidates into a single Character."""
         # Pick the most-mentioned candidate as the primary
         primary = max(cluster, key=lambda c: c.appearance_frequency or 0)
@@ -121,7 +121,7 @@ class DeduplicateCharactersUseCase:
         return merged
 
 
-def _first_truthy(values: Iterable[Optional[str]]) -> Optional[str]:
+def _first_truthy(values: Iterable[str | None]) -> str | None:
     for v in values:
         if v:
             return v

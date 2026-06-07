@@ -3,8 +3,8 @@ SQLAlchemy implementation of :class:`IOrganizationRepository`.
 """
 from __future__ import annotations
 
+import builtins
 import uuid as uuid_module
-from typing import List, Optional
 
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
@@ -63,7 +63,7 @@ class OrganizationRepository(IOrganizationRepository):
 
     # --- read -----------------------------------------------------------
 
-    def get(self, entity_id: str) -> Optional[Organization]:
+    def get(self, entity_id: str) -> Organization | None:
         orm = self.session.get(OrganizationORM, _to_uuid(entity_id))
         if orm is None:
             return None
@@ -71,7 +71,7 @@ class OrganizationRepository(IOrganizationRepository):
         ent.relationships = _load_relationships(self.session, ent.id)
         return ent
 
-    def list(self, *, limit: int = 100, offset: int = 0) -> List[Organization]:
+    def list(self, *, limit: int = 100, offset: int = 0) -> builtins.list[Organization]:
         stmt = select(OrganizationORM).order_by(OrganizationORM.name).limit(limit).offset(offset)
         out = []
         for orm in self.session.execute(stmt).scalars().all():
@@ -83,7 +83,7 @@ class OrganizationRepository(IOrganizationRepository):
     def count(self) -> int:
         return int(self.session.scalar(select(func.count(OrganizationORM.id))) or 0)
 
-    def get_by_name_type(self, name: str, type: str) -> Optional[Organization]:
+    def get_by_name_type(self, name: str, type: str) -> Organization | None:
         stmt = select(OrganizationORM).where(
             OrganizationORM.name == name, OrganizationORM.type == type
         )
@@ -94,7 +94,7 @@ class OrganizationRepository(IOrganizationRepository):
         ent.relationships = _load_relationships(self.session, ent.id)
         return ent
 
-    def get_rivals(self, org_id: str) -> List[Organization]:
+    def get_rivals(self, org_id: str) -> builtins.list[Organization]:
         stmt = (
             select(OrganizationORM)
             .join(
@@ -108,7 +108,7 @@ class OrganizationRepository(IOrganizationRepository):
         )
         return [_to_entity(o) for o in self.session.execute(stmt).scalars().all()]
 
-    def get_allies(self, org_id: str) -> List[Organization]:
+    def get_allies(self, org_id: str) -> builtins.list[Organization]:
         stmt = (
             select(OrganizationORM)
             .join(
@@ -122,7 +122,7 @@ class OrganizationRepository(IOrganizationRepository):
         )
         return [_to_entity(o) for o in self.session.execute(stmt).scalars().all()]
 
-    def search_by_name(self, query: str, *, limit: int = 20) -> List[Organization]:
+    def search_by_name(self, query: str, *, limit: int = 20) -> builtins.list[Organization]:
         if not query:
             return []
         pattern = f"%{query.lower()}%"
@@ -134,7 +134,7 @@ class OrganizationRepository(IOrganizationRepository):
         )
         return [_to_entity(o) for o in self.session.execute(stmt).scalars().all()]
 
-    def get_members(self, org_id: str) -> List[Character]:
+    def get_members(self, org_id: str) -> builtins.list[Character]:
         from app.models.character import Character as CharacterORM
         from app.repositories.character_repository import _to_entity as _char_to_entity
 

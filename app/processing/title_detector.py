@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Iterable, List, Optional, Tuple
 
 from app.processing.patterns import TITLE_LOOKUP
 
@@ -32,9 +31,9 @@ _TITLE_REGEX = re.compile(
 )
 
 
-def detect_titles(text: str) -> List[TitleMatch]:
+def detect_titles(text: str) -> list[TitleMatch]:
     """Return all ``<Title> <Name>`` matches found in ``text``."""
-    out: List[TitleMatch] = []
+    out: list[TitleMatch] = []
     for m in _TITLE_REGEX.finditer(text or ""):
         title_key = m.group(1).lower()
         pattern = TITLE_LOOKUP.get(title_key)
@@ -50,7 +49,7 @@ def detect_titles(text: str) -> List[TitleMatch]:
     return out
 
 
-def split_title_from_name(name_with_title: str) -> Tuple[Optional[str], str]:
+def split_title_from_name(name_with_title: str) -> tuple[str | None, str]:
     """Best-effort split of a string like ``"Elder Lin Lei"`` into ``("Elder", "Lin Lei")``."""
     if not name_with_title:
         return None, name_with_title

@@ -3,8 +3,6 @@
 """
 from __future__ import annotations
 
-from typing import List
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies import get_uow
@@ -42,7 +40,7 @@ def list_locations(
     uow: UnitOfWork = Depends(get_uow),
 ) -> Page:
     repo = uow.locations
-    items = [_to_read(l) for l in repo.list(limit=limit, offset=offset)]
+    items = [_to_read(loc) for loc in repo.list(limit=limit, offset=offset)]
     return Page(items=items, meta=PageMeta(total=repo.count(), limit=limit, offset=offset))
 
 
@@ -72,8 +70,8 @@ def create_location(payload: LocationCreate, uow: UnitOfWork = Depends(get_uow))
     return _to_read(created)
 
 
-@router.get("/{location_id}/sub-locations", response_model=List[LocationRead])
-def list_sub_locations(location_id: str, uow: UnitOfWork = Depends(get_uow)) -> List[LocationRead]:
+@router.get("/{location_id}/sub-locations", response_model=list[LocationRead])
+def list_sub_locations(location_id: str, uow: UnitOfWork = Depends(get_uow)) -> list[LocationRead]:
     if uow.locations.get(location_id) is None:
         raise HTTPException(status_code=404, detail="Location not found")
-    return [_to_read(l) for l in uow.locations.get_sub_locations(location_id)]
+    return [_to_read(loc) for loc in uow.locations.get_sub_locations(location_id)]
