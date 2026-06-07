@@ -277,8 +277,9 @@ class HealthResponse(BaseModel):
 class ScrapeRequest(BaseModel):
     source: str = "generic"
     novel_slug: str = Field(..., min_length=1, max_length=255)
-    index_url: str = Field(..., min_length=1)
-    base_url: str = Field(..., min_length=1)
+    index_url: Optional[str] = None
+    base_url: Optional[str] = None
+    domain: Optional[str] = None
     reverse_chapter_list: bool = True
     resume: bool = True
 

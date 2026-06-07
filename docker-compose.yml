@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: murim-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-murim_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-murim_password}
+      POSTGRES_DB: ${POSTGRES_DB:-murim_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-murim_user} -d ${POSTGRES_DB:-murim_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    container_name: murim-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      APP_NAME: Murim Knowledge Base
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-murim_user}:${POSTGRES_PASSWORD:-murim_password}@postgres:5432/${POSTGRES_DB:-murim_db}
+      SPACY_MODEL: en_core_web_lg
+      TRANSFORMERS_MODEL: sentence-transformers/all-MiniLM-L6-v2
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+
+  dashboard:
+    build: .
+    container_name: murim-dashboard
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_started
+    environment:
+      APP_NAME: Murim Knowledge Base
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-murim_user}:${POSTGRES_PASSWORD:-murim_password}@postgres:5432/${POSTGRES_DB:-murim_db}
+      API_URL: http://api:8000
+    ports:
+      - "8501:8501"
+    command: streamlit run app/dashboard/main.py --server.address 0.0.0.0 --server.port 8501
+
+volumes:
+  postgres_data:

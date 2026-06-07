@@ -19,14 +19,21 @@ def trigger_scrape(
     payload: ScrapeRequest,
     uow: UnitOfWork = Depends(get_uow),
 ) -> ScrapeResponse:
+    kwargs: Dict[str, Any] = {}
+    if payload.index_url:
+        kwargs["index_url"] = payload.index_url
+    if payload.base_url:
+        kwargs["base_url"] = payload.base_url
+    if payload.domain:
+        kwargs["domain"] = payload.domain
+    kwargs.setdefault("reverse_chapter_list", payload.reverse_chapter_list)
+
     try:
         scraper = make_scraper(
             source=payload.source,
             novel_slug=payload.novel_slug,
             uow=uow,
-            index_url=payload.index_url,
-            base_url=payload.base_url,
-            reverse_chapter_list=payload.reverse_chapter_list,
+            **kwargs,
         )
     except KeyError as exc:
         raise HTTPException(status_code=400, detail=str(exc))

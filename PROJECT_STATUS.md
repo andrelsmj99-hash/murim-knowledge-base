@@ -1,7 +1,7 @@
 # PROJECT_STATUS — Murim Knowledge Base
 
 > Documento vivo que reflete o estado real do workspace.
-> Última atualização: 2026-06-06 (sessão 13 — Documentação + versionamento: README.md, docs/, auditoria de .docx)
+> Última atualização: 2026-06-06 (sessão 14 — Docker, CI/CD, scrapers dedicados, pre-commit)
 
 ---
 
@@ -253,6 +253,16 @@ murim_knowledge_base/
 | 57 | 34 testes passando via `pytest tests/` | `tests/` + `tests/conftest.py` | ✅ Completo |
 | 58 | `POST /scrape` — trigger scraper via API REST | `app/api/routes/scrape.py` | ✅ Completo |
 | 59 | `ScrapeRequest` / `ScrapeResponse` schemas | `app/api/schemas/__init__.py` | ✅ Completo |
+| 60 | `Dockerfile` multi-stage build (Python 3.12-slim) | `Dockerfile` | ✅ Completo |
+| 61 | `docker-compose.yml` (Postgres + API + Dashboard) | `docker-compose.yml` | ✅ Completo |
+| 62 | `.dockerignore` + `.pre-commit-config.yaml` | Raiz | ✅ Completo |
+| 63 | `Makefile` (run-api, run-dashboard, test, lint, migrate, docker-*) | `Makefile` | ✅ Completo |
+| 64 | `pyproject.toml` (ruff, mypy configs) | `pyproject.toml` | ✅ Completo |
+| 65 | CI (GitHub Actions) — lint, typecheck, test com Postgres service | `.github/workflows/ci.yml` | ✅ Completo |
+| 66 | `NovelBinScraper` — scraper dedicado para novelbin.com | `app/scrapers/novelbin.py` | ✅ Completo |
+| 67 | `NovelUpdatesScraper` — metadata scraper para novelupdates.com | `app/scrapers/novelupdates.py` | ✅ Completo |
+| 68 | Scraper registry atualizado (generic, novelbin, novelupdates) | `app/scrapers/__init__.py` | ✅ Completo |
+| 69 | `ScrapeRequest` suporta `index_url`, `base_url`, `domain` opcionais | `app/api/schemas/__init__.py`, `app/api/routes/scrape.py` | ✅ Completo |
 
 ---
 
@@ -277,7 +287,8 @@ murim_knowledge_base/
 
 ### Scrapers
 
-- [ ] `NovelUpdatesScraper` ou similar — fonte real para validar com dados verdadeiros
+- [x] `NovelUpdatesScraper` — metadata scraper para novelupdates.com
+- [x] `NovelBinScraper` — scraper dedicado para novelbin.com
 - [ ] `WuxiaWorldScraper`
 - [ ] Suporte a sites em português (opção `language="pt"`)
 
@@ -292,10 +303,10 @@ murim_knowledge_base/
 ### DevOps / Documentação
 
 - [x] `README.md` (instalação, uso, arquitetura)
-- [ ] `Dockerfile` + `docker-compose.yml` (Postgres + API + dashboard)
-- [ ] `Makefile` ou `pyproject.toml` com scripts (`run-api`, `run-dashboard`, `scrape`, `migrate`, `test`)
-- [ ] Pre-commit (black, ruff, mypy)
-- [ ] CI (GitHub Actions)
+- [x] `Dockerfile` + `docker-compose.yml` (Postgres + API + dashboard)
+- [x] `Makefile` ou `pyproject.toml` com scripts (`run-api`, `run-dashboard`, `scrape`, `migrate`, `test`)
+- [x] Pre-commit (black, ruff, mypy)
+- [x] CI (GitHub Actions)
 - [x] `conftest.py` + fixtures pytest compartilhadas
 
 ---
@@ -610,6 +621,50 @@ murim_knowledge_base/
 - `PROJECT_STATUS.md` — auditoria de docs registrada, README marcado como concluído no backlog
 
 **Resultado:** Documentação base versionada. Estrutura pronta para receber materiais de worldbuilding. **Commit:** `9dea16b`.
+
+### Sessão 14 (Docker, CI/CD, scrapers dedicados)
+
+**Adicionado:**
+- `Dockerfile` — multi-stage build (builder + runtime), Python 3.12-slim, pip install + spaCy model download, HEALTHCHECK, alembic upgrade head automático na inicialização
+- `.dockerignore` — exclui `__pycache__`, `.venv`, `.git`, `data/*`, `logs/*`, `.md` (exceto requirements)
+- `docker-compose.yml` — 3 serviços: `postgres` (PostgreSQL 16 Alpine com healthcheck), `api` (FastAPI na porta 8000, depende do postgres), `dashboard` (Streamlit na porta 8501)
+- `Makefile` — 14 targets: `install`, `run-api`, `run-dashboard`, `migrate`, `downgrade`, `test`, `lint` (ruff), `format` (ruff), `typecheck` (mypy), `docker-build`, `docker-up`, `docker-down`, `clean`, `all`
+- `pyproject.toml` — configuração centralizada de ferramentas:
+  - `[tool.ruff]` — target py312, line-length 100, lint (E, F, I, N, W, UP, B, C4, SIM), format (double quotes, space indent)
+  - `[tool.mypy]` — py312, ignore_missing_imports, check_untyped_defs, warn_return_any, exclui alembic/
+- `.pre-commit-config.yaml` — 4 hooks: trailing-whitespace/end-of-file-fixer/check-yaml/check-toml/check-json/check-added-large-files/check-merge-conflict/debug-statements/detect-private-key + ruff (check + format) + mypy
+- `.github/workflows/ci.yml` — 3 jobs:
+  - `lint` — ruff check + ruff format --check via astral-sh/ruff-action
+  - `typecheck` — pip install mypy + dependências, roda `mypy app/`
+  - `test` — Postgres service container, pip cache, spacy model download, `pytest tests/ -v --tb=short`
+- `NovelBinScraper` (`app/scrapers/novelbin.py`) — scraper dedicado para novelbin.com/novelbin.me:
+  - Auto-constrói `index_url` via `https://{domain}/novel-book/{slug}`
+  - Selectors pré-configurados para título, autor, descrição, lista de capítulos, conteúdo
+  - Compatível com DOM mutation de ambas as variantes de domínio
+- `NovelUpdatesScraper` (`app/scrapers/novelupdates.py`) — metadata scraper para novelupdates.com:
+  - Extrai título, autor, gêneros, descrição, status, cover_url, rank, rating
+  - NÃO suporta `get_chapter_list` / `get_chapter_content` (NU não hospeda capítulos)
+  - Ideal para discovery; combinar com NovelBinScraper para conteúdo
+- `ScrapeRequest` schema atualizado — `index_url`, `base_url` e `domain` agora são opcionais (scrapers dedicados geram URLs automaticamente)
+- Scraper registry atualizado — agora registra `generic`, `novelbin`, `novelupdates`
+
+**Arquivos criados:**
+- `Dockerfile`
+- `.dockerignore`
+- `docker-compose.yml`
+- `Makefile`
+- `pyproject.toml`
+- `.pre-commit-config.yaml`
+- `.github/workflows/ci.yml`
+- `app/scrapers/novelbin.py`
+- `app/scrapers/novelupdates.py`
+
+**Arquivos modificados:**
+- `app/scrapers/__init__.py` — registra novos scrapers
+- `app/api/schemas/__init__.py` — `ScrapeRequest` com campos opcionais
+- `app/api/routes/scrape.py` — kwargs dinâmicos para scrapers dedicados
+
+**Resultado:** Projeto completo com Docker, CI/CD, pre-commit, Makefile, e 3 scrapers (generic, novelbin, novelupdates). **34 testes passando via `pytest tests/`.**
 
 ---
 
