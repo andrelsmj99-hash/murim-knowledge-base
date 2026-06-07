@@ -11,6 +11,7 @@ from types import TracebackType
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.interfaces import (
+    IChapterRepository,
     ICharacterRepository,
     ILocationRepository,
     INovelRepository,
@@ -18,6 +19,7 @@ from app.core.interfaces import (
 )
 from app.models import SessionLocal
 from app.repositories import (
+    ChapterRepository,
     CharacterRepository,
     LocationRepository,
     NovelRepository,
@@ -42,6 +44,7 @@ class UnitOfWork:
     def __init__(self, session_factory: sessionmaker | None = None) -> None:
         self._session_factory = session_factory or SessionLocal
         self._characters: ICharacterRepository | None = None
+        self._chapters: IChapterRepository | None = None
         self._novels: INovelRepository | None = None
         self._organizations: IOrganizationRepository | None = None
         self._locations: ILocationRepository | None = None
@@ -71,6 +74,12 @@ class UnitOfWork:
         if self._characters is None:
             self._characters = CharacterRepository(self.session)
         return self._characters
+
+    @property
+    def chapters(self) -> IChapterRepository:
+        if self._chapters is None:
+            self._chapters = ChapterRepository(self.session)
+        return self._chapters
 
     @property
     def novels(self) -> INovelRepository:

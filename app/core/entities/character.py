@@ -27,6 +27,7 @@ class Character:
     locations: list[str] = field(default_factory=list)  # IDs of locations
     relationships: dict[str, list[str]] = field(default_factory=dict)  # relationship_type -> [character_ids]
     embedding: str | None = None  # JSON-serialized float vector for semantic search
+    archetype: object = None  # Character archetype classification object
 
     def add_alias(self, alias_type: str, value: str):
         """Add an alias to the character."""

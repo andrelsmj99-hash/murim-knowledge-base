@@ -28,6 +28,7 @@ def _to_uuid(value: str) -> uuid_module.UUID:
 
 def _to_entity(orm: CharacterORM) -> Character:
     """ORM → domain entity."""
+    from app.core.entities import CharacterArchetype
     aliases = [
         EntityAlias(alias_type=a.alias_type, value=a.alias_value, canonical_value=a.alias_value.lower())
         for a in orm.aliases
@@ -48,6 +49,17 @@ def _to_entity(orm: CharacterORM) -> Character:
         except Exception:
             pass
 
+    # Handle archetype field if it exists
+    archetype = None
+    if hasattr(orm, 'archetype') and orm.archetype:
+        try:
+            import json
+            archetype_data = json.loads(orm.archetype) if isinstance(orm.archetype, str) else orm.archetype
+            if archetype_data:
+                archetype = CharacterArchetype(**archetype_data)
+        except Exception:
+            pass
+
     return Character(
         id=str(orm.id),
         name=orm.name,
@@ -61,6 +73,7 @@ def _to_entity(orm: CharacterORM) -> Character:
         locations=loc_ids,
         relationships=relationships,
         embedding=embedding,
+        archetype=archetype,
     )
 
 
@@ -68,6 +81,12 @@ def _to_orm(entity: Character) -> CharacterORM:
     """Domain entity → ORM (attached to the session, not yet persisted)."""
     import json
     embedding_json = json.dumps(entity.embedding) if entity.embedding else None
+    archetype_json = None
+    if entity.archetype:
+        try:
+            archetype_json = json.dumps(entity.archetype.__dict__)
+        except Exception:
+            pass
 
     orm = CharacterORM(
         id=_to_uuid(entity.id),
@@ -78,6 +97,7 @@ def _to_orm(entity: Character) -> CharacterORM:
         appearance_frequency=entity.appearance_frequency,
         embedding=embedding_json,
         embedding_vec=embedding_json,  # Also populate pgvector column
+        archetype=archetype_json,  # Handle archetype field
     )
     for alias in entity.aliases:
         orm.aliases.append(
@@ -216,6 +236,28 @@ class CharacterRepository(ICharacterRepository):
             orm.embedding = embedding
             orm.embedding_vec = embedding
             self.session.flush()
+
+    def set_archetype(self, character_id: str, archetype) -> bool:
+        """
+        Set the archetype for a character.
+
+        Args:
+            character_id: The ID of the character
+            archetype: The CharacterArchetype object to set
+
+        Returns:
+            True if successful, False if character not found
+        """
+        orm = self.session.get(CharacterORM, _to_uuid(character_id))
+        if orm is None:
+            return False
+        try:
+            archetype_json = json.dumps(archetype.__dict__) if archetype else None
+            orm.archetype = archetype_json
+            self.session.flush()
+            return True
+        except Exception:
+            return False
 
     def link_location(self, character_id: str, location_id: str) -> bool:
         from app.models.location import Location as LocationORM

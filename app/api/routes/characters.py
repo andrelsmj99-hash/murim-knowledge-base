@@ -9,12 +9,14 @@ from app.api.dependencies import get_encoder, get_uow
 from app.api.schemas import (
     AliasCreate,
     AliasRead,
+    ArchetypeResponse,
     CharacterCreate,
     CharacterLocationLink,
     CharacterOrganizationLink,
     CharacterRead,
     CharacterRelationshipCreate,
     CharacterUpdate,
+    ClassifyAllResponse,
     Page,
     PageMeta,
     TitleCreate,
@@ -22,7 +24,8 @@ from app.api.schemas import (
 from app.core.entities import Character
 from app.core.interfaces import ICharacterRepository
 from app.core.unit_of_work import UnitOfWork
-from app.core.use_cases import GenerateEmbeddingsUseCase
+from app.core.use_cases import ClassifyAllCharacters, ClassifyCharacterArchetype, GenerateEmbeddingsUseCase
+from app.nlp.archetype_classifier import ArchetypeClassifier
 
 router = APIRouter()
 
@@ -251,3 +254,77 @@ def unlink_character_organization(
     if not uow.characters.unlink_organization(character_id, organization_id):
         raise HTTPException(status_code=404, detail="Character-organization link not found")
     uow.commit()
+
+
+# ---------------------------------------------------------------------------
+# Archetype classification
+# ---------------------------------------------------------------------------
+
+
+@router.post("/{character_id}/classify", response_model=ArchetypeResponse)
+def classify_character_archetype(
+    character_id: str,
+    uow: UnitOfWork = Depends(get_uow),
+) -> ArchetypeResponse:
+    """Classify a character's archetype based on all chapters where they appear."""
+    character = uow.characters.get(character_id)
+    if not character:
+        raise HTTPException(status_code=404, detail="Character not found")
+    uc = ClassifyCharacterArchetype(
+        character_repository=uow.characters,
+        chapter_repository=uow.chapters,
+        classifier=ArchetypeClassifier(),
+    )
+    archetype = uc.execute(character_id)
+    return ArchetypeResponse(
+        character_id=archetype.character_id,
+        narrative_role=archetype.narrative_role.value,
+        combat_style=archetype.combat_style.value,
+        personality_traits=[t.value for t in archetype.personality_traits],
+        role_confidence=archetype.role_confidence,
+        combat_confidence=archetype.combat_confidence,
+        trait_scores=archetype.trait_scores,
+        classified_by=archetype.classified_by,
+    )
+
+
+@router.get("/{character_id}/archetype", response_model=ArchetypeResponse | None)
+def get_character_archetype(
+    character_id: str,
+    uow: UnitOfWork = Depends(get_uow),
+) -> ArchetypeResponse | None:
+    """Get a character's previously classified archetype."""
+    character = uow.characters.get(character_id)
+    if not character:
+        raise HTTPException(status_code=404, detail="Character not found")
+    if character.archetype is None:
+        return None
+    archetype = character.archetype
+    return ArchetypeResponse(
+        character_id=archetype.character_id,
+        narrative_role=archetype.narrative_role.value,
+        combat_style=archetype.combat_style.value,
+        personality_traits=[t.value for t in archetype.personality_traits],
+        role_confidence=archetype.role_confidence,
+        combat_confidence=archetype.combat_confidence,
+        trait_scores=archetype.trait_scores,
+        classified_by=archetype.classified_by,
+    )
+
+
+@router.post("/classify-all", response_model=ClassifyAllResponse)
+def classify_all_characters(
+    uow: UnitOfWork = Depends(get_uow),
+) -> ClassifyAllResponse:
+    """Classify all characters' archetypes in batch."""
+    uc = ClassifyAllCharacters(
+        character_repository=uow.characters,
+        chapter_repository=uow.chapters,
+        classifier=ArchetypeClassifier(),
+    )
+    results = uc.execute()
+    uow.commit()
+    return ClassifyAllResponse(
+        total=len(results),
+        classified=len(results),
+    )

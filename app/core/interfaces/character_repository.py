@@ -85,3 +85,7 @@ class ICharacterRepository(IRepository[Character], abc.ABC):
         Uses pgvector HNSW index when available (PostgreSQL), falls back to in-Python cosine.
         Returns characters with `_similarity` attribute set (0.0-1.0).
         """
+
+    @abc.abstractmethod
+    def set_archetype(self, character_id: str, archetype) -> bool:
+        """Persist a CharacterArchetype for a character. Returns True if successful."""

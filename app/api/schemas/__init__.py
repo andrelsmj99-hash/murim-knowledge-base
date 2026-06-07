@@ -297,3 +297,29 @@ class ScrapeResponse(BaseModel):
     total: int
     chapters: list[ScrapeChapterItem] = Field(default_factory=list)
     errors: list[str] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
+# Archetype
+# ---------------------------------------------------------------------------
+
+
+class ArchetypeResponse(BaseModel):
+    """Response schema for character archetype classification."""
+
+    character_id: str
+    narrative_role: str
+    combat_style: str
+    personality_traits: list[str] = Field(default_factory=list)
+    role_confidence: float = Field(ge=0.0, le=1.0)
+    combat_confidence: float = Field(ge=0.0, le=1.0)
+    trait_scores: dict[str, float] = Field(default_factory=dict)
+    classified_by: str = "rules"
+
+
+class ClassifyAllResponse(BaseModel):
+    """Response schema for batch classification."""
+
+    total: int
+    classified: int
+    errors: list[str] = Field(default_factory=list)

@@ -131,6 +131,8 @@ class Character(Base):
     embedding_vec = Column(EmbeddingVector, nullable=True)
     # Legacy text column for backward compatibility (JSON string)
     embedding = Column(Text, nullable=True)
+    # Character archetype classification (JSON-serialized)
+    archetype = Column(Text, nullable=True)
 
     __table_args__ = (
         UniqueConstraint("canonical_name", name="uix_canonical_name"),
