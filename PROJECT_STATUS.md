@@ -664,7 +664,7 @@ murim_knowledge_base/
 - `app/api/schemas/__init__.py` — `ScrapeRequest` com campos opcionais
 - `app/api/routes/scrape.py` — kwargs dinâmicos para scrapers dedicados
 
-**Resultado:** Projeto completo com Docker, CI/CD, pre-commit, Makefile, e 3 scrapers (generic, novelbin, novelupdates). **34 testes passando via `pytest tests/`.**
+**Resultado:** Projeto completo com Docker, CI/CD, pre-commit, Makefile, e 3 scrapers (generic, novelbin, novelupdates). **34 testes passando via `pytest tests/`.** **Commit:** `35924da`.
 
 ---
 
