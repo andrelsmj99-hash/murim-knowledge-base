@@ -1,7 +1,7 @@
 # PROJECT_STATUS — Murim Knowledge Base
 
 > Documento vivo que reflete o estado real do workspace.
-> Última atualização: 2026-06-06 (sessão 15 — Dashboard UX refinements: CRUD, paginação, export, dark mode)
+> Última atualização: 2026-06-07 (sessão 16 — Linting fixes: ruff auto-fixes, mypy, tests passing)
 
 ---
 
@@ -673,6 +673,23 @@ murim_knowledge_base/
 - `app/api/routes/scrape.py` — kwargs dinâmicos para scrapers dedicados
 
 **Resultado:** Projeto completo com Docker, CI/CD, pre-commit, Makefile, e 3 scrapers (generic, novelbin, novelupdates). **34 testes passando via `pytest tests/`.** **Commit:** `35924da`.
+
+### Sessão 16 (Linting fixes + qualidade de código)
+
+**Corrigido:**
+- Erro de sintaxe em `dashboard/api_client.py` (parêntese extra)
+- Import faltando `re` em `scrapers/novelupdates.py`
+- Imports não utilizados removidos em todo o codebase
+- Variáveis ambíguas (`l` → `loc`/`location`) em list comprehensions
+- Nomes de variáveis não-convencionais (`G` → `graph`, `COLOR_MAP` → `color_map`)
+- `if` aninhados combinados em `dashboard/pages/characters.py`
+- Type annotations modernizadas (`Dict/List` → `dict/list`, `Optional[X]` → `X | None`)
+- Imports reorganizados e ordenados (isort/ruff)
+- Adicionados `# noqa: E402` onde necessário (imports após sys.path)
+
+**Arquivos modificados:** 65 arquivos (maioria formatação/lint via ruff --fix)
+
+**Resultado:** Todos os 34 testes passando. Ruff clean (0 errors). **Commit:** `8914405`.
 
 ---
 
