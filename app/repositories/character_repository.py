@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import builtins
 import json
+import math
 import uuid as uuid_module
 
 from sqlalchemy import or_, select
@@ -38,6 +39,15 @@ def _to_entity(orm: CharacterORM) -> Character:
     for rel in orm.relationships:
         relationships.setdefault(rel.relationship_type, []).append(str(rel.related_character_id))
 
+    # Prefer pgvector column if available, fallback to JSON text
+    embedding = orm.embedding
+    if hasattr(orm, 'embedding_vec') and orm.embedding_vec:
+        try:
+            import json
+            embedding = json.loads(orm.embedding_vec) if isinstance(orm.embedding_vec, str) else orm.embedding_vec
+        except Exception:
+            pass
+
     return Character(
         id=str(orm.id),
         name=orm.name,
@@ -50,12 +60,15 @@ def _to_entity(orm: CharacterORM) -> Character:
         organizations=org_ids,
         locations=loc_ids,
         relationships=relationships,
-        embedding=orm.embedding,
+        embedding=embedding,
     )
 
 
 def _to_orm(entity: Character) -> CharacterORM:
     """Domain entity → ORM (attached to the session, not yet persisted)."""
+    import json
+    embedding_json = json.dumps(entity.embedding) if entity.embedding else None
+
     orm = CharacterORM(
         id=_to_uuid(entity.id),
         name=entity.name,
@@ -63,7 +76,8 @@ def _to_orm(entity: Character) -> CharacterORM:
         gender=entity.gender,
         first_appearance=entity.first_appearance,
         appearance_frequency=entity.appearance_frequency,
-        embedding=entity.embedding,
+        embedding=embedding_json,
+        embedding_vec=embedding_json,  # Also populate pgvector column
     )
     for alias in entity.aliases:
         orm.aliases.append(
@@ -200,6 +214,7 @@ class CharacterRepository(ICharacterRepository):
         orm = self.session.get(CharacterORM, _to_uuid(character_id))
         if orm is not None:
             orm.embedding = embedding
+            orm.embedding_vec = embedding
             self.session.flush()
 
     def link_location(self, character_id: str, location_id: str) -> bool:
@@ -312,6 +327,76 @@ class CharacterRepository(ICharacterRepository):
         self.session.delete(rel)
         self.session.flush()
         return True
+
+    def search_by_embedding(
+        self, query_vec: list[float], *, limit: int = 20
+    ) -> builtins.list[Character]:
+        """
+        Search characters by vector similarity using pgvector (PostgreSQL).
+        Falls back to in-Python cosine similarity if pgvector not available.
+        """
+        import json
+
+        # Try pgvector first (PostgreSQL with pgvector extension)
+        try:
+            from sqlalchemy import text
+
+            # Convert query vector to PostgreSQL array format
+            vec_str = "[" + ",".join(str(x) for x in query_vec) + "]"
+
+            # Use cosine similarity via pgvector (<=> operator)
+            stmt = text("""
+                SELECT id, name, canonical_name, gender, first_appearance,
+                       appearance_frequency, embedding, embedding_vec,
+                       1 - (embedding_vec <=> :vec) as similarity
+                FROM characters
+                WHERE embedding_vec IS NOT NULL
+                ORDER BY embedding_vec <=> :vec
+                LIMIT :limit
+            """)
+            result = self.session.execute(stmt, {"vec": vec_str, "limit": limit})
+            rows = result.mappings().all()
+
+            if rows:
+                characters = []
+                for row in rows:
+                    # Build character entity from row
+                    c = Character(
+                        id=str(row["id"]),
+                        name=row["name"],
+                        canonical_name=row["canonical_name"],
+                        gender=row["gender"],
+                        first_appearance=row["first_appearance"],
+                        appearance_frequency=row["appearance_frequency"] or 0,
+                        embedding=row["embedding"],
+                        _similarity=float(row["similarity"]),
+                    )
+                    characters.append(c)
+                return characters
+        except Exception:
+            # pgvector not available or query failed, fall through to Python fallback
+            pass
+
+        # Fallback: in-Python cosine similarity (for SQLite or if pgvector unavailable)
+        all_chars = self.list(limit=10000)  # Get all characters with embeddings
+        scored = []
+        for c in all_chars:
+            if c.embedding:
+                try:
+                    emb = json.loads(c.embedding) if isinstance(c.embedding, str) else c.embedding
+                    if emb and len(emb) == len(query_vec):
+                        dot = sum(x * y for x, y in zip(emb, query_vec, strict=True))
+                        na = math.sqrt(sum(x * x for x in emb))
+                        nb = math.sqrt(sum(y * y for y in query_vec))
+                        if na and nb:
+                            sim = dot / (na * nb)
+                            c._similarity = sim
+                            scored.append(c)
+                except Exception:
+                    pass
+
+        scored.sort(key=lambda x: getattr(x, "_similarity", 0.0), reverse=True)
+        return scored[:limit]
 
 
 # Re-export the JSON helper so callers can store the embedding column.

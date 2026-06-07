@@ -9,6 +9,13 @@ from sqlalchemy.orm import relationship
 
 from .base import Base
 
+try:
+    from pgvector.sqlalchemy import Vector
+    PGVECTOR_AVAILABLE = True
+except ImportError:
+    PGVECTOR_AVAILABLE = False
+    Vector = None
+
 # ---------------------------------------------------------------------------
 # Association tables (many-to-many)
 # ---------------------------------------------------------------------------
@@ -86,8 +93,10 @@ class Character(Base):
     locations = relationship("Location", secondary=character_locations, back_populates="characters")
     organizations = relationship("Organization", secondary=character_organizations, back_populates="members")
 
-    # Embedding for semantic search (JSON-serialized float vector)
+    # Embedding for semantic search (JSON-serialized float vector) — fallback for SQLite
     embedding = Column(Text, nullable=True)
+    # pgvector column for efficient similarity search (PostgreSQL only)
+    embedding_vec = Column(Vector(384), nullable=True) if PGVECTOR_AVAILABLE else Column(Text, nullable=True)
 
     __table_args__ = (
         UniqueConstraint("canonical_name", name="uix_canonical_name"),

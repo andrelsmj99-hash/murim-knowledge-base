@@ -296,6 +296,7 @@ murim_knowledge_base/
 
 - [x] `NovelUpdatesScraper` — metadata scraper para novelupdates.com
 - [x] `NovelBinScraper` — scraper dedicado para novelbin.com
+- [x] `NovelFireScraper` — scraper dedicado para novelfire.net
 - [ ] `WuxiaWorldScraper`
 - [ ] Suporte a sites em português (opção `language="pt"`)
 
@@ -313,7 +314,7 @@ murim_knowledge_base/
 - [x] `README.md` (instalação, uso, arquitetura)
 - [x] `Dockerfile` + `docker-compose.yml` (Postgres + API + dashboard)
 - [x] `Makefile` ou `pyproject.toml` com scripts (`run-api`, `run-dashboard`, `scrape`, `migrate`, `test`)
-- [x] Pre-commit (black, ruff, mypy)
+- [x] Pre-commit (ruff, mypy)
 - [x] CI (GitHub Actions)
 - [x] `conftest.py` + fixtures pytest compartilhadas
 
@@ -361,33 +362,33 @@ murim_knowledge_base/
 
 5. **`Character.embedding` não indexado**: O embedding é armazenado como JSON string em `Text`. Sem índice de similaridade (ex: pgvector), a busca semântica é O(n) por scan linear.
 
-6. **Dashboard UX**: Falta paginação real, CRUD completo (editar/deletar), dark mode, export (CSV/JSON).
+6. ~~**Dashboard UX**: Falta paginação real, CRUD completo (editar/deletar), dark mode, export (CSV/JSON).~~ **CORRIGIDO na sessão 15.**
 
 ---
 
 ## 8. Próximos Passos Prioritários
 
-### 🟡 Prioridade MÉDIA (núcleo funcional)
+### 🟡 Prioridade ALTA (impacto direto no core)
 
-1. **Scraper dedicado** (NovelUpdatesScraper ou similar) — `POST /scrape` pronto para uso com GenericScraper, falta scraper especializado
+1. ~~**pgvector / pg_trgm para busca semântica eficiente** — Atualmente O(n) scan linear. Com pgvector: HNSW/IVF index → O(log n). Requer PostgreSQL + extensão.~~ **CONCLUÍDO na sessão 18.**
 
-2. **Dockerfile** + **docker-compose.yml**
+2. **WuxiaWorldScraper** — Fonte majoritária de novels Murim/Wuxia licenciadas. Estrutura DOM diferente, precisa scraper dedicado.
 
-3. **README.md** — Instalação, uso, arquitetura
+### 🟡 Prioridade MÉDIA (NLP pipeline)
+
+3. **Detector de aliases por contexto** — "also known as", "whose real name was", "formerly known as" → extrai aliases automaticamente.
+
+4. **Co-referência básica** — Resolver pronomes ("he", "she", "the elder") → personagem anterior na mesma cena.
 
 ### 🟢 Prioridade BAIXA (UX e qualidade)
 
-4. Refinar Dashboard (CRUD completo, paginação real, dark mode, export CSV/JSON)
+5. **Testes E2E Dashboard (Playwright)** — Cobertura de fluxos críticos: login, CRUD, navegação, graph, search.
 
-5. Pre-commit + CI (GitHub Actions)
+6. **Suporte a sites em português** — Opção `language="pt"` no GenericScraper + patterns PT-BR.
 
-6. Suporte a pgvector para busca semântica eficiente
+7. **Modelo spaCy customizado / fine-tuned para Murim** — NER específico para termos de cultivation (dantian, meridian, qi, sect, clan, realm).
 
-7. Co-referência e detecção de aliases por contexto
-
-8. Detector de aliases a partir de contexto ("also known as", "whose real name was")
-
-9. Modelo spaCy customizado / fine-tuned para Murim
+8. **Versionamento de schema NLP** — Migration system para `patterns.py` quando novos padrões são adicionados.
 
 ---
 
@@ -690,6 +691,54 @@ murim_knowledge_base/
 **Arquivos modificados:** 65 arquivos (maioria formatação/lint via ruff --fix)
 
 **Resultado:** Todos os 34 testes passando. Ruff clean (0 errors). **Commit:** `8914405`.
+
+### Sessão 17 (NovelFire Scraper)
+
+**Adicionado:**
+- `app/scrapers/novelfire.py` — scraper dedicado para novelfire.net
+  - Configurable CSS selectors com defaults sensatos
+  - Extração de metadata: título, autor, gêneros, descrição, cover, status
+  - Lista de capítulos com reversão para ordem de leitura
+  - Extração de conteúdo com remoção de ruído (scripts, ads, iframes)
+  - Resolução de URLs relativas
+  - Persistência de progresso via BaseScraper
+- Registrado no registry `app/scrapers/__init__.py` como `novelfire`
+
+**Disponível via API:**
+```bash
+curl -X POST http://localhost:8000/api/v1/scrape \
+  -H "Content-Type: application/json" \
+  -d '{"source": "novelfire", "novel_slug": "seu-novel-slug"}'
+```
+
+**Arquivos criados:** `app/scrapers/novelfire.py`
+**Arquivos modificados:** `app/scrapers/__init__.py`
+
+**Resultado:** 4 scrapers disponíveis (generic, novelbin, novelupdates, novelfire). **34 testes passando**. **Commit:** `02e397e`.
+
+### Sessão 18 (pgvector Support para Busca Semântica Eficiente)
+
+**Adicionado:**
+- Dependência `pgvector>=0.2.0` em `requirements.txt`
+- Nova coluna `embedding_vec` (Vector(384)) no modelo `Character` — pgvector nativo para PostgreSQL
+- Fallback transparente: coluna `embedding` (TEXT/JSON) mantida para SQLite/dev
+- Migration Alembic `0603bbde60d9` — adiciona coluna + índice HNSW (`vector_cosine_ops`)
+- `ICharacterRepository.search_by_embedding()` — interface para busca por similaridade vetorial
+- `CharacterRepository.search_by_embedding()` — implementação com:
+  - pgvector HNSW index no PostgreSQL (`embedding_vec <=> query_vec`) → O(log n)
+  - Fallback in-Python cosine similarity para SQLite → O(n)
+- Atualizado `POST /api/v1/search` para usar pgvector quando disponível
+- `set_embedding()` popula ambas as colunas automaticamente
+
+**Arquivos criados:** `alembic/versions/0603bbde60d9_add_pgvector_embedding_column_to_.py`
+**Arquivos modificados:**
+- `requirements.txt` — pgvector dependency
+- `app/models/character.py` — embedding_vec column + PGVECTOR_AVAILABLE flag
+- `app/repositories/character_repository.py` — search_by_embedding() + dual column population
+- `app/core/interfaces/character_repository.py` — search_by_embedding() contract
+- `app/api/routes/search.py` — usa pgvector first, fallback to lexical+python cosine
+
+**Resultado:** Busca semântica agora O(log n) com pgvector (vs O(n) scan linear). **34 testes passando**. Ruff clean.
 
 ---
 

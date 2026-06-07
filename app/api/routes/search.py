@@ -4,8 +4,9 @@
 Strategy (degrades gracefully when the embedding model is unavailable):
 1. Substring / case-insensitive search across characters, orgs, locations.
 2. If the sentence-transformers model is loaded, score results by cosine
-   similarity to the query embedding (using cached ``Character.embedding``).
-3. Return the top ``limit`` hits across all kinds, sorted by score desc.
+   similarity to the query embedding.
+3. If pgvector is available, use HNSW index for efficient O(log n) search.
+4. Return the top ``limit`` hits across all kinds, sorted by score desc.
 """
 from __future__ import annotations
 
@@ -48,8 +49,21 @@ def search(
     hits: list[SearchHit] = []
     q_lower = q.lower()
 
-    # --- characters ---------------------------------------------------------
+    # --- characters: try pgvector first for efficient semantic search ---
+    if query_vec is not None:
+        pgvector_hits = uow.characters.search_by_embedding(query_vec, limit=limit * 2)
+        for c in pgvector_hits:
+            # pgvector returns cosine similarity as score (0-1)
+            score = c.get("_similarity", 0.0)
+            hits.append(
+                SearchHit(id=c.id, name=c.name, kind="character", score=score)
+            )
+
+    # Fallback: lexical search + in-Python cosine for characters not found via pgvector
+    existing_ids = {h.id for h in hits}
     for c in uow.characters.search_by_name(q, limit=limit * 2):
+        if c.id in existing_ids:
+            continue
         score = 1.0
         if query_vec is not None and getattr(c, "embedding", None):
             try:

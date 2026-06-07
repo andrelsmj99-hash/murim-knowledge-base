@@ -75,3 +75,13 @@ class ICharacterRepository(IRepository[Character], abc.ABC):
         self, character_id: str, related_character_id: str, relationship_type: str
     ) -> bool:
         """Remove a specific relationship. Returns True if removed, False if not found."""
+
+    @abc.abstractmethod
+    def search_by_embedding(
+        self, query_vec: list[float], *, limit: int = 20
+    ) -> list[Character]:
+        """
+        Search characters by vector similarity.
+        Uses pgvector HNSW index when available (PostgreSQL), falls back to in-Python cosine.
+        Returns characters with `_similarity` attribute set (0.0-1.0).
+        """
