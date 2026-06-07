@@ -22,6 +22,7 @@ from app.scrapers.generic import GenericScraper
 from app.scrapers.novelbin import NovelBinScraper
 from app.scrapers.novelfire import NovelFireScraper
 from app.scrapers.novelupdates import NovelUpdatesScraper
+from app.scrapers.wuxiaworld import WuxiaWorldScraper
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,7 @@ _REGISTRY: dict[str, type[BaseScraper]] = {
     "novelbin": NovelBinScraper,
     "novelupdates": NovelUpdatesScraper,
     "novelfire": NovelFireScraper,
+    "wuxiaworld": WuxiaWorldScraper,
 }
 
 

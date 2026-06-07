@@ -297,7 +297,7 @@ murim_knowledge_base/
 - [x] `NovelUpdatesScraper` — metadata scraper para novelupdates.com
 - [x] `NovelBinScraper` — scraper dedicado para novelbin.com
 - [x] `NovelFireScraper` — scraper dedicado para novelfire.net
-- [ ] `WuxiaWorldScraper`
+- [x] `WuxiaWorldScraper` — scraper dedicado para wuxiaworld.com
 - [ ] Suporte a sites em português (opção `language="pt"`)
 
 ### Dashboard (UX)
@@ -720,9 +720,10 @@ curl -X POST http://localhost:8000/api/v1/scrape \
 
 **Adicionado:**
 - Dependência `pgvector>=0.2.0` em `requirements.txt`
-- Nova coluna `embedding_vec` (Vector(384)) no modelo `Character` — pgvector nativo para PostgreSQL
-- Fallback transparente: coluna `embedding` (TEXT/JSON) mantida para SQLite/dev
-- Migration Alembic `0603bbde60d9` — adiciona coluna + índice HNSW (`vector_cosine_ops`)
+- Nova coluna `embedding_vec` no modelo `Character` — usa pgvector nativo (`Vector(384)`) no PostgreSQL, `Text` no SQLite
+- Custom type `EmbeddingVector` (TypeDecorator) — switch automático baseado no dialecto
+- Fallback transparente: coluna `embedding` (TEXT/JSON) mantida para compatibilidade
+- Migration Alembic `b45450486962` — schema inicial com embedding_vec
 - `ICharacterRepository.search_by_embedding()` — interface para busca por similaridade vetorial
 - `CharacterRepository.search_by_embedding()` — implementação com:
   - pgvector HNSW index no PostgreSQL (`embedding_vec <=> query_vec`) → O(log n)
@@ -730,15 +731,40 @@ curl -X POST http://localhost:8000/api/v1/scrape \
 - Atualizado `POST /api/v1/search` para usar pgvector quando disponível
 - `set_embedding()` popula ambas as colunas automaticamente
 
-**Arquivos criados:** `alembic/versions/0603bbde60d9_add_pgvector_embedding_column_to_.py`
+**Arquivos criados:** `alembic/versions/b45450486962_initial_schema_with_pgvector_support.py`
 **Arquivos modificados:**
 - `requirements.txt` — pgvector dependency
-- `app/models/character.py` — embedding_vec column + PGVECTOR_AVAILABLE flag
+- `app/models/character.py` — EmbeddingVector type + embedding_vec column
 - `app/repositories/character_repository.py` — search_by_embedding() + dual column population
 - `app/core/interfaces/character_repository.py` — search_by_embedding() contract
 - `app/api/routes/search.py` — usa pgvector first, fallback to lexical+python cosine
 
 **Resultado:** Busca semântica agora O(log n) com pgvector (vs O(n) scan linear). **34 testes passando**. Ruff clean.
+
+### Sessão 19 (WuxiaWorldScraper + pgvector fix)
+
+**Adicionado:**
+- `app/scrapers/wuxiaworld.py` — scraper dedicado para wuxiaworld.com
+  - Configurable CSS selectors com defaults para estrutura moderna do WuxiaWorld
+  - Extração de metadata: título, autor, gêneros, descrição, cover, status
+  - Lista de capítulos com reversão para ordem de leitura
+  - Extração de conteúdo com remoção de ruído (scripts, ads, iframes, nav)
+  - Resolução de URLs relativas
+  - Persistência de progresso via BaseScraper
+- Registrado no registry `app/scrapers/__init__.py` como `wuxiaworld`
+
+**Corrigido:**
+- pgvector `Vector` type não funcionava com SQLite (testes falhavam)
+- Substituído por custom `EmbeddingVector` TypeDecorator — usa pgvector.Vector no PostgreSQL, Text no SQLite
+- Migration regenerada (`b45450486962`) — embedding_vec como Text (ORM faz o switch)
+
+**Arquivos criados:** `app/scrapers/wuxiaworld.py`, `alembic/versions/b45450486962_initial_schema_with_pgvector_support.py`
+**Arquivos modificados:**
+- `app/scrapers/__init__.py` — registra wuxiaworld
+- `app/models/character.py` — EmbeddingVector TypeDecorator + embedding_vec column
+- `requirements.txt` — pgvector mantido
+
+**Resultado:** 5 scrapers disponíveis (generic, novelbin, novelupdates, novelfire, wuxiaworld). **34 testes passando**. Ruff clean.
 
 ---
 
