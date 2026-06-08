@@ -74,10 +74,10 @@ else:
 # Navigation
 # ---------------------------------------------------------------------------
 
-overview_page = st.Page(overview.show, title="Visão Geral", icon="🏠")
-characters_page = st.Page(characters.show, title="Personagens", icon="⚔️")
-graph_page = st.Page(graph.show, title="Grafo Pincel", icon="🕸️")
-search_page = st.Page(search.show, title="Busca", icon="🔍")
+overview_page = st.Page(overview.show, title="Visão Geral", icon="🏠", url_path="overview")
+characters_page = st.Page(characters.show, title="Personagens", icon="⚔️", url_path="characters")
+graph_page = st.Page(graph.show, title="Grafo Pincel", icon="🕸️", url_path="graph")
+search_page = st.Page(search.show, title="Busca", icon="🔍", url_path="search")
 
 # Run the selected page
 pg = st.navigation([overview_page, characters_page, graph_page, search_page])
