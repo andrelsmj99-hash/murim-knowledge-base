@@ -15,7 +15,8 @@ API REST (FastAPI)  +  Dashboard (Streamlit)  +  Grafo de conhecimento (NetworkX
 - Catalogar personagens, alcunhas, títulos e relacionamentos
 - Mapear seitas, clãs, alianças e hierarquias
 - Indexar localizações (cidades, montanhas, reinos)
-- Busca semântica (sentence-transformers) e lexical
+- Classificação de arquétipos de personagens (NLP por keywords)
+- Busca semântica (sentence-transformers + pgvector) e lexical
 - Visualização de grafo de relacionamentos (NetworkX + Plotly)
 - Exportação de dados estruturados
 
@@ -73,11 +74,12 @@ Clean Architecture com as camadas:
 app/
 ├── core/           # Domínio (entidades, interfaces, use cases, unit of work)
 ├── repositories/   # Adaptadores SQLAlchemy
-├── models/         # ORM (11 tabelas)
-├── scrapers/       # BaseScraper + GenericScraper
+├── models/         # ORM (9 tabelas)
+├── scrapers/       # BaseScraper + 4 scrapers (generic, novelbin, novelfire, novelupdates, wuxiaworld)
 ├── processing/     # Pipeline NLP (6 módulos)
-├── api/            # FastAPI (32 rotas)
+├── api/            # FastAPI (36 rotas)
 ├── dashboard/      # Streamlit (4 páginas)
+├── nlp/            # Classificador de arquétipos por keywords
 └── utils/          # Config + logging
 ```
 

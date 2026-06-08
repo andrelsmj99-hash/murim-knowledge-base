@@ -94,30 +94,12 @@ def add_relationship(
     payload: OrganizationRelationshipCreate,
     uow: UnitOfWork = Depends(get_uow),
 ) -> OrganizationRead:
-    import uuid as _uuid
-
-    from app.models.organization import OrganizationRelationship as OrgRelORM
-
     if uow.organizations.get(org_id) is None:
         raise HTTPException(status_code=404, detail="Organization not found")
     if uow.organizations.get(payload.related_organization_id) is None:
         raise HTTPException(status_code=404, detail="Related organization not found")
-    existing = (
-        uow.session.query(OrgRelORM)
-        .filter_by(
-            organization_id=_uuid.UUID(org_id),
-            related_organization_id=_uuid.UUID(payload.related_organization_id),
-            relationship_type=payload.relationship_type,
-        )
-        .first()
+    uow.organizations.add_relationship(
+        org_id, payload.related_organization_id, payload.relationship_type
     )
-    if existing is None:
-        uow.session.add(
-            OrgRelORM(
-                organization_id=_uuid.UUID(org_id),
-                related_organization_id=_uuid.UUID(payload.related_organization_id),
-                relationship_type=payload.relationship_type,
-            )
-        )
-        uow.commit()
+    uow.commit()
     return _to_read(uow.organizations.get(org_id))

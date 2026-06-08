@@ -25,7 +25,7 @@ def _url(path: str) -> str:
     return f"{_API_BASE.rstrip('/')}/{path.lstrip('/')}"
 
 
-# In-process shortcut湖北客户端 (fastest option for local dashboards)
+# In-process shortcut (fastest option for local dashboards)
 _client = None
 
 def _get_client():

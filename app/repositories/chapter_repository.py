@@ -11,7 +11,6 @@ from sqlalchemy.orm import Session
 
 from app.core.entities import Chapter
 from app.core.interfaces import IChapterRepository
-from app.models.character import Alias as AliasORM
 from app.models.character import Character as CharacterORM
 from app.models.novel import Chapter as ChapterORM
 

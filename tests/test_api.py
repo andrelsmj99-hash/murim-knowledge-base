@@ -333,6 +333,25 @@ def test_search_lexical_fallback(api_client) -> None:
     assert "character" in {h["kind"] for h in r.json()["hits"]}
 
 
+def test_search_semantic(api_client) -> None:
+    client, _ = api_client
+    r1 = client.post("/api/v1/characters", json={"name": "Lin Lei", "description": "A powerful swordsman"})
+    r2 = client.post("/api/v1/characters", json={"name": "Yi Yun", "description": "A young cultivator"})
+    char1 = r1.json()
+    char2 = r2.json()
+
+    # Embed both characters
+    client.post(f"/api/v1/characters/{char1['id']}/embed")
+    client.post(f"/api/v1/characters/{char2['id']}/embed")
+
+    # Semantic search should return results
+    r = client.get("/api/v1/search", params={"q": "sword", "limit": 10, "semantic": True})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["total"] >= 1
+    assert any(h["kind"] == "character" for h in body["hits"])
+
+
 def test_graph_serialization(api_client) -> None:
     client, _ = api_client
     client.post("/api/v1/novels", json={"title": "Foo", "language": "en"})

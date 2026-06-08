@@ -35,3 +35,9 @@ class IOrganizationRepository(IRepository[Organization], abc.ABC):
     @abc.abstractmethod
     def get_members(self, org_id: str) -> list[Character]:
         """Return all characters who are members of this organization."""
+
+    @abc.abstractmethod
+    def add_relationship(
+        self, organization_id: str, related_organization_id: str, relationship_type: str
+    ) -> bool:
+        """Create a relationship between two organizations. Returns False if already exists."""

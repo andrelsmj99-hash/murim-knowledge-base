@@ -54,7 +54,7 @@ def search(
         pgvector_hits = uow.characters.search_by_embedding(query_vec, limit=limit * 2)
         for c in pgvector_hits:
             # pgvector returns cosine similarity as score (0-1)
-            score = c.get("_similarity", 0.0)
+            score = getattr(c, "_similarity", 0.0)
             hits.append(
                 SearchHit(id=c.id, name=c.name, kind="character", score=score)
             )

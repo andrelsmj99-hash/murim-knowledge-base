@@ -12,6 +12,7 @@ import math
 import uuid as uuid_module
 
 from sqlalchemy import or_, select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.core.entities import Alias as EntityAlias
@@ -415,7 +416,7 @@ class CharacterRepository(ICharacterRepository):
                     )
                     characters.append(c)
                 return characters
-        except Exception:
+        except SQLAlchemyError:
             # pgvector not available or query failed, fall through to Python fallback
             pass
 

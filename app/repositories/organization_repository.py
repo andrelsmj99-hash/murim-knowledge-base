@@ -169,3 +169,27 @@ class OrganizationRepository(IOrganizationRepository):
             self.session.flush()
             return _to_entity(orm)
         return self.add(organization)
+
+    def add_relationship(
+        self, organization_id: str, related_organization_id: str, relationship_type: str
+    ) -> bool:
+        existing = (
+            self.session.query(OrganizationRelationshipORM)
+            .filter_by(
+                organization_id=_to_uuid(organization_id),
+                related_organization_id=_to_uuid(related_organization_id),
+                relationship_type=relationship_type,
+            )
+            .first()
+        )
+        if existing is not None:
+            return False
+        self.session.add(
+            OrganizationRelationshipORM(
+                organization_id=_to_uuid(organization_id),
+                related_organization_id=_to_uuid(related_organization_id),
+                relationship_type=relationship_type,
+            )
+        )
+        self.session.flush()
+        return True
