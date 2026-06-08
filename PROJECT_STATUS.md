@@ -1,7 +1,7 @@
 # PROJECT_STATUS — Murim Knowledge Base
 
 > Documento vivo que reflete o estado real do workspace.
-> Última atualização: 2026-06-08 (sessão 24 — Coreference Resolver)
+> Última atualização: 2026-06-08 (sessão 25 — E2E Dashboard Tests)
 
 ---
 
@@ -58,7 +58,7 @@ app/
 alembic/                  # Migration (1 versão, 11 tabelas)
 data/{raw,processed,exports,progress}/
 logs/                     # Logs rotativos (10MB, 5 backups)
-tests/                    # 5 suítes + conftest.py (68 testes, pytest puro)
+tests/                    # 6 suítes + conftest.py (84 unit + 20 E2E = 104 testes, pytest puro)
 ```
 
 ### Stack Tecnológica
@@ -191,7 +191,10 @@ murim_knowledge_base/
     ├── test_pipeline.py         # 5 testes (persistência + scraper)
     ├── test_nlp.py              # 12 testes (NLP pipeline)
     ├── test_api.py              # 17 testes (API REST)
-    └── test_archetype.py        # 16 testes (archetype classification)
+    ├── test_archetype.py        # 16 testes (archetype classification)
+    ├── test_alias_detector.py    # 17 testes (alias detection)
+    ├── test_coreference_resolver.py # 16 testes (coreference resolver)
+    └── test_dashboard_e2e.py     # 20 testes E2E (Playwright + Streamlit)
 ```
 
 ---
@@ -332,7 +335,7 @@ murim_knowledge_base/
 - [x] Paginação real nas listagens
 - [x] Dark mode (auto-detect do tema Streamlit)
 - [x] Exportar dados (CSV, JSON)
-- [ ] Testes E2E para o dashboard (Playwright)
+- [x] Testes E2E para o dashboard (Playwright)
 
 ### DevOps / Documentação
 
