@@ -1,7 +1,7 @@
 # PROJECT_STATUS — Murim Knowledge Base
 
 > Documento vivo que reflete o estado real do workspace.
-> Última atualização: 2026-06-07 (sessão 22 — Alias Detector)
+> Última atualização: 2026-06-08 (sessão 23 — Lint & Type Error Resolution)
 
 ---
 
@@ -871,7 +871,47 @@ curl -X POST http://localhost:8000/api/v1/scrape \
 - `app/core/use_cases/extract_entities.py` — `aliases` field + integration
 - `app/processing/__init__.py` — exports AliasHit, detect_aliases
 
-**Resultado:** 68/68 testes passando. Ruff clean. **Commit:** pending.
+**Resultado:** 68/68 testes passando. Ruff clean. **Commit:** `d40d438`.
+
+---
+
+### Sessão 23 (Lint & Type Error Resolution)
+
+**Corrigido:**
+- **Ruff (29 issues → 0):**
+  - Import sorting (I001) across 12 files
+  - Trailing whitespace (W293) in archetype_classifier.py
+  - Bare except (SIM105) in character_repository.py
+  - StrEnum migration (UP042) in archetype.py — `class NarrativeRole(StrEnum)`
+  - Unused loop variable (B007) in test_archetype.py
+  - Missing blank lines (E302/E303) in api_client.py and dependencies/__init__.py
+- **Mypy (93 → 0 errors):**
+  - `archetype.py`: `StrEnum` migration (3 UP042)
+  - `character.py`: `archetype` field typed as `CharacterArchetype | None` (was `object`)
+  - `ingest_entities.py`: Loop variable shadowing between `TitleMatch` and `str` (renamed to `tm`/`title_str`)
+  - `models/base.py`: `Generator[Session, None, None]` return type for `get_db()`
+  - `organization_detector.py`: `dict[tuple[int, int], OrgMatch]` (was `dict[str, OrgMatch]`)
+  - `ner.py`: Module-level `_SPACY_NLP: object | None`, type ignore for `nlp()` call
+  - `api_client.py`: `# type: ignore[no-any-return]` on `.json()` calls
+  - `archetype_classifier.py`: `Mapping[Any, list[str]]` for mixed-enum keyword dicts
+  - `novelbin.py`: `isinstance(href, str)` guard for BeautifulSoup attribute
+  - `scrapers/base.py`: Explicit `dict[str, Any]` annotation for JSON load
+  - `pyproject.toml`: Per-module mypy override for SQLAlchemy ORM false positives in `app.repositories.*`
+- **Tests:** 68/68 passing (unchanged)
+- **Ruff:** All checks passed
+- **Mypy:** 0 errors
+
+**Arquivos modificados:**
+- `app/api/dependencies/__init__.py`, `app/api/routes/characters.py`, `app/api/routes/search.py`
+- `app/core/entities/archetype.py`, `app/core/entities/character.py`
+- `app/core/use_cases/classify_character_archetype.py`, `app/core/use_cases/ingest_entities.py`
+- `app/dashboard/api_client.py`, `app/models/base.py`
+- `app/nlp/archetype_classifier.py`, `app/processing/ner.py`, `app/processing/organization_detector.py`
+- `app/repositories/character_repository.py`, `app/repositories/location_repository.py`
+- `app/scrapers/base.py`, `app/scrapers/generic.py`, `app/scrapers/novelbin.py`
+- `pyproject.toml`, `tests/test_archetype.py`
+
+**Resultado:** 68/68 testes passando. Ruff clean. Mypy clean. **Commit:** `42a10f8`.
 
 ---
 
