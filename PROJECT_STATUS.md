@@ -1,7 +1,7 @@
 # PROJECT_STATUS — Murim Knowledge Base
 
 > Documento vivo que reflete o estado real do workspace.
-> Última atualização: 2026-06-08 (sessão 28 — E2E Test: NovelFire Pipeline Verified)
+> Última atualização: 2026-06-08 (sessão 29 — Production Extraction: Nano Machine 483 chapters)
 
 ---
 
@@ -299,6 +299,9 @@ murim_knowledge_base/
 | 93 | `CoreferenceHit` dataclass + `resolve_coreferences()` — pronoun and title reference resolution | `app/processing/coreference_resolver.py` | ✅ Completo |
 | 94 | `coreferences` field on `ChapterExtraction` + integrated into `ExtractEntitiesUseCase` | `app/core/use_cases/extract_entities.py` | ✅ Completo |
 | 95 | 16 coreference resolver tests (unit + integration) | `tests/test_coreference_resolver.py` | ✅ Completo |
+| 96 | `scripts/production_extract.py` — Full extraction pipeline with resume support | `scripts/production_extract.py` | ✅ Completo |
+| 97 | NovelFire CSS selectors fixed for actual DOM structure | `app/scrapers/novelfire.py` | ✅ Completo |
+| 98 | Production extraction of Nano Machine (483 chapters, 1355 characters) | `murim_dev.db` | ✅ Completo |
 
 ---
 
@@ -1111,6 +1114,77 @@ Full end-to-end test written and passing, validating the complete scrape → ing
 - Mypy clean (0 errors, 77 files)
 
 **Arquivos criados:** `tests/test_novelfire_e2e.py`
+
+---
+
+## Sessão 29 — Production Extraction: Nano Machine (2026-06-08)
+
+Full production extraction of "Nano Machine" (483 chapters) from novelfire.net into the knowledge base.
+
+### What was done
+
+1. **Fixed NovelFireScraper selectors** — Corrected CSS selectors to match actual novelfire.net DOM:
+   - Chapter list: `ul.chapter-list` → `li a` with `span.chapter-no`, `strong.chapter-title`
+   - Chapter content: `<div id="content">` with `<p>` tags
+   - Chapter title: `<h1 class="titles"><span class="chapter-title">`
+   - URL path: `/book/{slug}` not `/novel/{slug}`
+   - Added pagination support for chapter list (100 chapters/page, 5 pages = 483 total)
+
+2. **Created `scripts/production_extract.py`** — Production extraction script orchestrating full pipeline:
+   - `--scrape-only`: Scrape chapters without NLP (faster)
+   - `--nlp-only`: Run NLP on existing chapters
+   - `--resume`: Skip already-ingested chapters
+   - `--limit N`: Process only N chapters
+
+3. **Applied Alembic migrations**:
+   - `c1a2b3c4d5e6` — Add archetype column to characters
+   - `d2e3f4a5b6c7` — Fix embedding_vec type
+
+4. **Full extraction completed**:
+   - Phase 1: Scraped all 483 chapters from novelfire.net (23 minutes)
+   - Phase 2: Ingested all chapters into SQLite database
+   - Phase 3: NLP entity extraction on all 483 chapters (4 minutes)
+   - Phase 4: Character deduplication (rapidfuzz similarity ≥85)
+
+### Extraction Results
+
+| Metric | Count |
+|---|---|
+| Chapters scraped | 483 |
+| Chapters ingested | 483 |
+| Characters extracted | 8,419 |
+| Characters after dedup | 1,355 |
+| Organizations extracted | 157 |
+| Locations extracted | 51 |
+| Dedup merges | 644 |
+
+### Top Entities
+
+**Characters (by mention frequency):**
+1. Mun Yu (41 mentions)
+2. Sang Dal (38 mentions)
+3. Byeok Liu (31 mentions)
+4. Mun Ku (27 mentions)
+5. Yoon Baek Ho (27 mentions)
+
+**Organizations:**
+- Buju Sword Clan, Blade God Six Martial Clan, Great Hung Clan, etc.
+
+**Locations:**
+- Central Plains, Changbai Mountain, Death Valley, Demonic Realm, etc.
+
+### Files Created/Modified
+
+- `scripts/production_extract.py` — New production extraction script
+- `app/scrapers/novelfire.py` — Fixed CSS selectors and URL patterns
+- `data/exports/` — Exported characters.csv, characters.json, organizations.csv, organizations.json, locations.csv, locations.json
+
+### Technical Notes
+
+- Extraction uses `setsid` for process isolation (shell timeout kills child processes)
+- Resume capability: script checks DB for existing chapters before scraping
+- NLP pipeline processes chapters sequentially (spaCy is single-threaded)
+- Character deduplication uses rapidfuzz with 85% similarity threshold
 
 ---
 

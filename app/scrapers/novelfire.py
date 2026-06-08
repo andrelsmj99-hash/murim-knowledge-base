@@ -18,19 +18,25 @@ from app.scrapers.base import BaseScraper
 
 logger = logging.getLogger(__name__)
 
-# Default selectors — may need adjustment based on actual site structure
+# Default selectors — tuned for novelfire.net DOM as of 2026-06
 NOVELFIRE_SELECTORS: dict[str, str] = {
-    "novel_title": "h1.novel-title, h1.book-title, .novel-info h1, .book-info h1, h1",
-    "novel_author": ".author a, .author-info a, a[href*='/author/'], .info-author a",
-    "novel_description": ".description, .novel-desc, .book-desc, .summary, #description",
-    "novel_cover": ".novel-cover img, .book-cover img, .cover img",
-    "novel_genres": ".genres a, .tags a, .categories a, .genre a",
-    "novel_status": ".status, .novel-status, .book-status",
-    "chapter_list_container": "#chapter-list, .chapter-list, .list-chapter, ul.chapters, .chapter-items",
-    "chapter_list_item": "li a, .chapter-item a, .ch-item a, a.chapter-link",
-    "chapter_title": "h1.chapter-title, h1.entry-title, .chapter-title, h1",
-    "chapter_content": "#chapter-content, .chapter-content, .reading-content, .text-content, .entry-content",
-    "next_chapter": "a.next, .nav-next a, a[rel='next']",
+    # Novel metadata (from /book/{slug} page)
+    "novel_title": "h1.novel-title",
+    "novel_author": "a[href*='/author/']",
+    "novel_description": "div.description p",
+    "novel_cover": ".book-cover img",
+    "novel_genres": ".genres a",
+    "novel_status": ".status",
+    # Chapter list (from /book/{slug}/chapters page, paginated)
+    "chapter_list_container": "ul.chapter-list",
+    "chapter_list_item": "ul.chapter-list li a",
+    "chapter_no": "span.chapter-no",
+    "chapter_title_in_list": "strong.chapter-title",
+    "chapter_update": "time.chapter-update",
+    # Chapter content (from /book/{slug}/chapter-{N})
+    "chapter_title": "h1.titles span.chapter-title",
+    "chapter_content": "#content",
+    "next_chapter": "a.btn-next-chapter",
 }
 
 
@@ -65,13 +71,15 @@ class NovelFireScraper(BaseScraper):
         index_url: str | None = None,
         domain: str = "novelfire.net",
         selectors: dict[str, str] | None = None,
+        chapter_list_pages: int = 5,
         **kwargs: Any,
     ) -> None:
         super().__init__(novel_slug, **kwargs)
         self.domain = domain
-        self.index_url = index_url or f"https://{domain}/novel/{novel_slug}"
+        self.index_url = index_url or f"https://{domain}/book/{novel_slug}"
         self._base_url = f"https://{domain}"
         self.selectors = {**NOVELFIRE_SELECTORS, **(selectors or {})}
+        self.chapter_list_pages = chapter_list_pages
 
     def _absolute(self, href: str) -> str:
         if href.startswith(("http://", "https://")):
@@ -108,43 +116,59 @@ class NovelFireScraper(BaseScraper):
         }
 
     def get_chapter_list(self) -> list[dict[str, Any]]:
-        response = self._make_request(self.index_url)
-        soup = _parse(response.text)
-
-        container = soup.select_one(self.selectors["chapter_list_container"])
-        if not container:
-            logger.warning(
-                "No chapter list container found for %s at %s", self.novel_slug, self.index_url
-            )
-            # Fallback: try finding any links that look like chapters
-            container = soup
-
-        anchors = list(container.select(self.selectors["chapter_list_item"]))
-
-        # Many sites list chapters newest-first; reverse to get reading order
-        anchors = list(reversed(anchors))
-
+        """Scrape all chapter list pages (paginated 100/chapter) and return full list."""
         chapters: list[dict[str, Any]] = []
         seen: set[int] = set()
 
-        for anchor in anchors:
-            href = anchor.get("href")
-            text = anchor.get_text(" ", strip=True)
-            if not href:
-                continue
-            href_str = str(href) if href else ""
-            number = self._extract_number(text)
-            if number is None or number in seen:
-                continue
-            seen.add(number)
-            chapters.append(
-                {
-                    "chapter_number": number,
-                    "title": text,
-                    "url": self._absolute(href_str),
-                }
+        for page in range(1, self.chapter_list_pages + 1):
+            list_url = f"{self.index_url}/chapters?page={page}"
+            try:
+                response = self._make_request(list_url)
+            except Exception as exc:
+                logger.warning("Failed to fetch chapter list page %d: %s", page, exc)
+                break
+
+            soup = _parse(response.text)
+            container = soup.select_one(self.selectors["chapter_list_container"])
+            if not container:
+                logger.info("No more chapter list pages at page %d", page)
+                break
+
+            anchors = list(container.select(self.selectors["chapter_list_item"]))
+            if not anchors:
+                logger.info("No chapters found on page %d, stopping", page)
+                break
+
+            for anchor in anchors:
+                href = anchor.get("href")
+                if not href:
+                    continue
+                href_str = str(href)
+                number = self._extract_number(href_str)
+                if number is None or number in seen:
+                    continue
+                seen.add(number)
+
+                # Extract title from <strong class="chapter-title"> inside the anchor
+                title_el = anchor.select_one(self.selectors["chapter_title_in_list"])
+                title = title_el.get_text(strip=True) if title_el else f"Chapter {number}"
+
+                chapters.append(
+                    {
+                        "chapter_number": number,
+                        "title": title,
+                        "url": self._absolute(href_str),
+                    }
+                )
+
+            logger.info(
+                "Page %d: found %d chapters so far (total: %d)",
+                page,
+                len(anchors),
+                len(chapters),
             )
 
+        chapters.sort(key=lambda c: c["chapter_number"])
         logger.info("Found %d chapter(s) for %s", len(chapters), self.novel_slug)
         return chapters
 
@@ -166,7 +190,13 @@ class NovelFireScraper(BaseScraper):
             )
             return None
 
-        text = content_el.get_text("\n", strip=True)
+        # Join <p> tags with double newlines for paragraph separation
+        paragraphs = content_el.find_all("p")
+        if paragraphs:
+            text = "\n\n".join(p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True))
+        else:
+            text = content_el.get_text("\n", strip=True)
+
         text = re.sub(r"\n{3,}", "\n\n", text).strip()
         if not text:
             return None
