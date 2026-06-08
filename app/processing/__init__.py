@@ -6,6 +6,7 @@ feed the higher-level use cases in :mod:`app.core.use_cases`.
 """
 
 from .alias_detector import AliasHit, detect_aliases
+from .coreference_resolver import CoreferenceHit, resolve_coreferences
 from .location_detector import LocationMatch, detect_locations
 from .ner import CharacterMention, ExtractedEntities, extract_entities
 from .organization_detector import OrgMatch, detect_organizations, merge_aliases
@@ -48,4 +49,6 @@ __all__ = [
     "extract_relationships",
     "AliasHit",
     "detect_aliases",
+    "CoreferenceHit",
+    "resolve_coreferences",
 ]

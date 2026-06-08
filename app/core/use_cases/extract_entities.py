@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 
 from app.processing import (
     CharacterMention,
+    CoreferenceHit,
     ExtractedEntities,
     LocationMatch,
     OrgMatch,
@@ -23,6 +24,7 @@ from app.processing import (
     detect_titles,
     extract_entities,
     extract_relationships,
+    resolve_coreferences,
     split_title_from_name,
 )
 from app.processing.alias_detector import AliasHit, detect_aliases
@@ -41,6 +43,7 @@ class ChapterExtraction:
     locations: list[LocationMatch] = field(default_factory=list)
     relationships: list[RelationshipHit] = field(default_factory=list)
     aliases: list[AliasHit] = field(default_factory=list)
+    coreferences: list[CoreferenceHit] = field(default_factory=list)
 
     def canonical_characters(self) -> set[str]:
         return {m.canonical for m in self.character_mentions if m.canonical}
@@ -85,6 +88,9 @@ class ExtractEntitiesUseCase:
         # Attach title data to mentions whose surface starts with a title
         merged_mentions = self._attach_titles(ner.character_mentions, titles)
 
+        # Resolve pronouns and title references to characters
+        coref_hits = resolve_coreferences(text, merged_mentions)
+
         result = ChapterExtraction(
             chapter_id=chapter_id,
             character_mentions=merged_mentions,
@@ -93,9 +99,10 @@ class ExtractEntitiesUseCase:
             locations=locs,
             relationships=rels,
             aliases=alias_hits,
+            coreferences=coref_hits,
         )
         logger.info(
-            "Extracted from chapter %s: %d chars, %d titles, %d orgs, %d locs, %d rels, %d aliases",
+            "Extracted from chapter %s: %d chars, %d titles, %d orgs, %d locs, %d rels, %d aliases, %d corefs",
             chapter_id or "?",
             len(merged_mentions),
             len(titles),
@@ -103,6 +110,7 @@ class ExtractEntitiesUseCase:
             len(locs),
             len(rels),
             len(alias_hits),
+            len(coref_hits),
         )
         return result
 

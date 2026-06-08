@@ -1,7 +1,7 @@
 # PROJECT_STATUS — Murim Knowledge Base
 
 > Documento vivo que reflete o estado real do workspace.
-> Última atualização: 2026-06-08 (sessão 23 — Lint & Type Error Resolution)
+> Última atualização: 2026-06-08 (sessão 24 — Coreference Resolver)
 
 ---
 
@@ -292,6 +292,9 @@ murim_knowledge_base/
 | 90 | `AliasHit` dataclass + `detect_aliases()` — alias detection from context phrases | `app/processing/alias_detector.py` | ✅ Completo |
 | 91 | `aliases` field on `ChapterExtraction` + integrated into `ExtractEntitiesUseCase` | `app/core/use_cases/extract_entities.py` | ✅ Completo |
 | 92 | 17 alias detector tests (unit + integration) | `tests/test_alias_detector.py` | ✅ Completo |
+| 93 | `CoreferenceHit` dataclass + `resolve_coreferences()` — pronoun and title reference resolution | `app/processing/coreference_resolver.py` | ✅ Completo |
+| 94 | `coreferences` field on `ChapterExtraction` + integrated into `ExtractEntitiesUseCase` | `app/core/use_cases/extract_entities.py` | ✅ Completo |
+| 95 | 16 coreference resolver tests (unit + integration) | `tests/test_coreference_resolver.py` | ✅ Completo |
 
 ---
 
@@ -311,7 +314,7 @@ murim_knowledge_base/
 - [x] `POST /characters/{id}/embed` — gera embedding sob demanda
 - [x] `POST /characters/embed-all` — gera embeddings em lote
 - [x] Detector de aliases a partir de contexto ("also known as", "whose real name was", "formerly known as")
-- [ ] Co-referência ("he" → personagem anterior mencionado)
+- [x] Co-referência básica ("he", "she", "the elder" → personagem anterior mencionado)
 - [ ] Modelo spaCy customizado / fine-tuned para Murim
 
 ### Scrapers
@@ -400,7 +403,7 @@ murim_knowledge_base/
 
 3. ~~**Detector de aliases por contexto** — "also known as", "whose real name was", "formerly known as" → extrai aliases automaticamente.~~ **CONCLUÍDO na sessão 21.**
 
-4. **Co-referência básica** — Resolver pronomes ("he", "she", "the elder") → personagem anterior na mesma cena.
+4. ~~**Co-referência básica** — Resolver pronomes ("he", "she", "the elder") → personagem anterior na mesma cena.~~ **CONCLUÍDO na sessão 24.**
 
 ### 🟢 Prioridade BAIXA (UX e qualidade)
 
@@ -912,6 +915,32 @@ curl -X POST http://localhost:8000/api/v1/scrape \
 - `pyproject.toml`, `tests/test_archetype.py`
 
 **Resultado:** 68/68 testes passando. Ruff clean. Mypy clean. **Commit:** `42a10f8`.
+
+### Sessão 24 (Coreference Resolver)
+
+**Adicionado:**
+- **Módulo**: `CoreferenceHit` dataclass + `resolve_coreferences()` — resolução de pronomes ("he", "she", "him", "her", "his", "herself") e referências por título ("the elder", "the sect master") para o personagem mais recente na mesma cena (`app/processing/coreference_resolver.py`)
+  - Suporta pronomes: subject, object, possessive e reflexive
+  - Referências por título: mapeia "the elder" → personagem com título "Elder"
+  - Títulos genéricos ("elder", "master", "senior") resolvem para o personagem mais recente
+  - Linear scan com tracking de personagem atual por posição no texto
+  - Confidence scoring (0.6 para pronomes, 0.7 para títulos)
+- **Integração**: `coreferences: list[CoreferenceHit]` adicionado ao `ChapterExtraction` dataclass
+- **Pipeline**: `resolve_coreferences()` integrado ao `ExtractEntitiesUseCase.execute()`
+- **Exports**: `CoreferenceHit` e `resolve_coreferences` exportados via `app/processing/__init__.py`
+- **Tests (16 new)**:
+  - Unit: empty text, None text, no mentions, pronoun he/she/his resolution, title references (the elder, the sect master), multiple characters tracking, pronoun between characters, empty text with mentions, confidence scores, no pronouns, position tracking, relative pronouns (the younger), batch resolution
+  - Integration: already included in existing extract_entities tests via pipeline
+
+**Arquivos criados:**
+- `app/processing/coreference_resolver.py`
+- `tests/test_coreference_resolver.py`
+
+**Arquivos modificados:**
+- `app/core/use_cases/extract_entities.py` — `coreferences` field + integration
+- `app/processing/__init__.py` — exports CoreferenceHit, resolve_coreferences
+
+**Resultado:** 84/84 testes passando. Ruff clean. Mypy clean. **Commit:** pendente.
 
 ---
 
