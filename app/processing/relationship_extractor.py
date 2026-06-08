@@ -4,6 +4,7 @@ Extract character↔character relationships from prose.
 Uses the pattern catalogue in :data:`app.processing.patterns.RELATIONSHIP_PHRASES`
 combined with a simple "X of the Y" / "X of Y" / "Y's master X" fallback.
 """
+
 from __future__ import annotations
 
 import re
@@ -28,40 +29,76 @@ class RelationshipHit:
 
 # Pronouns and generic words that should never be a relationship endpoint
 _BAD_ENDPOINTS = {
-    "he", "she", "it", "they", "him", "her", "them",
-    "his", "their", "its",
-    "this", "that", "these", "those",
-    "the", "a", "an", "is", "was", "and", "or", "but",
+    "he",
+    "she",
+    "it",
+    "they",
+    "him",
+    "her",
+    "them",
+    "his",
+    "their",
+    "its",
+    "this",
+    "that",
+    "these",
+    "those",
+    "the",
+    "a",
+    "an",
+    "is",
+    "was",
+    "and",
+    "or",
+    "but",
 }
 
 
 # Heuristics for "X's <rel> Y" possessives — note the corrected order:
 #   "Di Shi's master is Qing Yan" → source="Di Shi", target="Qing Yan"
 _POSSESSIVE_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
-    ("master", re.compile(
-        r"(?P<s>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})'s\s+master\s+(?:is|was)\s+(?P<t>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})",
-        re.IGNORECASE,
-    )),
-    ("disciple", re.compile(
-        r"(?P<s>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})'s\s+disciple\s+(?:is|was)\s+(?P<t>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})",
-        re.IGNORECASE,
-    )),
-    ("senior_brother", re.compile(
-        r"(?P<s>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})'s\s+senior\s+brother\s+(?:is|was)\s+(?P<t>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})",
-        re.IGNORECASE,
-    )),
-    ("junior_brother", re.compile(
-        r"(?P<s>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})'s\s+junior\s+brother\s+(?:is|was)\s+(?P<t>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})",
-        re.IGNORECASE,
-    )),
-    ("father", re.compile(
-        r"(?P<s>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})'s\s+father\s+(?:is|was)\s+(?P<t>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})",
-        re.IGNORECASE,
-    )),
-    ("son", re.compile(
-        r"(?P<s>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})'s\s+son\s+(?:is|was)\s+(?P<t>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})",
-        re.IGNORECASE,
-    )),
+    (
+        "master",
+        re.compile(
+            r"(?P<s>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})'s\s+master\s+(?:is|was)\s+(?P<t>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "disciple",
+        re.compile(
+            r"(?P<s>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})'s\s+disciple\s+(?:is|was)\s+(?P<t>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "senior_brother",
+        re.compile(
+            r"(?P<s>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})'s\s+senior\s+brother\s+(?:is|was)\s+(?P<t>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "junior_brother",
+        re.compile(
+            r"(?P<s>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})'s\s+junior\s+brother\s+(?:is|was)\s+(?P<t>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "father",
+        re.compile(
+            r"(?P<s>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})'s\s+father\s+(?:is|was)\s+(?P<t>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "son",
+        re.compile(
+            r"(?P<s>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})'s\s+son\s+(?:is|was)\s+(?P<t>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})",
+            re.IGNORECASE,
+        ),
+    ),
 ]
 
 
@@ -116,7 +153,7 @@ def _clean(value: str) -> str:
     cleaned = " ".join(value.split())
     for prefix in ("the ", "a ", "an "):
         if cleaned.lower().startswith(prefix):
-            cleaned = cleaned[len(prefix):]
+            cleaned = cleaned[len(prefix) :]
             break
     return cleaned.strip()
 

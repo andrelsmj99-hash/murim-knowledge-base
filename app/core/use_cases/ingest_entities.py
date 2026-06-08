@@ -10,6 +10,7 @@ Responsibilities:
 
 This is the natural second half of the NLP pipeline.
 """
+
 from __future__ import annotations
 
 import logging
@@ -116,8 +117,8 @@ class IngestEntitiesUseCase:
             if existing is not None:
                 # Bump frequency
                 existing.appearance_frequency = (
-                    (existing.appearance_frequency or 0) + cand.appearance_frequency
-                )
+                    existing.appearance_frequency or 0
+                ) + cand.appearance_frequency
                 for title_str in cand.titles:
                     if title_str not in existing.titles:
                         existing.titles.append(title_str)
@@ -175,9 +176,7 @@ class IngestEntitiesUseCase:
             if existing is not None:
                 result.location_ids.append(existing.id)
             else:
-                loc = self.uow.locations.upsert(
-                    Location(name=match.canonical, type=match.type)
-                )
+                loc = self.uow.locations.upsert(Location(name=match.canonical, type=match.type))
                 result.new_locations += 1
                 result.location_ids.append(loc.id)
 
@@ -192,8 +191,12 @@ class IngestEntitiesUseCase:
         for rel in extraction.relationships:
             src_key = canonicalize_name(rel.source)
             tgt_key = canonicalize_name(rel.target)
-            src_id = char_index.get(src_key) or self._ensure_character(src_key, rel.source, result=result)
-            tgt_id = char_index.get(tgt_key) or self._ensure_character(tgt_key, rel.target, result=result)
+            src_id = char_index.get(src_key) or self._ensure_character(
+                src_key, rel.source, result=result
+            )
+            tgt_id = char_index.get(tgt_key) or self._ensure_character(
+                tgt_key, rel.target, result=result
+            )
             if src_id == tgt_id:
                 continue
 
@@ -203,7 +206,9 @@ class IngestEntitiesUseCase:
                 if char is not None:
                     char.relationships.setdefault(rel.relationship_type, []).append(tgt_id)
 
-    def _ensure_character(self, canonical_key: str, surface: str, *, result: IngestEntitiesResult) -> str:
+    def _ensure_character(
+        self, canonical_key: str, surface: str, *, result: IngestEntitiesResult
+    ) -> str:
         """Create a placeholder character on-the-fly when only seen in a relationship."""
         existing = self.uow.characters.get_by_canonical_name(canonical_key)
         if existing is not None:

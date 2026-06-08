@@ -1,6 +1,7 @@
 """
 Domain entity for the Novel aggregate (independent of ORM).
 """
+
 from __future__ import annotations
 
 import uuid as uuid_module

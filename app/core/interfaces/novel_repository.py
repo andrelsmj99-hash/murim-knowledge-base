@@ -1,6 +1,7 @@
 """
 Novel and Chapter repository contract.
 """
+
 from __future__ import annotations
 
 import abc

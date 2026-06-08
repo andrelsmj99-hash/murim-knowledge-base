@@ -2,6 +2,7 @@
 Tests for the alias detector — extracts aliases from context phrases
 like "also known as", "whose real name was", "formerly known as".
 """
+
 from app.processing.alias_detector import detect_aliases
 
 
@@ -27,13 +28,17 @@ class TestAliasDetector:
         text = "He was formerly known as the Demon King before his reincarnation."
         hits = detect_aliases(text)
         assert len(hits) >= 1
-        assert any("demon king" in h.alias.lower() or "demon king" in h.real_name.lower() for h in hits)
+        assert any(
+            "demon king" in h.alias.lower() or "demon king" in h.real_name.lower() for h in hits
+        )
 
     def test_once_called(self):
         text = "The old man was once called the Sword Saint."
         hits = detect_aliases(text)
         assert len(hits) >= 1
-        assert any("sword saint" in h.alias.lower() or "sword saint" in h.real_name.lower() for h in hits)
+        assert any(
+            "sword saint" in h.alias.lower() or "sword saint" in h.real_name.lower() for h in hits
+        )
 
     def test_born_as(self):
         text = "Born as Li Tian, he later became known as the Heavenly Sovereign."

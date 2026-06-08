@@ -10,6 +10,7 @@ Example::
     with UnitOfWork() as uow:
         run_scrape("generic", "coiling-dragon", index_url=..., base_url=..., uow=uow)
 """
+
 from __future__ import annotations
 
 import logging
@@ -47,9 +48,7 @@ def register_scraper(source_name: str, scraper_cls: type[BaseScraper]) -> None:
 def get_scraper_class(source_name: str) -> type[BaseScraper]:
     key = source_name.lower()
     if key not in _REGISTRY:
-        raise KeyError(
-            f"Unknown source '{source_name}'. Available: {sorted(_REGISTRY)}"
-        )
+        raise KeyError(f"Unknown source '{source_name}'. Available: {sorted(_REGISTRY)}")
     return _REGISTRY[key]
 
 
@@ -67,9 +66,7 @@ def make_scraper(
     """Instantiate a scraper, optionally wiring it to a DB-bound use case."""
     cls = get_scraper_class(source)
     if uow is not None:
-        kwargs.setdefault(
-            "ingest_use_case", IngestChapterUseCase(uow)
-        )
+        kwargs.setdefault("ingest_use_case", IngestChapterUseCase(uow))
     return cls(novel_slug=novel_slug, **kwargs)
 
 

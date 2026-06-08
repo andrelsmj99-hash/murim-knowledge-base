@@ -1,6 +1,7 @@
 """
 Character models for the knowledge base.
 """
+
 import uuid
 
 from sqlalchemy import (
@@ -21,6 +22,7 @@ from .base import Base
 # pgvector is optional - only used with PostgreSQL
 try:
     from pgvector.sqlalchemy import Vector as PgVector
+
     PGVECTOR_AVAILABLE = True
 except ImportError:
     PGVECTOR_AVAILABLE = False
@@ -32,6 +34,7 @@ class EmbeddingVector(TypeDecorator):
     Custom type that uses pgvector.Vector on PostgreSQL and Text on SQLite.
     Stores embeddings as JSON arrays of floats.
     """
+
     impl = Text
     cache_ok = True
 
@@ -49,6 +52,7 @@ class EmbeddingVector(TypeDecorator):
     def process_result_value(self, value, dialect):
         return value
 
+
 # ---------------------------------------------------------------------------
 # Association tables (many-to-many)
 # ---------------------------------------------------------------------------
@@ -56,15 +60,35 @@ class EmbeddingVector(TypeDecorator):
 character_locations = Table(
     "character_locations",
     Base.metadata,
-    Column("character_id", UUID(as_uuid=True), ForeignKey("characters.id", ondelete="CASCADE"), primary_key=True),
-    Column("location_id", UUID(as_uuid=True), ForeignKey("locations.id", ondelete="CASCADE"), primary_key=True),
+    Column(
+        "character_id",
+        UUID(as_uuid=True),
+        ForeignKey("characters.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    Column(
+        "location_id",
+        UUID(as_uuid=True),
+        ForeignKey("locations.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
 )
 
 character_organizations = Table(
     "character_organizations",
     Base.metadata,
-    Column("character_id", UUID(as_uuid=True), ForeignKey("characters.id", ondelete="CASCADE"), primary_key=True),
-    Column("organization_id", UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), primary_key=True),
+    Column(
+        "character_id",
+        UUID(as_uuid=True),
+        ForeignKey("characters.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    Column(
+        "organization_id",
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
     Column("role", String(100), nullable=True),  # e.g., "Sect Leader", "Elder", "Disciple"
 )
 
@@ -73,25 +97,39 @@ character_organizations = Table(
 # Character ↔ Character relationships
 # ---------------------------------------------------------------------------
 
+
 class Relationship(Base):
     __tablename__ = "relationships"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    character_id = Column(UUID(as_uuid=True), ForeignKey("characters.id", ondelete="CASCADE"), nullable=False)
-    related_character_id = Column(UUID(as_uuid=True), ForeignKey("characters.id", ondelete="CASCADE"), nullable=False)
-    relationship_type = Column(String(100), nullable=False)  # e.g., "master", "disciple", "rival", "ally"
+    character_id = Column(
+        UUID(as_uuid=True), ForeignKey("characters.id", ondelete="CASCADE"), nullable=False
+    )
+    related_character_id = Column(
+        UUID(as_uuid=True), ForeignKey("characters.id", ondelete="CASCADE"), nullable=False
+    )
+    relationship_type = Column(
+        String(100), nullable=False
+    )  # e.g., "master", "disciple", "rival", "ally"
 
-    character = relationship("Character", foreign_keys=[character_id], back_populates="relationships")
-    related_character = relationship("Character", foreign_keys=[related_character_id], back_populates="related_to")
+    character = relationship(
+        "Character", foreign_keys=[character_id], back_populates="relationships"
+    )
+    related_character = relationship(
+        "Character", foreign_keys=[related_character_id], back_populates="related_to"
+    )
 
     __table_args__ = (
-        UniqueConstraint("character_id", "related_character_id", "relationship_type", name="uix_relationship"),
+        UniqueConstraint(
+            "character_id", "related_character_id", "relationship_type", name="uix_relationship"
+        ),
     )
 
 
 # ---------------------------------------------------------------------------
 # Character
 # ---------------------------------------------------------------------------
+
 
 class Character(Base):
     __tablename__ = "characters"
@@ -124,7 +162,9 @@ class Character(Base):
 
     # Many-to-many
     locations = relationship("Location", secondary=character_locations, back_populates="characters")
-    organizations = relationship("Organization", secondary=character_organizations, back_populates="members")
+    organizations = relationship(
+        "Organization", secondary=character_organizations, back_populates="members"
+    )
 
     # Embedding for semantic search (JSON-serialized float vector)
     # Uses pgvector.Vector on PostgreSQL, Text on SQLite
@@ -134,20 +174,21 @@ class Character(Base):
     # Character archetype classification (JSON-serialized)
     archetype = Column(Text, nullable=True)
 
-    __table_args__ = (
-        UniqueConstraint("canonical_name", name="uix_canonical_name"),
-    )
+    __table_args__ = (UniqueConstraint("canonical_name", name="uix_canonical_name"),)
 
 
 # ---------------------------------------------------------------------------
 # Alias / Title
 # ---------------------------------------------------------------------------
 
+
 class Alias(Base):
     __tablename__ = "aliases"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    character_id = Column(UUID(as_uuid=True), ForeignKey("characters.id", ondelete="CASCADE"), nullable=False)
+    character_id = Column(
+        UUID(as_uuid=True), ForeignKey("characters.id", ondelete="CASCADE"), nullable=False
+    )
     alias_type = Column(String(100), nullable=False)  # "Alias", "Nickname", "Demon Name"
     alias_value = Column(String(255), index=True, nullable=False)
 
@@ -160,7 +201,9 @@ class Title(Base):
     __tablename__ = "titles"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    character_id = Column(UUID(as_uuid=True), ForeignKey("characters.id", ondelete="CASCADE"), nullable=False)
+    character_id = Column(
+        UUID(as_uuid=True), ForeignKey("characters.id", ondelete="CASCADE"), nullable=False
+    )
     title = Column(String(255), index=True, nullable=False)
 
     character = relationship("Character", back_populates="titles")

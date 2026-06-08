@@ -12,6 +12,7 @@ Strategy:
 2. Otherwise, rapidfuzz-based string similarity above a threshold clusters
    candidates together. Threshold defaults to 85.
 """
+
 from __future__ import annotations
 
 import logging
@@ -99,7 +100,8 @@ class DeduplicateCharactersUseCase:
             canonical_name=primary.canonical_name,
             gender=primary.gender or _first_truthy(c.gender for c in cluster),
             description=primary.description or _first_truthy(c.description for c in cluster),
-            first_appearance=primary.first_appearance or _first_truthy(c.first_appearance for c in cluster),
+            first_appearance=primary.first_appearance
+            or _first_truthy(c.first_appearance for c in cluster),
             appearance_frequency=sum(c.appearance_frequency or 0 for c in cluster),
             aliases=list(primary.aliases),
             titles=list(primary.titles),

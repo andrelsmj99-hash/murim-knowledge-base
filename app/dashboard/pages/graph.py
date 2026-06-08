@@ -1,6 +1,7 @@
 """
 Visualizacao do Grafo de Conhecimento (NetworkX -> Plotly) com dark mode.
 """
+
 from __future__ import annotations
 
 import plotly.graph_objects as go
@@ -36,14 +37,19 @@ def show() -> None:
 
     kinds = list({n["kind"] for n in nodes})
     with col_filter:
-        selected_kinds = st.multiselect("Filtrar por tipo", kinds, default=kinds, key="graph_filter")
+        selected_kinds = st.multiselect(
+            "Filtrar por tipo", kinds, default=kinds, key="graph_filter"
+        )
 
     filtered_nodes = [n for n in nodes if n["kind"] in selected_kinds]
     filtered_ids = {n["id"] for n in filtered_nodes}
-    filtered_edges = [e for e in edges if e["source"] in filtered_ids and e["target"] in filtered_ids]
+    filtered_edges = [
+        e for e in edges if e["source"] in filtered_ids and e["target"] in filtered_ids
+    ]
 
     try:
         import networkx as nx
+
         graph = nx.Graph()
         for n in filtered_nodes:
             graph.add_node(n["id"], kind=n["kind"])
@@ -97,7 +103,8 @@ def show() -> None:
     font_color = "#fafafa" if bg_color == "#0e1117" else "#262730"
 
     node_trace = go.Scatter(
-        x=node_x, y=node_y,
+        x=node_x,
+        y=node_y,
         mode="markers+text",
         text=node_text,
         textposition="top center",
@@ -123,4 +130,7 @@ def show() -> None:
     cols = st.columns(len(color_map))
     for idx, (kind, color) in enumerate(color_map.items()):
         with cols[idx]:
-            st.markdown(f"<span style='color:{color};font-size:18px'>●</span> {kind}", unsafe_allow_html=True)
+            st.markdown(
+                f"<span style='color:{color};font-size:18px'>●</span> {kind}",
+                unsafe_allow_html=True,
+            )

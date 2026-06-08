@@ -7,6 +7,7 @@ Examples::
     "Senior Brother Yi"  -> title="Senior Brother", name="Yi"
     "Young Master Wei"   -> title="Young Master",  name="Wei"
 """
+
 from __future__ import annotations
 
 import re
@@ -26,7 +27,9 @@ class TitleMatch:
 # Compile a single big regex that catches "<Title> <Name>" at word boundaries
 _TITLE_KEYS_BY_LENGTH = sorted(TITLE_LOOKUP.keys(), key=len, reverse=True)
 _TITLE_REGEX = re.compile(
-    r"\b(" + "|".join(re.escape(t) for t in _TITLE_KEYS_BY_LENGTH) + r")\s+(?P<name>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})\b",
+    r"\b("
+    + "|".join(re.escape(t) for t in _TITLE_KEYS_BY_LENGTH)
+    + r")\s+(?P<name>[A-Z][\w']+(?:\s+[A-Z][\w']+){0,2})\b",
     re.IGNORECASE,
 )
 

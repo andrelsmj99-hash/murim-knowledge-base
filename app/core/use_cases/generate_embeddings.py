@@ -38,7 +38,9 @@ class GenerateEmbeddingsUseCase:
     def execute(self, character_id: str) -> EmbeddingResult:
         character = self.uow.characters.get(character_id)
         if character is None:
-            return EmbeddingResult(character_id=character_id, success=False, error="Character not found")
+            return EmbeddingResult(
+                character_id=character_id, success=False, error="Character not found"
+            )
 
         text = character.name
         if character.description:
@@ -46,7 +48,11 @@ class GenerateEmbeddingsUseCase:
 
         vector = self.encoder(text)
         if vector is None:
-            return EmbeddingResult(character_id=character_id, success=False, error="Encoder failed to produce embedding")
+            return EmbeddingResult(
+                character_id=character_id,
+                success=False,
+                error="Encoder failed to produce embedding",
+            )
 
         blob = json.dumps(vector)
         self.uow.characters.set_embedding(character_id, blob)
@@ -63,7 +69,11 @@ class GenerateEmbeddingsUseCase:
                 continue
             result = self.execute(c.id)
             results.append(result)
-        logger.info("Generated embeddings for %d/%d characters", sum(1 for r in results if r.success), len(results))
+        logger.info(
+            "Generated embeddings for %d/%d characters",
+            sum(1 for r in results if r.success),
+            len(results),
+        )
         return GenerateEmbeddingsResult(results=results)
 
 

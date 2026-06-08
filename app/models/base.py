@@ -5,6 +5,7 @@ Uses :class:`app.utils.config.settings` as the single source of truth for the
 database URL, removing duplication with ``os.getenv`` and ensuring consistency
 across the application (including Alembic).
 """
+
 from collections.abc import Generator
 
 from sqlalchemy import create_engine

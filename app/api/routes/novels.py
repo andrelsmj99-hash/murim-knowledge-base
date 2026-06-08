@@ -1,6 +1,7 @@
 """
 /novels and /novels/{id}/chapters routes.
 """
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -33,7 +34,9 @@ def list_novels(
     uow: UnitOfWork = Depends(get_uow),
 ) -> Page:
     repo = _uow_novels(uow)
-    items: list[NovelRead] = [NovelRead.model_validate(n) for n in repo.list(limit=limit, offset=offset)]
+    items: list[NovelRead] = [
+        NovelRead.model_validate(n) for n in repo.list(limit=limit, offset=offset)
+    ]
     return Page(items=items, meta=PageMeta(total=repo.count(), limit=limit, offset=offset))
 
 

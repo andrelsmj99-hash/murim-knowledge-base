@@ -12,6 +12,7 @@ This scraper extracts:
 - Series status
 - Associated translation links
 """
+
 from __future__ import annotations
 
 import logging
@@ -124,4 +125,3 @@ class NovelUpdatesScraper(BaseScraper):
             "NovelUpdates does not host chapter content. "
             "Use a content scraper (e.g. NovelBinScraper) for chapter content."
         )
-

@@ -1,6 +1,7 @@
 """
 Character archetype domain entities.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -71,4 +72,3 @@ __all__ = [
     "PersonalityTrait",
     "CharacterArchetype",
 ]
-

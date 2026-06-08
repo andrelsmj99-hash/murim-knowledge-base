@@ -1,6 +1,7 @@
 """
 Use cases for character archetype classification.
 """
+
 from __future__ import annotations
 
 from app.core.entities import CharacterArchetype

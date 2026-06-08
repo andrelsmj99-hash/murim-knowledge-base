@@ -7,6 +7,7 @@ Responsibilities:
 - persist the chapter and commit the transaction
 - return a small :class:`IngestResult` summarizing what happened
 """
+
 from __future__ import annotations
 
 import logging

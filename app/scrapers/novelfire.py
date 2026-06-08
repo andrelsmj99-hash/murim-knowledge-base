@@ -4,6 +4,7 @@ NovelFire (novelfire.net) dedicated scraper.
 NovelFire is a popular aggregator for translated web-novels including Murim/Wuxia/Xianxia.
 This scraper uses configurable CSS selectors with sensible defaults for the site's structure.
 """
+
 from __future__ import annotations
 
 import logging
@@ -112,7 +113,9 @@ class NovelFireScraper(BaseScraper):
 
         container = soup.select_one(self.selectors["chapter_list_container"])
         if not container:
-            logger.warning("No chapter list container found for %s at %s", self.novel_slug, self.index_url)
+            logger.warning(
+                "No chapter list container found for %s at %s", self.novel_slug, self.index_url
+            )
             # Fallback: try finding any links that look like chapters
             container = soup
 
@@ -151,12 +154,16 @@ class NovelFireScraper(BaseScraper):
         soup = _parse(response.text)
 
         # Remove noise elements
-        for tag in soup.select("script, style, ins, iframe, .ads, .advertisement, .ad-block, .adsbygoogle"):
+        for tag in soup.select(
+            "script, style, ins, iframe, .ads, .advertisement, .ad-block, .adsbygoogle"
+        ):
             tag.decompose()
 
         content_el = soup.select_one(self.selectors["chapter_content"])
         if content_el is None:
-            logger.warning("No content found at %s using selector %s", url, self.selectors["chapter_content"])
+            logger.warning(
+                "No content found at %s using selector %s", url, self.selectors["chapter_content"]
+            )
             return None
 
         text = content_el.get_text("\n", strip=True)

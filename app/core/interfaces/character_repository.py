@@ -1,6 +1,7 @@
 """
 Character repository contract.
 """
+
 from __future__ import annotations
 
 import abc
@@ -29,7 +30,15 @@ class ICharacterRepository(IRepository[Character], abc.ABC):
         """Return an existing character matched by ``canonical_name`` or add it."""
 
     @abc.abstractmethod
-    def update(self, character_id: str, *, name: str | None = None, gender: str | None = None, description: str | None = None, first_appearance: str | None = None) -> Character | None:
+    def update(
+        self,
+        character_id: str,
+        *,
+        name: str | None = None,
+        gender: str | None = None,
+        description: str | None = None,
+        first_appearance: str | None = None,
+    ) -> Character | None:
         """Partial update of a character's scalar fields. Returns updated entity or None if not found."""
 
     @abc.abstractmethod
@@ -53,7 +62,9 @@ class ICharacterRepository(IRepository[Character], abc.ABC):
         """Remove a character-location association. Returns True if unlinked, False if not found."""
 
     @abc.abstractmethod
-    def link_organization(self, character_id: str, organization_id: str, role: str | None = None) -> bool:
+    def link_organization(
+        self, character_id: str, organization_id: str, role: str | None = None
+    ) -> bool:
         """Associate a character with an organization. Returns True if linked, False if not found."""
 
     @abc.abstractmethod
@@ -77,9 +88,7 @@ class ICharacterRepository(IRepository[Character], abc.ABC):
         """Remove a specific relationship. Returns True if removed, False if not found."""
 
     @abc.abstractmethod
-    def search_by_embedding(
-        self, query_vec: list[float], *, limit: int = 20
-    ) -> list[Character]:
+    def search_by_embedding(self, query_vec: list[float], *, limit: int = 20) -> list[Character]:
         """
         Search characters by vector similarity.
         Uses pgvector HNSW index when available (PostgreSQL), falls back to in-Python cosine.

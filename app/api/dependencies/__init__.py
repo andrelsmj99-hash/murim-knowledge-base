@@ -4,6 +4,7 @@ FastAPI dependency providers.
 Wraps the UnitOfWork in a request-scoped lifecycle and offers a lazy
 sentence-transformers encoder so it is only loaded when /search is hit.
 """
+
 from __future__ import annotations
 
 import logging

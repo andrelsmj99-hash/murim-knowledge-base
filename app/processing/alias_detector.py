@@ -11,6 +11,7 @@ Recognises patterns like:
 * "called <alias>"
 * "named <alias>"
 """
+
 from __future__ import annotations
 
 import re
@@ -48,8 +49,7 @@ _ALIAS_PATTERNS: list[tuple[re.Pattern[str], str, str, float]] = [
         re.compile(
             rf"(?P<name>{_NAME})"
             r",?\s+also\s+known\s+as\s+"
-            rf"(?P<alias>{_NAME}(?:\s+of\s+{_NAME})?)"
-            + _BOUNDARY,
+            rf"(?P<alias>{_NAME}(?:\s+of\s+{_NAME})?)" + _BOUNDARY,
             re.IGNORECASE,
         ),
         "name",
@@ -61,8 +61,7 @@ _ALIAS_PATTERNS: list[tuple[re.Pattern[str], str, str, float]] = [
         re.compile(
             rf"(?P<name>{_NAME})"
             r",?\s+also\s+called\s+"
-            rf"(?P<alias>{_NAME})"
-            + _BOUNDARY,
+            rf"(?P<alias>{_NAME})" + _BOUNDARY,
             re.IGNORECASE,
         ),
         "name",
@@ -110,8 +109,7 @@ _ALIAS_PATTERNS: list[tuple[re.Pattern[str], str, str, float]] = [
         re.compile(
             rf"(?P<name>{_NAME})"
             r",?\s+formerly\s+known\s+as\s+"
-            rf"(?P<alias>{_NAME})"
-            + _BOUNDARY,
+            rf"(?P<alias>{_NAME})" + _BOUNDARY,
             re.IGNORECASE,
         ),
         "name",
@@ -123,8 +121,7 @@ _ALIAS_PATTERNS: list[tuple[re.Pattern[str], str, str, float]] = [
         re.compile(
             rf"(?P<name>{_NAME})"
             r",?\s+once\s+called\s+"
-            rf"(?P<alias>{_NAME})"
-            + _BOUNDARY,
+            rf"(?P<alias>{_NAME})" + _BOUNDARY,
             re.IGNORECASE,
         ),
         "name",
@@ -148,8 +145,7 @@ _ALIAS_PATTERNS: list[tuple[re.Pattern[str], str, str, float]] = [
         re.compile(
             rf"(?P<name>{_NAME})"
             r",?\s+known\s+as\s+"
-            rf"(?P<alias>{_NAME})"
-            + _BOUNDARY,
+            rf"(?P<alias>{_NAME})" + _BOUNDARY,
             re.IGNORECASE,
         ),
         "name",
@@ -161,8 +157,7 @@ _ALIAS_PATTERNS: list[tuple[re.Pattern[str], str, str, float]] = [
         re.compile(
             rf"(?P<name>{_NAME})"
             r"\s+called\s+"
-            rf"(?P<alias>{_NAME})"
-            + _BOUNDARY,
+            rf"(?P<alias>{_NAME})" + _BOUNDARY,
             re.IGNORECASE,
         ),
         "name",
@@ -174,8 +169,7 @@ _ALIAS_PATTERNS: list[tuple[re.Pattern[str], str, str, float]] = [
         re.compile(
             rf"(?P<name>{_NAME})"
             r"\s+named\s+"
-            rf"(?P<alias>{_NAME})"
-            + _BOUNDARY,
+            rf"(?P<alias>{_NAME})" + _BOUNDARY,
             re.IGNORECASE,
         ),
         "name",

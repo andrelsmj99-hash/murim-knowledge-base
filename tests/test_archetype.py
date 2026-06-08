@@ -1,6 +1,7 @@
 """
 Tests for character archetype classification feature.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -136,9 +137,7 @@ class TestClassifyCharacterArchetype:
         with pytest.raises(ValueError, match="Character .* not found"):
             uc.execute(str(uuid.uuid4()))
 
-    def test_classify_empty_corpus(
-        self, sqlite_uow, seed_novel_and_characters
-    ):
+    def test_classify_empty_corpus(self, sqlite_uow, seed_novel_and_characters):
         from app.core.use_cases import ClassifyCharacterArchetype
 
         char_repo = sqlite_uow.characters
@@ -263,16 +262,12 @@ class TestArchetypeEndpoints:
 
     def test_classify_nonexistent_character(self, api_client):
         client, _ = api_client
-        r = client.post(
-            "/api/v1/characters/00000000-0000-0000-0000-000000000000/classify"
-        )
+        r = client.post("/api/v1/characters/00000000-0000-0000-0000-000000000000/classify")
         assert r.status_code == 404
 
     def test_get_archetype_nonexistent_character(self, api_client):
         client, _ = api_client
-        r = client.get(
-            "/api/v1/characters/00000000-0000-0000-0000-000000000000/archetype"
-        )
+        r = client.get("/api/v1/characters/00000000-0000-0000-0000-000000000000/archetype")
         assert r.status_code == 404
 
     def test_classify_all_characters(self, api_client):

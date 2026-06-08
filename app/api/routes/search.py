@@ -8,6 +8,7 @@ Strategy (degrades gracefully when the embedding model is unavailable):
 3. If pgvector is available, use HNSW index for efficient O(log n) search.
 4. Return the top ``limit`` hits across all kinds, sorted by score desc.
 """
+
 from __future__ import annotations
 
 import logging
@@ -55,9 +56,7 @@ def search(
         for c in pgvector_hits:
             # pgvector returns cosine similarity as score (0-1)
             score = getattr(c, "_similarity", 0.0)
-            hits.append(
-                SearchHit(id=c.id, name=c.name, kind="character", score=score)
-            )
+            hits.append(SearchHit(id=c.id, name=c.name, kind="character", score=score))
 
     # Fallback: lexical search + in-Python cosine for characters not found via pgvector
     existing_ids = {h.id for h in hits}
@@ -68,6 +67,7 @@ def search(
         if query_vec is not None and c.embedding:
             try:
                 import json as _json
+
                 emb: list[float] = _json.loads(c.embedding)
                 score = _cosine(query_vec, emb)
             except Exception:  # noqa: BLE001
@@ -75,9 +75,7 @@ def search(
         else:
             if q_lower in c.canonical_name:
                 score = 2.0
-        hits.append(
-            SearchHit(id=c.id, name=c.name, kind="character", score=score)
-        )
+        hits.append(SearchHit(id=c.id, name=c.name, kind="character", score=score))
 
     # --- organizations ------------------------------------------------------
     for o in uow.organizations.search_by_name(q, limit=limit):

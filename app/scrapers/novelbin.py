@@ -4,6 +4,7 @@ NovelBin (novelbin.com / novelbin.me) dedicated scraper.
 NovelBin is one of the most popular aggregators for Murim / Wuxia / Xianxia
 web-novels. It hosts complete translated novels with a consistent HTML structure.
 """
+
 from __future__ import annotations
 
 import logging

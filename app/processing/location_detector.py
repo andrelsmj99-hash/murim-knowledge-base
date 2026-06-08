@@ -4,6 +4,7 @@ Detect location mentions in prose.
 Uses the curated list in :data:`app.processing.patterns.LOCATION_PATTERNS`
 combined with a generic ``"<Word>+<GeoType>"`` heuristic.
 """
+
 from __future__ import annotations
 
 import re

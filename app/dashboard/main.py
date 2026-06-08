@@ -18,6 +18,7 @@ Notes on architecture:
   To point at a remote server set the env var ``API_BASE_URL``.
 - ``st.set_page_config`` must be called *before* any other Streamlit command.
 """
+
 from __future__ import annotations
 
 import os

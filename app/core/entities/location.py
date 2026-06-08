@@ -1,6 +1,7 @@
 """
 Domain entity for a Location.
 """
+
 from __future__ import annotations
 
 import uuid as uuid_module

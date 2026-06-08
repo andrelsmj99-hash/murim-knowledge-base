@@ -6,6 +6,7 @@ Design:
 - Subclasses only implement `get_chapter_list` and `get_chapter_content`.
 - Progress is persisted as JSON so a scrape can be safely resumed.
 """
+
 from __future__ import annotations
 
 import abc
@@ -177,9 +178,7 @@ class BaseScraper(abc.ABC):
             if number is not None and number not in progress["processed_chapters"]:
                 progress["processed_chapters"].append(number)
             # Store last chapter without the (potentially huge) content
-            progress["last_chapter"] = {
-                k: v for k, v in chapter_data.items() if k != "content"
-            }
+            progress["last_chapter"] = {k: v for k, v in chapter_data.items() if k != "content"}
             with self.progress_file.open("w", encoding="utf-8") as fh:
                 json.dump(progress, fh, indent=2, ensure_ascii=False)
         except OSError as exc:

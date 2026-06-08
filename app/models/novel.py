@@ -1,6 +1,7 @@
 """
 Novel and Chapter models for the knowledge base.
 """
+
 import uuid
 
 from sqlalchemy import Column, ForeignKey, Integer, String, Text, UniqueConstraint
@@ -25,9 +26,7 @@ class Novel(Base):
     # Relationships
     chapters = relationship("Chapter", back_populates="novel", cascade="all, delete-orphan")
 
-    __table_args__ = (
-        UniqueConstraint('title', 'author', name='uix_novel_title_author'),
-    )
+    __table_args__ = (UniqueConstraint("title", "author", name="uix_novel_title_author"),)
 
 
 class Chapter(Base):
@@ -44,5 +43,5 @@ class Chapter(Base):
     novel = relationship("Novel", back_populates="chapters")
 
     __table_args__ = (
-        UniqueConstraint('novel_id', 'chapter_number', name='uix_chapter_novel_number'),
+        UniqueConstraint("novel_id", "chapter_number", name="uix_chapter_novel_number"),
     )

@@ -5,6 +5,7 @@ This is a pure CPU step — it does NOT touch the database. Persistence
 happens in :class:`IngestEntitiesUseCase`, which is the natural caller
 of this use case.
 """
+
 from __future__ import annotations
 
 import logging

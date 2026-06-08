@@ -1,6 +1,7 @@
 """
 SQLAlchemy implementation of :class:`IChapterRepository`.
 """
+
 from __future__ import annotations
 
 import builtins
@@ -54,7 +55,9 @@ class ChapterRepository(IChapterRepository):
     def count(self) -> int:
         return int(self.session.scalar(select(func.count(ChapterORM.id))) or 0)
 
-    def get_by_novel(self, novel_id: str, *, limit: int = 1000, offset: int = 0) -> builtins.list[Chapter]:
+    def get_by_novel(
+        self, novel_id: str, *, limit: int = 1000, offset: int = 0
+    ) -> builtins.list[Chapter]:
         stmt = (
             select(ChapterORM)
             .where(ChapterORM.novel_id == _to_uuid(novel_id))

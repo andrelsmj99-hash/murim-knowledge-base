@@ -1,6 +1,7 @@
 """
 SQLAlchemy adapters that implement the domain repository contracts.
 """
+
 from .chapter_repository import ChapterRepository
 from .character_repository import CharacterRepository
 from .location_repository import LocationRepository

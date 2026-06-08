@@ -1,6 +1,7 @@
 """
 Domain entities — pure dataclasses independent of the persistence layer.
 """
+
 from .archetype import CharacterArchetype, CombatStyle, NarrativeRole, PersonalityTrait
 from .character import Alias, Character
 from .character import Relationship as CharacterRelationship

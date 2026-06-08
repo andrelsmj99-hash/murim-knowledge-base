@@ -5,6 +5,7 @@ A repository owns a SQLAlchemy session and exposes entity-oriented
 operations. Repositories are not thread-safe and are intended to be
 instantiated per Unit-of-Work.
 """
+
 from __future__ import annotations
 
 import abc

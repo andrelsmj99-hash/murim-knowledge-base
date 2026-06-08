@@ -6,6 +6,7 @@ Subclasses (or configurations) just need to provide the two URL templates and
 CSS selectors — everything else (retry, rate-limit, progress, DB persistence)
 is handled by the base class and the injected use case.
 """
+
 from __future__ import annotations
 
 import logging
@@ -150,7 +151,9 @@ class GenericScraper(BaseScraper):
 
         content_el = soup.select_one(self.selectors["chapter_content"])
         if content_el is None:
-            logger.warning("No content found at %s using %s", url, self.selectors["chapter_content"])
+            logger.warning(
+                "No content found at %s using %s", url, self.selectors["chapter_content"]
+            )
             return None
 
         text = content_el.get_text("\n", strip=True)

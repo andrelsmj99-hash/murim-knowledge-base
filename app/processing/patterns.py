@@ -11,6 +11,7 @@ the code — we can:
 * Reuse the same patterns across the NER, title, organization and
   relationship extractors.
 """
+
 from __future__ import annotations
 
 import re
@@ -66,44 +67,118 @@ TITLES: list[TitlePattern] = [
     # Cultivation ranks
     TitlePattern("Mortal", "rank", ("common mortal",)),
     TitlePattern("Martial Artist", "rank", ("martial artist",)),
-    TitlePattern("Warrior", "rank",),
+    TitlePattern(
+        "Warrior",
+        "rank",
+    ),
     TitlePattern("Master", "rank", ("Grand Master", "GrandMaster")),
     TitlePattern("Grandmaster", "rank", ("Grand Master",)),
-    TitlePattern("Sage", "rank",),
-    TitlePattern("Saint", "rank",),
-    TitlePattern("Emperor", "rank",),
-    TitlePattern("Empress", "rank",),
+    TitlePattern(
+        "Sage",
+        "rank",
+    ),
+    TitlePattern(
+        "Saint",
+        "rank",
+    ),
+    TitlePattern(
+        "Emperor",
+        "rank",
+    ),
+    TitlePattern(
+        "Empress",
+        "rank",
+    ),
     TitlePattern("Progenitor", "rank", ("Ancestor",)),
-    TitlePattern("Ancestor", "rank",),
-    TitlePattern("Immortal", "rank",),
-    TitlePattern("True Immortal", "rank",),
-    TitlePattern("Golden Immortal", "rank",),
+    TitlePattern(
+        "Ancestor",
+        "rank",
+    ),
+    TitlePattern(
+        "Immortal",
+        "rank",
+    ),
+    TitlePattern(
+        "True Immortal",
+        "rank",
+    ),
+    TitlePattern(
+        "Golden Immortal",
+        "rank",
+    ),
     # Sect hierarchy / respect
     TitlePattern("Sect Leader", "rank", ("Sect Master", "SectMaster", "Patriarch")),
     TitlePattern("Elder", "rank", ("Grand Elder", "First Elder", "Elders")),
-    TitlePattern("Inner Disciple", "rank",),
-    TitlePattern("Outer Disciple", "rank",),
-    TitlePattern("Core Disciple", "rank",),
-    TitlePattern("Personal Disciple", "rank",),
-    TitlePattern("Pavilion Master", "rank",),
-    TitlePattern("Hall Master", "rank",),
-    TitlePattern("Peak Master", "rank",),
-    TitlePattern("Protector", "rank",),
-    TitlePattern("Protector of the Law", "rank",),
+    TitlePattern(
+        "Inner Disciple",
+        "rank",
+    ),
+    TitlePattern(
+        "Outer Disciple",
+        "rank",
+    ),
+    TitlePattern(
+        "Core Disciple",
+        "rank",
+    ),
+    TitlePattern(
+        "Personal Disciple",
+        "rank",
+    ),
+    TitlePattern(
+        "Pavilion Master",
+        "rank",
+    ),
+    TitlePattern(
+        "Hall Master",
+        "rank",
+    ),
+    TitlePattern(
+        "Peak Master",
+        "rank",
+    ),
+    TitlePattern(
+        "Protector",
+        "rank",
+    ),
+    TitlePattern(
+        "Protector of the Law",
+        "rank",
+    ),
     # Respect / family
-    TitlePattern("Senior", "respect", ("Senior Brother", "Senior Sister", "Senior Uncle", "Senior Aunt")),
+    TitlePattern(
+        "Senior", "respect", ("Senior Brother", "Senior Sister", "Senior Uncle", "Senior Aunt")
+    ),
     TitlePattern("Junior", "respect", ("Junior Brother", "Junior Sister")),
     TitlePattern("Young Master", "family", ("Young Lord", "Young Lady", "Young Miss")),
-    TitlePattern("Eldest Young Master", "family",),
-    TitlePattern("Second Young Master", "family",),
-    TitlePattern("Third Young Master", "family",),
+    TitlePattern(
+        "Eldest Young Master",
+        "family",
+    ),
+    TitlePattern(
+        "Second Young Master",
+        "family",
+    ),
+    TitlePattern(
+        "Third Young Master",
+        "family",
+    ),
     TitlePattern("Fairy", "respect", ("Fairy Sister", "Fairy Aunt", "Ice Fairy")),
     TitlePattern("Demon", "respect", ("Great Demon", "Heavenly Demon", "Demon King", "Demoness")),
     TitlePattern("Old Man", "respect", ("Old Lady", "Old Ancestor", "Old Monster")),
     TitlePattern("Lady", "family", ("Madam", "Matriarch")),
-    TitlePattern("Lord", "family",),
-    TitlePattern("Princess", "family",),
-    TitlePattern("Prince", "family",),
+    TitlePattern(
+        "Lord",
+        "family",
+    ),
+    TitlePattern(
+        "Princess",
+        "family",
+    ),
+    TitlePattern(
+        "Prince",
+        "family",
+    ),
 ]
 
 
@@ -156,10 +231,22 @@ ORG_PATTERNS: list[OrgPattern] = [
     OrgPattern("Heavenly Demon Cult", "Cult", ("Demon Cult", "Heavenly Demon", "Demon Sect")),
     OrgPattern("Righteous Alliance", "Alliance", ("Righteous Path", "Righteous Sect")),
     OrgPattern("Unholy Union", "Alliance", ("Unholy Path",)),
-    OrgPattern("Hidden Dragon Hall", "Hall",),
-    OrgPattern("Brocade Hall", "Hall",),
-    OrgPattern("Immortal Sword Pavilion", "Pavilion",),
-    OrgPattern("Plum Blossom Island", "Island",),
+    OrgPattern(
+        "Hidden Dragon Hall",
+        "Hall",
+    ),
+    OrgPattern(
+        "Brocade Hall",
+        "Hall",
+    ),
+    OrgPattern(
+        "Immortal Sword Pavilion",
+        "Pavilion",
+    ),
+    OrgPattern(
+        "Plum Blossom Island",
+        "Island",
+    ),
 ]
 
 
@@ -170,15 +257,36 @@ ORG_PATTERNS: list[OrgPattern] = [
 LOCATION_PATTERNS: list[LocationPattern] = [
     LocationPattern("Mount Hua", "Mountain", ("Mount Huashan",)),
     LocationPattern("Mount Kunlun", "Mountain", ("Kunlun Mountain",)),
-    LocationPattern("Mount Emei", "Mountain",),
-    LocationPattern("Wudang Mountain", "Mountain",),
-    LocationPattern("Central Plains", "Region",),
+    LocationPattern(
+        "Mount Emei",
+        "Mountain",
+    ),
+    LocationPattern(
+        "Wudang Mountain",
+        "Mountain",
+    ),
+    LocationPattern(
+        "Central Plains",
+        "Region",
+    ),
     LocationPattern("Northern Wasteland", "Region", ("Northern Border",)),
-    LocationPattern("Southern Wasteland", "Region",),
+    LocationPattern(
+        "Southern Wasteland",
+        "Region",
+    ),
     LocationPattern("Jianghu", "Region", ("Rivers and Lakes", "The Jianghu")),
-    LocationPattern("Imperial City", "City",),
-    LocationPattern("Heavenly Realm", "Realm",),
-    LocationPattern("Demon Realm", "Realm",),
+    LocationPattern(
+        "Imperial City",
+        "City",
+    ),
+    LocationPattern(
+        "Heavenly Realm",
+        "Realm",
+    ),
+    LocationPattern(
+        "Demon Realm",
+        "Realm",
+    ),
 ]
 
 
@@ -188,16 +296,52 @@ LOCATION_PATTERNS: list[LocationPattern] = [
 
 # (relationship_type, regex with two capture groups, group indices)
 _RELATIONSHIP_TEMPLATES: list[tuple[str, str, tuple[int, int]]] = [
-    ("master", r"(?P<s1>[\w\s]+?)\s+(?:is|was)\s+the\s+master\s+of\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| and|\s*$)", (1, 2)),
+    (
+        "master",
+        r"(?P<s1>[\w\s]+?)\s+(?:is|was)\s+the\s+master\s+of\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| and|\s*$)",
+        (1, 2),
+    ),
     ("master", r"(?P<s1>[\w\s]+?)'s\s+disciple\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| and|\s*$)", (1, 2)),
-    ("disciple", r"(?P<s1>[\w\s]+?)\s+(?:is|was)\s+(?:a|the)\s+disciple\s+of\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| and|\s*$)", (1, 2)),
-    ("senior_brother", r"(?P<s1>[\w\s]+?)\s+(?:is|was)\s+the\s+senior\s+brother\s+of\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| and|\s*$)", (1, 2)),
-    ("rival", r"(?P<s1>[\w\s]+?)\s+(?:is|was)\s+(?:a|the)\s+rival\s+of\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| and|\s*$)", (1, 2)),
-    ("enemy", r"(?P<s1>[\w\s]+?)\s+(?:is|was)\s+(?:a|the)\s+(?:sworn\s+)?enemy\s+of\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| and|\s*$)", (1, 2)),
-    ("ally", r"(?P<s1>[\w\s]+?)\s+(?:is|was)\s+(?:a|the)\s+ally\s+of\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| and|\s*$)", (1, 2)),
-    ("friend", r"(?P<s1>[\w\s]+?)\s+(?:is|was)\s+(?:a\s+)?friend\s+of\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| and|\s*$)", (1, 2)),
-    ("father", r"(?P<s1>[\w\s]+?)\s+(?:is|was)\s+the\s+father\s+of\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| and|\s*$)", (1, 2)),
-    ("parent", r"(?P<s1>[\w\s]+?)'s\s+(?:son|daughter)\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| and|\s*$)", (1, 2)),
+    (
+        "disciple",
+        r"(?P<s1>[\w\s]+?)\s+(?:is|was)\s+(?:a|the)\s+disciple\s+of\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| and|\s*$)",
+        (1, 2),
+    ),
+    (
+        "senior_brother",
+        r"(?P<s1>[\w\s]+?)\s+(?:is|was)\s+the\s+senior\s+brother\s+of\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| and|\s*$)",
+        (1, 2),
+    ),
+    (
+        "rival",
+        r"(?P<s1>[\w\s]+?)\s+(?:is|was)\s+(?:a|the)\s+rival\s+of\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| and|\s*$)",
+        (1, 2),
+    ),
+    (
+        "enemy",
+        r"(?P<s1>[\w\s]+?)\s+(?:is|was)\s+(?:a|the)\s+(?:sworn\s+)?enemy\s+of\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| and|\s*$)",
+        (1, 2),
+    ),
+    (
+        "ally",
+        r"(?P<s1>[\w\s]+?)\s+(?:is|was)\s+(?:a|the)\s+ally\s+of\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| and|\s*$)",
+        (1, 2),
+    ),
+    (
+        "friend",
+        r"(?P<s1>[\w\s]+?)\s+(?:is|was)\s+(?:a\s+)?friend\s+of\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| and|\s*$)",
+        (1, 2),
+    ),
+    (
+        "father",
+        r"(?P<s1>[\w\s]+?)\s+(?:is|was)\s+the\s+father\s+of\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| and|\s*$)",
+        (1, 2),
+    ),
+    (
+        "parent",
+        r"(?P<s1>[\w\s]+?)'s\s+(?:son|daughter)\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| and|\s*$)",
+        (1, 2),
+    ),
 ]
 
 RELATIONSHIP_PHRASES: list[RelationshipPhrase] = [

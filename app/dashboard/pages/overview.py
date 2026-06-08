@@ -1,6 +1,7 @@
 """
 Visão Geral — métricas, cards de estatísticas e resumo dos últimos dados.
 """
+
 from __future__ import annotations
 
 import time
@@ -101,7 +102,14 @@ def show() -> None:
                 region = st.text_input("Região (opcional)", key="qa_loc_region")
                 if st.form_submit_button("Adicionar") and name:
                     try:
-                        post("api/v1/locations", json={"name": name, "type": loc_type or "Generic", "region": region or None})
+                        post(
+                            "api/v1/locations",
+                            json={
+                                "name": name,
+                                "type": loc_type or "Generic",
+                                "region": region or None,
+                            },
+                        )
                         st.success("Localização adicionada!")
                         time.sleep(0.5)
                         st.rerun()
@@ -123,8 +131,12 @@ def show() -> None:
                 data = get("api/v1/novels", params={"limit": 10})
                 items = data.get("items", [])
                 if items:
-                    _render_table(items, ["title", "author", "total_chapters"], ["Título", "Autor", "Chap."])
-                    _export(items, "novels", ["title", "author", "total_chapters", "language", "genre"])
+                    _render_table(
+                        items, ["title", "author", "total_chapters"], ["Título", "Autor", "Chap."]
+                    )
+                    _export(
+                        items, "novels", ["title", "author", "total_chapters", "language", "genre"]
+                    )
                 else:
                     st.info("Nenhuma novel cadastrada.")
             except Exception:
@@ -135,8 +147,16 @@ def show() -> None:
                 data = get("api/v1/characters", params={"limit": 10})
                 items = data.get("items", [])
                 if items:
-                    _render_table(items, ["name", "canonical_name", "appearance_frequency"], ["Nome", "Canonical", "Freq."])
-                    _export(items, "characters", ["name", "canonical_name", "appearance_frequency", "gender"])
+                    _render_table(
+                        items,
+                        ["name", "canonical_name", "appearance_frequency"],
+                        ["Nome", "Canonical", "Freq."],
+                    )
+                    _export(
+                        items,
+                        "characters",
+                        ["name", "canonical_name", "appearance_frequency", "gender"],
+                    )
                 else:
                     st.info("Nenhum personagem cadastrado.")
             except Exception:
@@ -172,7 +192,11 @@ def _render_graph_summary() -> None:
         graph_info = get("api/v1/graph")
         stats = graph_info.get("stats", {})
         labels = ["Characters", "Organizations", "Locations"]
-        values = [stats.get("characters", 0), stats.get("organizations", 0), stats.get("locations", 0)]
+        values = [
+            stats.get("characters", 0),
+            stats.get("organizations", 0),
+            stats.get("locations", 0),
+        ]
         fig = px.pie(names=labels, values=values, hole=0.4, title="Nós no Grafo")
         fig.update_layout(height=400)
         st.plotly_chart(fig, use_container_width=True, key="graph_summary_pie")
@@ -184,7 +208,9 @@ def _render_table(items, keys, labels):
     if not items:
         st.info("Sem dados.")
         return
-    rows = [{label: item.get(k, "") for k, label in zip(keys, labels, strict=False)} for item in items]
+    rows = [
+        {label: item.get(k, "") for k, label in zip(keys, labels, strict=False)} for item in items
+    ]
     st.dataframe(pd.DataFrame(rows), use_container_width=True)
 
 

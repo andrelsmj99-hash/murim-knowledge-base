@@ -1,6 +1,7 @@
 """
 Organization models for the knowledge base.
 """
+
 import uuid
 
 from sqlalchemy import Column, ForeignKey, String, Text, UniqueConstraint
@@ -17,9 +18,15 @@ class OrganizationRelationship(Base):
     __tablename__ = "organization_relationships"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
-    related_organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
-    relationship_type = Column(String(100), nullable=False)  # "rival", "ally", "subordinate", "parent"
+    organization_id = Column(
+        UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False
+    )
+    related_organization_id = Column(
+        UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False
+    )
+    relationship_type = Column(
+        String(100), nullable=False
+    )  # "rival", "ally", "subordinate", "parent"
 
     __table_args__ = (
         UniqueConstraint(
@@ -49,14 +56,16 @@ class Organization(Base):
     headquarters = relationship("Location", back_populates="organizations")
 
     # Many-to-many with Character (via association table)
-    members = relationship("Character", secondary=character_organizations, back_populates="organizations")
+    members = relationship(
+        "Character", secondary=character_organizations, back_populates="organizations"
+    )
 
     # Filtered relationships by type
     rivals = relationship(
         "Organization",
         secondary="organization_relationships",
         primaryjoin="and_(Organization.id==OrganizationRelationship.organization_id, "
-                    "OrganizationRelationship.relationship_type=='rival')",
+        "OrganizationRelationship.relationship_type=='rival')",
         secondaryjoin="Organization.id==OrganizationRelationship.related_organization_id",
         viewonly=True,
     )
@@ -65,11 +74,9 @@ class Organization(Base):
         "Organization",
         secondary="organization_relationships",
         primaryjoin="and_(Organization.id==OrganizationRelationship.organization_id, "
-                    "OrganizationRelationship.relationship_type=='ally')",
+        "OrganizationRelationship.relationship_type=='ally')",
         secondaryjoin="Organization.id==OrganizationRelationship.related_organization_id",
         viewonly=True,
     )
 
-    __table_args__ = (
-        UniqueConstraint("name", "type", name="uix_org_name_type"),
-    )
+    __table_args__ = (UniqueConstraint("name", "type", name="uix_org_name_type"),)

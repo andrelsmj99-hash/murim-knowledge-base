@@ -5,6 +5,7 @@ Delega todas as chamadas para a mesma instância FastAPI via ASGI
 (TestClient) quando rodando em modo single-process (recomendado para o
 streamlit local), ou via HTTP quando ``API_BASE_URL`` está configurado.
 """
+
 from __future__ import annotations
 
 import logging
@@ -28,6 +29,7 @@ def _url(path: str) -> str:
 
 # In-process shortcut (fastest option for local dashboards)
 _client = None
+
 
 def _get_client():
     global _client

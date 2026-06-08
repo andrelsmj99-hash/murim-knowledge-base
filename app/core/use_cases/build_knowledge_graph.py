@@ -19,6 +19,7 @@ Output graphs use the following schema::
 
 The graph is the contract the dashboard / API use to power visualizations.
 """
+
 from __future__ import annotations
 
 import logging
@@ -141,7 +142,11 @@ class BuildKnowledgeGraphUseCase:
             characters=len(characters),
             organizations=len(orgs),
             locations=len(locations),
-            relationships=sum(1 for _, _, d in graph.edges(data=True) if d.get("kind", "").startswith(("rel_", "rival", "ally"))),
+            relationships=sum(
+                1
+                for _, _, d in graph.edges(data=True)
+                if d.get("kind", "").startswith(("rel_", "rival", "ally"))
+            ),
         )
         logger.info(
             "Built knowledge graph: %d nodes, %d edges (stats=%s)",

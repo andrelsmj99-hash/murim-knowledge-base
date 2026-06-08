@@ -1,13 +1,14 @@
 """
 Alembic environment — pulls DB URL from app settings and uses ORM metadata.
 """
+
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from app.utils.config import settings
+from alembic import context
 from app.models import Base  # noqa: F401 — populates Base.metadata
+from app.utils.config import settings
 
 # Alembic Config object (alembic.ini)
 config = context.config

@@ -8,6 +8,7 @@ Usage::
 The factory pattern keeps tests easy: ``create_app()`` builds an
 isolated app instance that can be wrapped with ``TestClient``.
 """
+
 from __future__ import annotations
 
 import logging

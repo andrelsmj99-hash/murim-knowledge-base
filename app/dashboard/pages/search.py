@@ -1,6 +1,7 @@
 """
 Página de Busca — free-text query contra a API (lexical + semantic).
 """
+
 from __future__ import annotations
 
 import pandas as pd
@@ -14,7 +15,9 @@ def show() -> None:
 
     col_q, col_sem, _ = st.columns([3, 1, 2])
     with col_q:
-        query = st.text_input("Digite o termo de busca", key="search_query", placeholder="ex: Murim, Sword, Sect...")
+        query = st.text_input(
+            "Digite o termo de busca", key="search_query", placeholder="ex: Murim, Sword, Sect..."
+        )
     with col_sem:
         semantic = st.toggle("Semântica", value=False, key="search_semantic")
 
@@ -44,7 +47,9 @@ def show() -> None:
     st.subheader(f"Resultados ({len(filtered)} / {total})")
 
     for h in filtered:
-        kind_icon = {"character": "⚔️", "organization": "🏛️", "location": "📍", "novel": "📘"}.get(h["kind"], "❓")
+        kind_icon = {"character": "⚔️", "organization": "🏛️", "location": "📍", "novel": "📘"}.get(
+            h["kind"], "❓"
+        )
         with st.container(border=True):
             cols = st.columns([5, 1])
             with cols[0]:
@@ -55,7 +60,9 @@ def show() -> None:
                 st.metric("Score", f"{h['score']:.2f}")
 
     # Export
-    df = pd.DataFrame([{"name": h["name"], "kind": h["kind"], "score": round(h["score"], 3)} for h in filtered])
+    df = pd.DataFrame(
+        [{"name": h["name"], "kind": h["kind"], "score": round(h["score"], 3)} for h in filtered]
+    )
     csv_data = df.to_csv(index=False).encode("utf-8")
     st.download_button(
         label="⬇ Exportar CSV",

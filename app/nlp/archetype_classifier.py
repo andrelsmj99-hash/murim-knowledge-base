@@ -1,6 +1,7 @@
 """
 Archetype classifier for Murim/Wuxia characters using NLP techniques.
 """
+
 from __future__ import annotations
 
 import re
@@ -24,101 +25,312 @@ class ArchetypeClassifier:
         # Narrative role keywords
         self.narrative_keywords = {
             NarrativeRole.PROTAGONIST: [
-                "main character", "mc", "hero", "protagonist", "chosen one", "destined",
-                "fated", "reincarnated", "transmigrated", "cultivation", "breakthrough",
-                "realm", "stage", "level", "power", "strength", "destiny", "chosen",
-                "legendary", "heroic", "brave", "valiant", "champion", "savior"
+                "main character",
+                "mc",
+                "hero",
+                "protagonist",
+                "chosen one",
+                "destined",
+                "fated",
+                "reincarnated",
+                "transmigrated",
+                "cultivation",
+                "breakthrough",
+                "realm",
+                "stage",
+                "level",
+                "power",
+                "strength",
+                "destiny",
+                "chosen",
+                "legendary",
+                "heroic",
+                "brave",
+                "valiant",
+                "champion",
+                "savior",
             ],
             NarrativeRole.ANTAGONIST: [
-                "villain", "antagonist", "evil", "malicious", "vindictive", "cruel",
-                "tyrant", "despot", "oppressor", "ruthless", "rival", "enemy", "foe",
-                "adversary", "menacing", "sinister", "malevolent", "vile", "wicked"
+                "villain",
+                "antagonist",
+                "evil",
+                "malicious",
+                "vindictive",
+                "cruel",
+                "tyrant",
+                "despot",
+                "oppressor",
+                "ruthless",
+                "rival",
+                "enemy",
+                "foe",
+                "adversary",
+                "menacing",
+                "sinister",
+                "malevolent",
+                "vile",
+                "wicked",
             ],
             NarrativeRole.MENTOR: [
-                "master", "teacher", "elder", "senior", "sage", "grandmaster", "patriarch",
-                "matriarch", "ancestor", "guide", "instructor", "tutor", "mentor", "wise",
-                "ancient", "venerable", "experienced", "knowledgeable", "sage"
+                "master",
+                "teacher",
+                "elder",
+                "senior",
+                "sage",
+                "grandmaster",
+                "patriarch",
+                "matriarch",
+                "ancestor",
+                "guide",
+                "instructor",
+                "tutor",
+                "mentor",
+                "wise",
+                "ancient",
+                "venerable",
+                "experienced",
+                "knowledgeable",
+                "sage",
             ],
             NarrativeRole.RIVAL: [
-                "rival", "competitor", "opponent", "challenger", "contestant", "duelist",
-                "adversary", "foe", "nemesis", "opponent", "challenger"
+                "rival",
+                "competitor",
+                "opponent",
+                "challenger",
+                "contestant",
+                "duelist",
+                "adversary",
+                "foe",
+                "nemesis",
+                "opponent",
+                "challenger",
             ],
             NarrativeRole.ALLY: [
-                "ally", "companion", "friend", "partner", "comrade", "confidant", "ally",
-                "supporter", "follower", "disciple", "student", "apprentice"
+                "ally",
+                "companion",
+                "friend",
+                "partner",
+                "comrade",
+                "confidant",
+                "ally",
+                "supporter",
+                "follower",
+                "disciple",
+                "student",
+                "apprentice",
             ],
             NarrativeRole.BACKGROUND: [
-                "background", "minor", "supporting", "extra", "passerby", "citizen",
-                "villager", "commoner", "servant", "guard", "soldier", "merchant"
-            ]
+                "background",
+                "minor",
+                "supporting",
+                "extra",
+                "passerby",
+                "citizen",
+                "villager",
+                "commoner",
+                "servant",
+                "guard",
+                "soldier",
+                "merchant",
+            ],
         }
 
         # Combat style keywords
         self.combat_keywords = {
             CombatStyle.SWORD: [
-                "sword", "blade", "katana", "jian", "dao", "saber", "edge", "cut",
-                "slash", "thrust", "swordsmanship", "blade technique", "sword technique"
+                "sword",
+                "blade",
+                "katana",
+                "jian",
+                "dao",
+                "saber",
+                "edge",
+                "cut",
+                "slash",
+                "thrust",
+                "swordsmanship",
+                "blade technique",
+                "sword technique",
             ],
             CombatStyle.BODY: [
-                "fist", "palm", "finger", "kick", "punch", "body", "martial",
-                "barehanded", "unarmed", "fist technique", "palm strike", "finger strike",
-                "body technique", "martial arts", "boxing", "kung fu"
+                "fist",
+                "palm",
+                "finger",
+                "kick",
+                "punch",
+                "body",
+                "martial",
+                "barehanded",
+                "unarmed",
+                "fist technique",
+                "palm strike",
+                "finger strike",
+                "body technique",
+                "martial arts",
+                "boxing",
+                "kung fu",
             ],
             CombatStyle.POISON: [
-                "poison", "toxin", "venom", "poisonous", "toxic", "venomous", "deadly",
-                "lethal", "noxious", "venom technique", "poison technique"
+                "poison",
+                "toxin",
+                "venom",
+                "poisonous",
+                "toxic",
+                "venomous",
+                "deadly",
+                "lethal",
+                "noxious",
+                "venom technique",
+                "poison technique",
             ],
             CombatStyle.SPEED: [
-                "swift", "speed", "fast", "quick", "agile", "nimble", "fleet", "rapid",
-                "velocity", "lightning", "flash", "blur", "speed technique"
+                "swift",
+                "speed",
+                "fast",
+                "quick",
+                "agile",
+                "nimble",
+                "fleet",
+                "rapid",
+                "velocity",
+                "lightning",
+                "flash",
+                "blur",
+                "speed technique",
             ],
             CombatStyle.QI_INTERNAL: [
-                "qi", "chi", "inner", "internal", "energy", "spiritual", "cultivation",
-                "spirit", "mana", "spirit force", "inner energy", "breathing", "meditation"
+                "qi",
+                "chi",
+                "inner",
+                "internal",
+                "energy",
+                "spiritual",
+                "cultivation",
+                "spirit",
+                "mana",
+                "spirit force",
+                "inner energy",
+                "breathing",
+                "meditation",
             ],
             CombatStyle.RANGED: [
-                "ranged", "distance", "remote", "bow", "arrow", "projectile", "throwing",
-                "shooting", "distance attack", "ranged technique"
+                "ranged",
+                "distance",
+                "remote",
+                "bow",
+                "arrow",
+                "projectile",
+                "throwing",
+                "shooting",
+                "distance attack",
+                "ranged technique",
             ],
             CombatStyle.SUPPORT: [
-                "support", "heal", "healing", "cure", "protect", "shield", "defend",
-                "barrier", "protective", "auxiliary", "buff", "support technique"
+                "support",
+                "heal",
+                "healing",
+                "cure",
+                "protect",
+                "shield",
+                "defend",
+                "barrier",
+                "protective",
+                "auxiliary",
+                "buff",
+                "support technique",
             ],
-            CombatStyle.UNKNOWN: [
-                "unknown", "mysterious", "unclear", "ambiguous"
-            ]
+            CombatStyle.UNKNOWN: ["unknown", "mysterious", "unclear", "ambiguous"],
         }
 
         # Personality trait keywords
         self.personality_keywords = {
             PersonalityTrait.ARROGANT: [
-                "arrogant", "proud", "haughty", "conceited", "egotistical", "vain",
-                "boastful", "snobbish", "supercilious", "overconfident", "smug"
+                "arrogant",
+                "proud",
+                "haughty",
+                "conceited",
+                "egotistical",
+                "vain",
+                "boastful",
+                "snobbish",
+                "supercilious",
+                "overconfident",
+                "smug",
             ],
             PersonalityTrait.COLD: [
-                "cold", "distant", "aloof", "detached", "emotionless", "stoic",
-                "icy", "frosty", "chilly", "unemotional", "apathetic"
+                "cold",
+                "distant",
+                "aloof",
+                "detached",
+                "emotionless",
+                "stoic",
+                "icy",
+                "frosty",
+                "chilly",
+                "unemotional",
+                "apathetic",
             ],
             PersonalityTrait.LOYAL: [
-                "loyal", "faithful", "devoted", "dedicated", "committed", "steadfast",
-                "reliable", "trustworthy", "dependable", "allegiant", "true"
+                "loyal",
+                "faithful",
+                "devoted",
+                "dedicated",
+                "committed",
+                "steadfast",
+                "reliable",
+                "trustworthy",
+                "dependable",
+                "allegiant",
+                "true",
             ],
             PersonalityTrait.MYSTERIOUS: [
-                "mysterious", "enigmatic", "cryptic", "secretive", "mystifying",
-                "puzzling", "obscure", "ambiguous", "shadowy", "inscrutable"
+                "mysterious",
+                "enigmatic",
+                "cryptic",
+                "secretive",
+                "mystifying",
+                "puzzling",
+                "obscure",
+                "ambiguous",
+                "shadowy",
+                "inscrutable",
             ],
             PersonalityTrait.AMBITIOUS: [
-                "ambitious", "driven", "determined", "goal-oriented", "aspiring",
-                "motivated", "eager", "zealous", "aspirational", "goal-focused"
+                "ambitious",
+                "driven",
+                "determined",
+                "goal-oriented",
+                "aspiring",
+                "motivated",
+                "eager",
+                "zealous",
+                "aspirational",
+                "goal-focused",
             ],
             PersonalityTrait.PROTECTIVE: [
-                "protective", "guardian", "defender", "shield", "caretaker",
-                "watchful", "vigilant", "guarding", "shielding", "defending"
+                "protective",
+                "guardian",
+                "defender",
+                "shield",
+                "caretaker",
+                "watchful",
+                "vigilant",
+                "guarding",
+                "shielding",
+                "defending",
             ],
             PersonalityTrait.TRAITOR: [
-                "traitor", "betrayer", "deceiver", "backstabber", "turncoat",
-                "double-crosser", "spy", "infiltrator", "saboteur", "mole"
-            ]
+                "traitor",
+                "betrayer",
+                "deceiver",
+                "backstabber",
+                "turncoat",
+                "double-crosser",
+                "spy",
+                "infiltrator",
+                "saboteur",
+                "mole",
+            ],
         }
 
         # Flatten all keywords for preprocessing
@@ -153,7 +365,7 @@ class ArchetypeClassifier:
     def _normalize_text(self, text: str) -> list[str]:
         """Normalize text into words for analysis."""
         # Simple tokenization
-        words = re.findall(r'\b\w+\b', self._preprocess_text(text))
+        words = re.findall(r"\b\w+\b", self._preprocess_text(text))
         return words
 
     def classify(self, character_id: str, text_corpus: str) -> CharacterArchetype:
@@ -181,7 +393,7 @@ class ArchetypeClassifier:
                 role_confidence=0.0,
                 combat_confidence=0.0,
                 trait_scores={},
-                classified_by="rules"
+                classified_by="rules",
             )
 
         # Count keyword matches for each category
@@ -229,6 +441,5 @@ class ArchetypeClassifier:
             role_confidence=role_confidence,
             combat_confidence=combat_confidence,
             trait_scores={k.value: v for k, v in trait_scores.items()},
-            classified_by="rules"
+            classified_by="rules",
         )
-

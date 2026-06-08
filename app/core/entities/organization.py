@@ -1,6 +1,7 @@
 """
 Domain entities for Organizations and their inter-org relationships.
 """
+
 from __future__ import annotations
 
 import uuid as uuid_module

@@ -1,6 +1,7 @@
 """
 SQLAlchemy implementation of :class:`ILocationRepository`.
 """
+
 from __future__ import annotations
 
 import builtins
@@ -41,7 +42,9 @@ def _to_orm(entity: Location) -> LocationORM:
         description=entity.description,
         region=entity.region,
         realm=entity.realm,
-        parent_location_id=_to_uuid(entity.parent_location_id) if entity.parent_location_id else None,
+        parent_location_id=_to_uuid(entity.parent_location_id)
+        if entity.parent_location_id
+        else None,
     )
 
 
@@ -131,7 +134,9 @@ class LocationRepository(ILocationRepository):
             orm.region = location.region or orm.region
             orm.realm = location.realm or orm.realm
             orm.parent_location_id = (
-                _to_uuid(location.parent_location_id) if location.parent_location_id else orm.parent_location_id
+                _to_uuid(location.parent_location_id)
+                if location.parent_location_id
+                else orm.parent_location_id
             )
             self.session.flush()
             return _to_entity(orm)

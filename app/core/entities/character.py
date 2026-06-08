@@ -1,6 +1,7 @@
 """
 Domain entities for the Character concept.
 """
+
 from __future__ import annotations
 
 import uuid as uuid_module
@@ -17,6 +18,7 @@ class Alias:
     value: str
     canonical_value: str  # Normalized value for deduplication
 
+
 @dataclass
 class Character:
     id: str = field(default_factory=lambda: str(uuid_module.uuid4()))
@@ -31,18 +33,27 @@ class Character:
     appearance_frequency: int = 0
     organizations: list[str] = field(default_factory=list)  # IDs of organizations
     locations: list[str] = field(default_factory=list)  # IDs of locations
-    relationships: dict[str, list[str]] = field(default_factory=dict)  # relationship_type -> [character_ids]
+    relationships: dict[str, list[str]] = field(
+        default_factory=dict
+    )  # relationship_type -> [character_ids]
     embedding: str | None = None  # JSON-serialized float vector for semantic search
     archetype: CharacterArchetype | None = None  # Character archetype classification object
 
     def add_alias(self, alias_type: str, value: str):
         """Add an alias to the character."""
         if not any(a.value == value for a in self.aliases):
-            self.aliases.append(Alias(alias_type=alias_type, value=value, canonical_value=value.lower().replace(" ", "_")))
+            self.aliases.append(
+                Alias(
+                    alias_type=alias_type,
+                    value=value,
+                    canonical_value=value.lower().replace(" ", "_"),
+                )
+            )
 
     def increment_frequency(self):
         """Increment the appearance frequency."""
         self.appearance_frequency += 1
+
 
 @dataclass
 class Relationship:

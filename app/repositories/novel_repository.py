@@ -1,6 +1,7 @@
 """
 SQLAlchemy implementation of :class:`INovelRepository`.
 """
+
 from __future__ import annotations
 
 import builtins
@@ -97,7 +98,9 @@ class NovelRepository(INovelRepository):
         orm = self.session.execute(stmt).scalar_one_or_none()
         return _novel_to_entity(orm) if orm else None
 
-    def get_chapters(self, novel_id: str, *, limit: int = 1000, offset: int = 0) -> builtins.list[Chapter]:
+    def get_chapters(
+        self, novel_id: str, *, limit: int = 1000, offset: int = 0
+    ) -> builtins.list[Chapter]:
         stmt = (
             select(ChapterORM)
             .where(ChapterORM.novel_id == _to_uuid(novel_id))
@@ -110,7 +113,10 @@ class NovelRepository(INovelRepository):
     def chapter_exists(self, novel_id: str, chapter_number: int) -> bool:
         stmt = (
             select(ChapterORM.id)
-            .where(ChapterORM.novel_id == _to_uuid(novel_id), ChapterORM.chapter_number == chapter_number)
+            .where(
+                ChapterORM.novel_id == _to_uuid(novel_id),
+                ChapterORM.chapter_number == chapter_number,
+            )
             .limit(1)
         )
         return self.session.execute(stmt).scalar_one_or_none() is not None
@@ -160,10 +166,13 @@ class NovelRepository(INovelRepository):
         self.session.add(orm)
         novel_orm = self.session.get(NovelORM, _to_uuid(chapter.novel_id))
         if novel_orm is not None:
-            novel_orm.total_chapters = (
-                int(self.session.scalar(
-                    select(func.count(ChapterORM.id)).where(ChapterORM.novel_id == _to_uuid(chapter.novel_id))
-                ) or 0)
+            novel_orm.total_chapters = int(
+                self.session.scalar(
+                    select(func.count(ChapterORM.id)).where(
+                        ChapterORM.novel_id == _to_uuid(chapter.novel_id)
+                    )
+                )
+                or 0
             )
         self.session.flush()
         return _chapter_to_entity(orm)

@@ -1,6 +1,7 @@
 """
 SQLAlchemy implementation of :class:`IOrganizationRepository`.
 """
+
 from __future__ import annotations
 
 import builtins

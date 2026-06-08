@@ -4,6 +4,7 @@ Application configuration using environment variables and Pydantic Settings.
 The .env file is resolved relative to the project root so it works regardless
 of the current working directory used to launch the process.
 """
+
 from pathlib import Path
 
 from pydantic import Field

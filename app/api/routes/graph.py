@@ -4,6 +4,7 @@
 The build is delegated to :class:`BuildKnowledgeGraphUseCase` so the API
 stays in sync with any future logic (novel-scoped graphs, filtered views).
 """
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query
@@ -46,7 +47,9 @@ def get_graph(
         "nodes": graph.number_of_nodes(),
         "edges": graph.number_of_edges(),
         "characters": sum(1 for _, d in graph.nodes(data=True) if d.get("kind") == "character"),
-        "organizations": sum(1 for _, d in graph.nodes(data=True) if d.get("kind") == "organization"),
+        "organizations": sum(
+            1 for _, d in graph.nodes(data=True) if d.get("kind") == "organization"
+        ),
         "locations": sum(1 for _, d in graph.nodes(data=True) if d.get("kind") == "location"),
     }
     return GraphResponse(nodes=nodes, edges=edges, stats=stats)

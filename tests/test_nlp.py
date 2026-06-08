@@ -155,9 +155,7 @@ def test_build_knowledge_graph_use_case(sqlite_session_factory, sample_chapter):
     kinds = {d.get("kind") for _, d in G.nodes(data=True)}
     assert "character" in kinds
     assert "organization" in kinds
-    char_org_edges = [
-        (u, v, d) for u, v, d in G.edges(data=True) if d.get("kind") == "member_of"
-    ]
+    char_org_edges = [(u, v, d) for u, v, d in G.edges(data=True) if d.get("kind") == "member_of"]
     assert len(char_org_edges) >= 1
 
 

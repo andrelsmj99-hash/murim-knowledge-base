@@ -4,6 +4,7 @@ WuxiaWorld (wuxiaworld.com) dedicated scraper.
 WuxiaWorld is a major licensed publisher for Chinese web-novels (Wuxia/Xianxia).
 They host official translations with a consistent modern React-based UI structure.
 """
+
 from __future__ import annotations
 
 import logging
@@ -113,7 +114,9 @@ class WuxiaWorldScraper(BaseScraper):
 
         container = soup.select_one(self.selectors["chapter_list_container"])
         if not container:
-            logger.warning("No chapter list container found for %s at %s", self.novel_slug, self.index_url)
+            logger.warning(
+                "No chapter list container found for %s at %s", self.novel_slug, self.index_url
+            )
             container = soup
 
         anchors = list(container.select(self.selectors["chapter_list_item"]))
@@ -151,12 +154,16 @@ class WuxiaWorldScraper(BaseScraper):
         soup = _parse(response.text)
 
         # Remove noise elements
-        for tag in soup.select("script, style, ins, iframe, .ads, .advertisement, .ad-block, .adsbygoogle, .chapter-nav, .chapter-navigation"):
+        for tag in soup.select(
+            "script, style, ins, iframe, .ads, .advertisement, .ad-block, .adsbygoogle, .chapter-nav, .chapter-navigation"
+        ):
             tag.decompose()
 
         content_el = soup.select_one(self.selectors["chapter_content"])
         if content_el is None:
-            logger.warning("No content found at %s using selector %s", url, self.selectors["chapter_content"])
+            logger.warning(
+                "No content found at %s using selector %s", url, self.selectors["chapter_content"]
+            )
             return None
 
         text = content_el.get_text("\n", strip=True)

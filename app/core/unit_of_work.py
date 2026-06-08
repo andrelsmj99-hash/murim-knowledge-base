@@ -4,6 +4,7 @@ Unit of Work — owns a SQLAlchemy session and exposes all repositories.
 Use cases receive a ``UnitOfWork`` instead of individual repositories, which
 keeps session/transaction management centralized.
 """
+
 from __future__ import annotations
 
 from types import TracebackType

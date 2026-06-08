@@ -1,6 +1,7 @@
 """
 Página de Personagens — busca funcional, CRUD completo, paginação.
 """
+
 from __future__ import annotations
 
 import pandas as pd
@@ -16,7 +17,9 @@ def show() -> None:
     col_search, col_page, col_export = st.columns([3, 2, 1])
 
     with col_search:
-        query = st.text_input("Buscar por nome", key="char_search", placeholder="Digite para filtrar...")
+        query = st.text_input(
+            "Buscar por nome", key="char_search", placeholder="Digite para filtrar..."
+        )
     with col_page:
         limit_options = [10, 25, 50, 100]
         per_page = st.selectbox("Por página", limit_options, index=1, key="char_pp")
@@ -28,7 +31,9 @@ def show() -> None:
             data = get("api/v1/search", params={"q": query, "limit": 200})
             all_items = [h for h in data.get("hits", []) if h.get("kind") == "character"]
         else:
-            data = get("api/v1/characters", params={"limit": per_page, "offset": (page - 1) * per_page})
+            data = get(
+                "api/v1/characters", params={"limit": per_page, "offset": (page - 1) * per_page}
+            )
             all_items = data.get("items", [])
             total_count = data.get("meta", {}).get("total", 0)
     except Exception:
@@ -68,7 +73,9 @@ def _render_character_row(char: dict) -> None:
             if char.get("gender"):
                 st.markdown(f"**Gênero:** {char['gender']}")
             if char.get("description"):
-                st.markdown(f"**Descrição:** {char['description'][:200]}{'…' if len(char.get('description', '')) > 200 else ''}")
+                st.markdown(
+                    f"**Descrição:** {char['description'][:200]}{'…' if len(char.get('description', '')) > 200 else ''}"
+                )
             st.markdown(f"**Frequência:** {char.get('appearance_frequency', 0)}")
             aliases = char.get("aliases", [])
             if aliases:
@@ -96,11 +103,16 @@ def _render_character_row(char: dict) -> None:
                 with st.form(key=f"form_{cid}"):
                     new_name = st.text_input("Nome", value=name, key=f"nm_{cid}")
                     new_gender = st.selectbox(
-                        "Gênero", ["", "Male", "Female", "Other"],
-                        index=0 if not char.get("gender") else ["", "Male", "Female", "Other"].index(char.get("gender", "")),
+                        "Gênero",
+                        ["", "Male", "Female", "Other"],
+                        index=0
+                        if not char.get("gender")
+                        else ["", "Male", "Female", "Other"].index(char.get("gender", "")),
                         key=f"gd_{cid}",
                     )
-                    new_desc = st.text_area("Descrição", value=char.get("description") or "", key=f"ds_{cid}")
+                    new_desc = st.text_area(
+                        "Descrição", value=char.get("description") or "", key=f"ds_{cid}"
+                    )
                     if st.form_submit_button("Salvar"):
                         try:
                             patch(
@@ -117,19 +129,23 @@ def _render_character_row(char: dict) -> None:
                             st.error(f"Erro: {exc}")
 
             confirm_delete = st.checkbox("🗑️ Deletar", key=f"del_{cid}")
-            if confirm_delete and st.button(f"Confirmar exclusão de {name}", key=f"btndel_{cid}", type="primary"):
-                    try:
-                        delete(f"api/v1/characters/{cid}")
-                        st.success(f"{name} deletado!")
-                        st.rerun()
-                    except Exception as exc:
-                        st.error(f"Erro: {exc}")
+            if confirm_delete and st.button(
+                f"Confirmar exclusão de {name}", key=f"btndel_{cid}", type="primary"
+            ):
+                try:
+                    delete(f"api/v1/characters/{cid}")
+                    st.success(f"{name} deletado!")
+                    st.rerun()
+                except Exception as exc:
+                    st.error(f"Erro: {exc}")
 
 
 def _render_export_button(items: list, name: str) -> None:
     if not items:
         return
-    df = pd.DataFrame([{k: v for k, v in item.items() if not isinstance(v, (list, dict))} for item in items])
+    df = pd.DataFrame(
+        [{k: v for k, v in item.items() if not isinstance(v, (list, dict))} for item in items]
+    )
 
     csv_data = df.to_csv(index=False).encode("utf-8")
     st.download_button(

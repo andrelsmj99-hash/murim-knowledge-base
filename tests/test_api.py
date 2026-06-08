@@ -109,8 +109,12 @@ def test_character_crud_and_extras(api_client) -> None:
 def test_organization_crud_and_relationships(api_client) -> None:
     client, _ = api_client
     a = client.post("/api/v1/organizations", json={"name": "Mount Hua Sect", "type": "Sect"}).json()
-    b = client.post("/api/v1/organizations", json={"name": "Heavenly Demon Cult", "type": "Cult"}).json()
-    c = client.post("/api/v1/organizations", json={"name": "Righteous Alliance", "type": "Alliance"}).json()
+    b = client.post(
+        "/api/v1/organizations", json={"name": "Heavenly Demon Cult", "type": "Cult"}
+    ).json()
+    c = client.post(
+        "/api/v1/organizations", json={"name": "Righteous Alliance", "type": "Alliance"}
+    ).json()
 
     r = client.post(
         f"/api/v1/organizations/{a['id']}/relationships",
@@ -177,7 +181,9 @@ def test_character_location_link_404(api_client) -> None:
 def test_character_organization_linking(api_client) -> None:
     client, _ = api_client
     c = client.post("/api/v1/characters", json={"name": "Chung Myung"}).json()
-    org = client.post("/api/v1/organizations", json={"name": "Mount Hua Sect", "type": "Sect"}).json()
+    org = client.post(
+        "/api/v1/organizations", json={"name": "Mount Hua Sect", "type": "Sect"}
+    ).json()
 
     r = client.get(f"/api/v1/characters/{c['id']}")
     assert r.json()["organizations"] == []
@@ -224,6 +230,7 @@ def test_scrape_endpoint_unknown_source(api_client) -> None:
 
 def _mock_response(content: str, status: int = 200) -> type:
     import requests
+
     mock_resp = requests.Response()
     mock_resp.status_code = status
     mock_resp._content = content.encode("utf-8")
@@ -241,7 +248,9 @@ def test_scrape_endpoint_happy_path(api_client, monkeypatch) -> None:
     </ul>
     </body></html>
     """
-    chapter_html = "<html><body><div id='chapter-content'><p>Some text content.</p></div></body></html>"
+    chapter_html = (
+        "<html><body><div id='chapter-content'><p>Some text content.</p></div></body></html>"
+    )
 
     call_count = 0
 
@@ -296,7 +305,9 @@ def test_scrape_endpoint_no_chapters(api_client, monkeypatch) -> None:
 
 def test_character_embed_single(api_client) -> None:
     client, _ = api_client
-    r = client.post("/api/v1/characters", json={"name": "Lin Lei", "description": "The protagonist"})
+    r = client.post(
+        "/api/v1/characters", json={"name": "Lin Lei", "description": "The protagonist"}
+    )
     assert r.status_code == 201
     char_id = r.json()["id"]
 
@@ -335,8 +346,12 @@ def test_search_lexical_fallback(api_client) -> None:
 
 def test_search_semantic(api_client) -> None:
     client, _ = api_client
-    r1 = client.post("/api/v1/characters", json={"name": "Lin Lei", "description": "A powerful swordsman"})
-    r2 = client.post("/api/v1/characters", json={"name": "Yi Yun", "description": "A young cultivator"})
+    r1 = client.post(
+        "/api/v1/characters", json={"name": "Lin Lei", "description": "A powerful swordsman"}
+    )
+    r2 = client.post(
+        "/api/v1/characters", json={"name": "Yi Yun", "description": "A young cultivator"}
+    )
     char1 = r1.json()
     char2 = r2.json()
 

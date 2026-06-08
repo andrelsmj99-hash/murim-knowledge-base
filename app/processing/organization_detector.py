@@ -10,6 +10,7 @@ Two strategies are combined:
 The output is normalised via :data:`app.processing.patterns.ORG_LOOKUP` so
 that aliases map to a single canonical name.
 """
+
 from __future__ import annotations
 
 import re

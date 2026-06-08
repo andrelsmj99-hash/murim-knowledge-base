@@ -1,6 +1,7 @@
 """
 /characters and /characters/{id}/relationships routes.
 """
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status

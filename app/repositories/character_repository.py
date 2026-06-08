@@ -4,6 +4,7 @@ SQLAlchemy implementation of :class:`ICharacterRepository`.
 Maps between the ORM model in :mod:`app.models.character` and the
 domain entity in :mod:`app.core.entities.character`.
 """
+
 from __future__ import annotations
 
 import builtins
@@ -30,8 +31,11 @@ def _to_uuid(value: str) -> uuid_module.UUID:
 def _to_entity(orm: CharacterORM) -> Character:
     """ORM → domain entity."""
     from app.core.entities import CharacterArchetype
+
     aliases = [
-        EntityAlias(alias_type=a.alias_type, value=a.alias_value, canonical_value=a.alias_value.lower())
+        EntityAlias(
+            alias_type=a.alias_type, value=a.alias_value, canonical_value=a.alias_value.lower()
+        )
         for a in orm.aliases
     ]
     titles = [t.title for t in orm.titles]
@@ -43,19 +47,27 @@ def _to_entity(orm: CharacterORM) -> Character:
 
     # Prefer pgvector column if available, fallback to JSON text
     embedding = orm.embedding
-    if hasattr(orm, 'embedding_vec') and orm.embedding_vec:
+    if hasattr(orm, "embedding_vec") and orm.embedding_vec:
         try:
             import json
-            embedding = json.loads(orm.embedding_vec) if isinstance(orm.embedding_vec, str) else orm.embedding_vec
+
+            embedding = (
+                json.loads(orm.embedding_vec)
+                if isinstance(orm.embedding_vec, str)
+                else orm.embedding_vec
+            )
         except Exception:
             pass
 
     # Handle archetype field if it exists
     archetype = None
-    if hasattr(orm, 'archetype') and orm.archetype:
+    if hasattr(orm, "archetype") and orm.archetype:
         try:
             import json
-            archetype_data = json.loads(orm.archetype) if isinstance(orm.archetype, str) else orm.archetype
+
+            archetype_data = (
+                json.loads(orm.archetype) if isinstance(orm.archetype, str) else orm.archetype
+            )
             if archetype_data:
                 archetype = CharacterArchetype(**archetype_data)
         except Exception:
@@ -81,6 +93,7 @@ def _to_entity(orm: CharacterORM) -> Character:
 def _to_orm(entity: Character) -> CharacterORM:
     """Domain entity → ORM (attached to the session, not yet persisted)."""
     import json
+
     embedding_json = json.dumps(entity.embedding) if entity.embedding else None
     archetype_json = None
     if entity.archetype:
@@ -130,6 +143,7 @@ class CharacterRepository(ICharacterRepository):
 
     def count(self) -> int:
         from sqlalchemy import func
+
         return int(self.session.scalar(select(func.count(CharacterORM.id))) or 0)
 
     def get_by_canonical_name(self, canonical_name: str) -> Character | None:
@@ -221,6 +235,7 @@ class CharacterRepository(ICharacterRepository):
 
     def add_title(self, character_id: str, title: str) -> bool:
         from app.models.character import Title as TitleORM
+
         orm = self.session.get(CharacterORM, _to_uuid(character_id))
         if orm is None:
             return False
@@ -259,6 +274,7 @@ class CharacterRepository(ICharacterRepository):
 
     def link_location(self, character_id: str, location_id: str) -> bool:
         from app.models.location import Location as LocationORM
+
         c_orm = self.session.get(CharacterORM, _to_uuid(character_id))
         if c_orm is None:
             return False
@@ -272,6 +288,7 @@ class CharacterRepository(ICharacterRepository):
 
     def unlink_location(self, character_id: str, location_id: str) -> bool:
         from app.models.location import Location as LocationORM
+
         c_orm = self.session.get(CharacterORM, _to_uuid(character_id))
         if c_orm is None:
             return False
@@ -282,8 +299,11 @@ class CharacterRepository(ICharacterRepository):
         self.session.flush()
         return True
 
-    def link_organization(self, character_id: str, organization_id: str, role: str | None = None) -> bool:
+    def link_organization(
+        self, character_id: str, organization_id: str, role: str | None = None
+    ) -> bool:
         from app.models.organization import Organization as OrganizationORM
+
         c_orm = self.session.get(CharacterORM, _to_uuid(character_id))
         if c_orm is None:
             return False
@@ -297,6 +317,7 @@ class CharacterRepository(ICharacterRepository):
 
     def unlink_organization(self, character_id: str, organization_id: str) -> bool:
         from app.models.organization import Organization as OrganizationORM
+
         c_orm = self.session.get(CharacterORM, _to_uuid(character_id))
         if c_orm is None:
             return False
@@ -311,6 +332,7 @@ class CharacterRepository(ICharacterRepository):
         self, character_id: str, related_character_id: str, relationship_type: str
     ) -> bool:
         from app.models.character import Relationship as RelationshipORM
+
         c_orm = self.session.get(CharacterORM, _to_uuid(character_id))
         if c_orm is None:
             return False
@@ -353,6 +375,7 @@ class CharacterRepository(ICharacterRepository):
         self, character_id: str, related_character_id: str, relationship_type: str
     ) -> bool:
         from app.models.character import Relationship as RelationshipORM
+
         rel = (
             self.session.query(RelationshipORM)
             .filter_by(

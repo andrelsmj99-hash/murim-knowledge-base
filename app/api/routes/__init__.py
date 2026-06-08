@@ -10,6 +10,7 @@ All routers accept a :class:`UnitOfWork` and follow the same conventions:
 
 Search and graph have bespoke shapes.
 """
+
 from fastapi import APIRouter
 
 from . import characters, graph, locations, novels, organizations, scrape, search

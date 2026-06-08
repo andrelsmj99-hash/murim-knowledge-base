@@ -145,6 +145,7 @@ def test_end_to_end_scrape_into_db(sqlite_session_factory):
             resp.text = responses[url]
             resp.status_code = 200
             return resp
+
         scraper.session.get = fake_get
 
         chapters = scraper.scrape_novel()

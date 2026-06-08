@@ -4,6 +4,7 @@ Pydantic schemas (request/response DTOs) for the public API.
 The schemas are intentionally decoupled from the domain entities so the
 wire format can evolve independently of the persistence model.
 """
+
 from __future__ import annotations
 
 from datetime import datetime
