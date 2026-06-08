@@ -830,6 +830,22 @@ curl -X POST http://localhost:8000/api/v1/scrape \
 
 **Resultado:** Character archetype classification system completo. 50 testes passando via `pytest tests/`. Ruff clean. **Commit:** `0b6aa67`.
 
+### Sessão 21 (Bug Fixes from Code Review)
+
+**Corrigido:**
+- **Bug crítico** `search.py:57`: `.get("_similarity")` em dataclass → `getattr()` — corrige AttributeError em runtime
+- **Bug** `character_repository.py:418`: `except Exception: pass` → `except SQLAlchemyError: pass` — erros SQL reais não são mais engolidos silenciosamente
+- **Bug de arquitetura** `organizations.py:97-121`: lógica ORM `add_relationship` movida do router para `OrganizationRepository.add_relationship()` — respeita Clean Architecture
+- **Interface**: `add_relationship()` adicionado ao `IOrganizationRepository`
+- **Migração**: `d2e3f4a5b6c7` — altera `embedding_vec` para `vector(384)` no PostgreSQL (no-op no SQLite)
+- **Código morto removido**: import `AliasORM` não utilizado em `chapter_repository.py`, caracteres chineses em `api_client.py`
+- **README.md**: contagens atualizadas (5 scrapers, 36 rotas, 9 tabelas, 6 módulos NLP)
+
+**Teste adicionado:**
+- `test_search_semantic` — valida o caminho de busca semântica com embeddings
+
+**Resultado:** 51/51 testes passando. **Commit:** `9321b38`.
+
 ---
 
 ## 10. Como Rodar
