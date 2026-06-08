@@ -4,10 +4,10 @@ Character archetype domain entities.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 
-class NarrativeRole(str, Enum):
+class NarrativeRole(StrEnum):
     """The role a character plays in the narrative."""
 
     PROTAGONIST = "protagonist"
@@ -18,7 +18,7 @@ class NarrativeRole(str, Enum):
     BACKGROUND = "background"
 
 
-class CombatStyle(str, Enum):
+class CombatStyle(StrEnum):
     """The primary combat style of a character."""
 
     SWORD = "sword"
@@ -31,7 +31,7 @@ class CombatStyle(str, Enum):
     UNKNOWN = "unknown"
 
 
-class PersonalityTrait(str, Enum):
+class PersonalityTrait(StrEnum):
     """Personality traits commonly found in Murim characters."""
 
     ARROGANT = "arrogant"
@@ -71,3 +71,4 @@ __all__ = [
     "PersonalityTrait",
     "CharacterArchetype",
 ]
+

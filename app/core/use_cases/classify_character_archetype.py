@@ -3,8 +3,6 @@ Use cases for character archetype classification.
 """
 from __future__ import annotations
 
-from typing import List, Tuple
-
 from app.core.entities import CharacterArchetype
 from app.core.interfaces import IChapterRepository, ICharacterRepository
 from app.nlp.archetype_classifier import ArchetypeClassifier
@@ -73,7 +71,7 @@ class ClassifyAllCharacters:
         self.chapter_repository = chapter_repository
         self.classifier = classifier
 
-    def execute(self) -> List[Tuple[str, CharacterArchetype]]:
+    def execute(self) -> list[tuple[str, CharacterArchetype]]:
         """
         Classify all characters in the database.
 

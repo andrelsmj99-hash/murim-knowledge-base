@@ -53,7 +53,7 @@ class ExtractedEntities:
 # ---------------------------------------------------------------------------
 
 
-_SPACY_NLP = None
+_SPACY_NLP: object | None = None
 _SPACY_LOAD_ATTEMPTED = False
 
 
@@ -64,13 +64,12 @@ def _load_spacy(model_name: str) -> object | None:
         return _SPACY_NLP
     _SPACY_LOAD_ATTEMPTED = True
     try:
-        import spacy  # type: ignore
+        import spacy
 
         _SPACY_NLP = spacy.load(model_name)
         logger.info("Loaded spaCy model %s for NER", model_name)
     except Exception as exc:  # noqa: BLE001
         logger.info("spaCy unavailable, using regex fallback: %s", exc)
-        _SPACY_NLP = None
     return _SPACY_NLP
 
 
@@ -100,7 +99,7 @@ def extract_entities(
     nlp = _load_spacy(spacy_model)
     if nlp is not None:
         try:
-            doc = nlp(text[:100_000])  # cap to avoid blowing up on huge chapters
+            doc = nlp(text[:100_000])  # type: ignore[operator]  # cap to avoid blowing up on huge chapters
             for ent in doc.ents:
                 if ent.label_ == "PERSON":
                     out.person_entities.append(ent.text)

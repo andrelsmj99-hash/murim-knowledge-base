@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import threading
+from collections.abc import Generator
 
 from app.core.unit_of_work import UnitOfWork
 from app.models.base import SessionLocal
@@ -26,9 +27,9 @@ def _session_factory():
     return SessionLocal()
 
 
-def get_uow() -> UnitOfWork:
+def get_uow() -> Generator[UnitOfWork, None, None]:
     """Yield an already-entered :class:`UnitOfWork` for the duration of a request."""
-    uow = UnitOfWork(session_factory=_session_factory)
+    uow = UnitOfWork(session_factory=_session_factory)  # type: ignore[arg-type]
     uow.__enter__()
     try:
         yield uow

@@ -24,7 +24,11 @@ from app.api.schemas import (
 from app.core.entities import Character
 from app.core.interfaces import ICharacterRepository
 from app.core.unit_of_work import UnitOfWork
-from app.core.use_cases import ClassifyAllCharacters, ClassifyCharacterArchetype, GenerateEmbeddingsUseCase
+from app.core.use_cases import (
+    ClassifyAllCharacters,
+    ClassifyCharacterArchetype,
+    GenerateEmbeddingsUseCase,
+)
 from app.nlp.archetype_classifier import ArchetypeClassifier
 
 router = APIRouter()

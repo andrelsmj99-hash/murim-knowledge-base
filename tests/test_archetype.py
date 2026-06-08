@@ -11,12 +11,11 @@ from app.core.entities import (
     CharacterArchetype,
     CombatStyle,
     NarrativeRole,
-    PersonalityTrait,
 )
 from app.models.character import Character as CharacterORM
-from app.models.novel import Chapter as ChapterORM, Novel as NovelORM
+from app.models.novel import Chapter as ChapterORM
+from app.models.novel import Novel as NovelORM
 from app.nlp.archetype_classifier import ArchetypeClassifier
-
 
 # ---------------------------------------------------------------------------
 # Unit tests for ArchetypeClassifier
@@ -83,7 +82,7 @@ class TestArchetypeClassifier:
         corpus = "He is wise and intelligent. His knowledge is vast and deep."
         archetype = classifier.classify("trait-char", corpus)
         assert isinstance(archetype.trait_scores, dict)
-        for key, score in archetype.trait_scores.items():
+        for _key, score in archetype.trait_scores.items():
             assert isinstance(score, float)
             assert 0.0 <= score <= 1.0
 

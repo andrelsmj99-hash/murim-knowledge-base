@@ -96,7 +96,7 @@ class NovelBinScraper(BaseScraper):
         for anchor in anchors:
             href = anchor.get("href")
             text = anchor.get_text(" ", strip=True)
-            if not href:
+            if not href or not isinstance(href, str):
                 continue
             number = self._extract_number(text)
             if number is None or number in seen:

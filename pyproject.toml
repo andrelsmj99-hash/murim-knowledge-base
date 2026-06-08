@@ -57,3 +57,11 @@ module = [
     "transformers.*",
 ]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "app.repositories.*",
+]
+# SQLAlchemy 2.x ORM Column types are inherently incompatible with mypy
+# when used in constructors and assignments — false positives.
+disable_error_code = ["arg-type", "assignment", "union-attr", "call-arg", "attr-defined", "valid-type", "var-annotated", "no-any-return"]

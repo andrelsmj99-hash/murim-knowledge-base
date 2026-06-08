@@ -163,7 +163,7 @@ class BaseScraper(abc.ABC):
             return {"processed_chapters": [], "last_chapter": None}
         try:
             with self.progress_file.open("r", encoding="utf-8") as fh:
-                data = json.load(fh)
+                data: dict[str, Any] = json.load(fh)
             data.setdefault("processed_chapters", [])
             return data
         except (OSError, json.JSONDecodeError) as exc:

@@ -8,6 +8,7 @@ streamlit local), ou via HTTP quando ``API_BASE_URL`` está configurado.
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -41,45 +42,45 @@ def _get_client():
     return _client
 
 
-def get(path: str, *, params: dict | None = None) -> dict:
+def get(path: str, *, params: dict | None = None) -> dict[str, Any]:
     """GET a JSON endpoint."""
     if _API_BASE is not None:
         import requests
 
         r = requests.get(_url(path), params=params, timeout=30)
         r.raise_for_status()
-        return r.json()
+        return r.json()  # type: ignore[no-any-return]
     # In-process
     params = params or {}
     r = _get_client().request("GET", path, params=params)
     r.raise_for_status()
-    return r.json()
+    return r.json()  # type: ignore[no-any-return]
 
 
-def post(path: str, *, json: dict | None = None) -> dict:
+def post(path: str, *, json: dict | None = None) -> dict[str, Any]:
     """POST a JSON endpoint."""
     if _API_BASE is not None:
         import requests
 
         r = requests.post(_url(path), json=json, timeout=30)
         r.raise_for_status()
-        return r.json()
+        return r.json()  # type: ignore[no-any-return]
     r = _get_client().request("POST", path, json=json)
     r.raise_for_status()
-    return r.json()
+    return r.json()  # type: ignore[no-any-return]
 
 
-def patch(path: str, *, json: dict | None = None) -> dict:
+def patch(path: str, *, json: dict | None = None) -> dict[str, Any]:
     """PATCH a JSON endpoint."""
     if _API_BASE is not None:
         import requests
 
         r = requests.patch(_url(path), json=json, timeout=30)
         r.raise_for_status()
-        return r.json()
+        return r.json()  # type: ignore[no-any-return]
     r = _get_client().request("PATCH", path, json=json)
     r.raise_for_status()
-    return r.json()
+    return r.json()  # type: ignore[no-any-return]
 
 
 def delete(path: str) -> None:

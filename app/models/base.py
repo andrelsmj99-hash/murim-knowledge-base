@@ -5,6 +5,8 @@ Uses :class:`app.utils.config.settings` as the single source of truth for the
 database URL, removing duplication with ``os.getenv`` and ensuring consistency
 across the application (including Alembic).
 """
+from collections.abc import Generator
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
@@ -34,7 +36,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
-def get_db() -> Session:
+def get_db() -> Generator[Session, None, None]:
     """FastAPI dependency that yields a database session and closes it afterwards."""
     db = SessionLocal()
     try:

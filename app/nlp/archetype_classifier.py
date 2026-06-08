@@ -5,7 +5,8 @@ from __future__ import annotations
 
 import re
 from collections import Counter
-from typing import Dict, List
+from collections.abc import Mapping
+from typing import Any
 
 from app.core.entities import (
     CharacterArchetype,
@@ -122,7 +123,12 @@ class ArchetypeClassifier:
 
         # Flatten all keywords for preprocessing
         self.all_keywords = []
-        for keywords in [self.narrative_keywords, self.combat_keywords, self.personality_keywords]:
+        all_kw_dicts: list[Mapping[Any, list[str]]] = [
+            self.narrative_keywords,
+            self.combat_keywords,
+            self.personality_keywords,
+        ]
+        for keywords in all_kw_dicts:
             for category_keywords in keywords.values():
                 if isinstance(category_keywords, list):
                     self.all_keywords.extend(category_keywords)
@@ -144,7 +150,7 @@ class ArchetypeClassifier:
             return 0.0
         return min(1.0, matches / total_words)
 
-    def _normalize_text(self, text: str) -> List[str]:
+    def _normalize_text(self, text: str) -> list[str]:
         """Normalize text into words for analysis."""
         # Simple tokenization
         words = re.findall(r'\b\w+\b', self._preprocess_text(text))
@@ -153,18 +159,18 @@ class ArchetypeClassifier:
     def classify(self, character_id: str, text_corpus: str) -> CharacterArchetype:
         """
         Classify a character's archetype based on text analysis.
-        
+
         Args:
             character_id: The ID of the character to classify
             text_corpus: Text content to analyze for classification
-            
+
         Returns:
             CharacterArchetype with classification results
         """
         # Normalize the text
         words = self._normalize_text(text_corpus)
         word_count = len(words)
-        
+
         if word_count == 0:
             # Return default archetype for empty corpus
             return CharacterArchetype(
@@ -177,43 +183,43 @@ class ArchetypeClassifier:
                 trait_scores={},
                 classified_by="rules"
             )
-        
+
         # Count keyword matches for each category
         word_counter = Counter(words)
-        
+
         # Classify narrative role
         narrative_scores = {}
         for role, keywords in self.narrative_keywords.items():
             matches = sum(word_counter.get(keyword.lower(), 0) for keyword in keywords)
             narrative_scores[role] = matches / max(1, word_count)  # Normalize
-        
+
         # Find best narrative role
         best_narrative_role = max(narrative_scores.items(), key=lambda x: x[1])
         narrative_role = best_narrative_role[0]
         role_confidence = best_narrative_role[1]
-        
+
         # Classify combat style
         combat_scores = {}
         for style, keywords in self.combat_keywords.items():
             matches = sum(word_counter.get(keyword.lower(), 0) for keyword in keywords)
             combat_scores[style] = matches / max(1, word_count)  # Normalize
-        
+
         # Find best combat style
         best_combat_style = max(combat_scores.items(), key=lambda x: x[1])
         combat_style = best_combat_style[0]
         combat_confidence = best_combat_style[1]
-        
+
         # Classify personality traits
         personality_traits = []
         trait_scores = {}
-        
+
         for trait, keywords in self.personality_keywords.items():
             matches = sum(word_counter.get(keyword.lower(), 0) for keyword in keywords)
             if matches > 0:  # Only include traits with some evidence
                 trait_scores[trait] = matches / max(1, word_count)
                 if trait_scores[trait] > 0.01:  # Threshold for inclusion
                     personality_traits.append(trait)
-        
+
         # Create the archetype
         return CharacterArchetype(
             character_id=character_id,
@@ -222,6 +228,7 @@ class ArchetypeClassifier:
             personality_traits=personality_traits,
             role_confidence=role_confidence,
             combat_confidence=combat_confidence,
-            trait_scores=trait_scores,
+            trait_scores={k.value: v for k, v in trait_scores.items()},
             classified_by="rules"
         )
+

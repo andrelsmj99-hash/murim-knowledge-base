@@ -95,16 +95,16 @@ class IngestEntitiesUseCase:
 
         # Attach titles to candidates
         title_map: dict[str, list[str]] = {}
-        for t in extraction.titles:
-            _, bare = _split_title_context(t.context)
+        for tm in extraction.titles:
+            _, bare = _split_title_context(tm.context)
             key = bare.lower() if bare else ""
             if not key:
                 continue
-            title_map.setdefault(key, []).append(t.title)
+            title_map.setdefault(key, []).append(tm.title)
         for cand in candidates:
-            for t in title_map.get(cand.canonical_name, []):
-                if t not in cand.titles:
-                    cand.titles.append(t)
+            for title_str in title_map.get(cand.canonical_name, []):
+                if title_str not in cand.titles:
+                    cand.titles.append(title_str)
 
         # Deduplicate within the chapter itself
         dedup = self.dedup.execute(candidates)
@@ -118,9 +118,9 @@ class IngestEntitiesUseCase:
                 existing.appearance_frequency = (
                     (existing.appearance_frequency or 0) + cand.appearance_frequency
                 )
-                for t in cand.titles:
-                    if t not in existing.titles:
-                        existing.titles.append(t)
+                for title_str in cand.titles:
+                    if title_str not in existing.titles:
+                        existing.titles.append(title_str)
                 for a in cand.aliases:
                     existing.add_alias(a.alias_type, a.value)
                 self.uow.session.flush()

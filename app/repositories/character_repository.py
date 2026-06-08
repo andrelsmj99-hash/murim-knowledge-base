@@ -84,10 +84,7 @@ def _to_orm(entity: Character) -> CharacterORM:
     embedding_json = json.dumps(entity.embedding) if entity.embedding else None
     archetype_json = None
     if entity.archetype:
-        try:
-            archetype_json = json.dumps(entity.archetype.__dict__)
-        except Exception:
-            pass
+        archetype_json = json.dumps(entity.archetype.__dict__)
 
     orm = CharacterORM(
         id=_to_uuid(entity.id),

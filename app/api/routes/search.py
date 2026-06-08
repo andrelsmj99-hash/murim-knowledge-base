@@ -65,10 +65,10 @@ def search(
         if c.id in existing_ids:
             continue
         score = 1.0
-        if query_vec is not None and getattr(c, "embedding", None):
+        if query_vec is not None and c.embedding:
             try:
                 import json as _json
-                emb = _json.loads(c.embedding)
+                emb: list[float] = _json.loads(c.embedding)
                 score = _cosine(query_vec, emb)
             except Exception:  # noqa: BLE001
                 score = 1.0

@@ -44,7 +44,7 @@ def detect_organizations(text: str) -> list[OrgMatch]:
     if not text:
         return []
 
-    out: dict[str, OrgMatch] = {}
+    out: dict[tuple[int, int], OrgMatch] = {}
 
     # 1. Lookup known orgs (longest first to avoid partial matches)
     sorted_keys = sorted(ORG_LOOKUP.keys(), key=len, reverse=True)
