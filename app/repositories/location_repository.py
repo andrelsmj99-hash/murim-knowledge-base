@@ -129,7 +129,8 @@ class LocationRepository(ILocationRepository):
         existing = self.get_by_name_type(location.name, location.type)
         if existing:
             orm = self.session.get(LocationORM, _to_uuid(existing.id))
-            assert orm is not None, f"LocationORM {existing.id} disappeared after get_by_name_type"
+            if orm is None:
+                raise RuntimeError(f"LocationORM {existing.id} disappeared after get_by_name_type")
             orm.description = location.description or orm.description
             orm.region = location.region or orm.region
             orm.realm = location.realm or orm.realm

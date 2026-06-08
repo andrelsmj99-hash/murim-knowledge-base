@@ -1,7 +1,7 @@
 # PROJECT_STATUS — Murim Knowledge Base
 
 > Documento vivo que reflete o estado real do workspace.
-> Última atualização: 2026-06-08 (sessão 26 — CI/Docker/Security Hardening & Bugfixes)
+> Última atualização: 2026-06-08 (sessão 27 — Bug Fixes: Scraper Persistence, Dead Code, Missing Package)
 
 ---
 
@@ -360,6 +360,12 @@ murim_knowledge_base/
 
 4. ~~**`IngestEntitiesUseCase._ingest_organizations`** — Semântica de "novo" vs "atualizado" não trackeada.~~ **VERIFICADO na sessão 12 — contador incrementa apenas no branch `else` (org nova).**
 
+5. ~~**`make_scraper()` TypeError** — `ingest_use_case` passado para scrapers dedicados que não aceitam.~~ **CORRIGIDO na sessão 27 — `ingest_use_case` agora é parâmetro de `BaseScraper.__init__`.**
+
+6. ~~**Non-generic scrapers não persistem no DB** — Apenas `GenericScraper` tinha `scrape_novel()` com persistência.~~ **CORRIGIDO na sessão 27 — `BaseScraper.scrape_novel()` agora persiste quando `ingest_use_case` está definido.**
+
+7. ~~**Dead code em `build_knowledge_graph.py`** — Dict comprehension `{str(o.id): o for o in orgs}` descartada.~~ **CORRIGIDO na sessão 27 — expressão morta removida.**
+
 ### Inconsistências Arquiteturais
 
 1. ~~**`update_character` (PATCH)**: Acessa ORM diretamente.~~ **CORRIGIDO na sessão 7.**
@@ -391,6 +397,10 @@ murim_knowledge_base/
 5. **`Character.embedding` não indexado**: O embedding é armazenado como JSON string em `Text`. Sem índice de similaridade (ex: pgvector), a busca semântica é O(n) por scan linear.
 
 6. ~~**Dashboard UX**: Falta paginação real, CRUD completo (editar/deletar), dark mode, export (CSV/JSON).~~ **CORRIGIDO na sessão 15.**
+
+7. ~~**`assert` em código de produção** (`location_repository.py:132`).~~ **CORRIGIDO na sessão 27 — substituído por `raise RuntimeError`.**
+
+8. ~~**Pacote `app/nlp/` sem `__init__.py`**.~~ **CORRIGIDO na sessão 27.**
 
 ---
 
@@ -1006,6 +1016,60 @@ Revisão completa de segurança, CI pipeline, e correção de bugs encontrados n
 - `tests/test_api.py` — 11 new tests
 
 **Resultado:** 95/95 testes passando. Ruff clean. Ruff format clean. Mypy clean (0 errors, 76 files). **Commit:** pendente.
+
+---
+
+## Sessão 27 — Bug Fixes: Scraper Persistence, Dead Code, Missing Package (2026-06-08)
+
+Auditoria do codebase identificou e corrigiu 5 issues reais.
+
+### FIX-1: Non-Generic Scrapers Não Persistiam no DB (HIGH)
+
+**Bug**: `make_scraper()` passava `ingest_use_case` para scrapers que não aceitavam → `TypeError` em runtime. Além disso, apenas `GenericScraper` tinha lógica de persistência em `scrape_novel()`.
+
+**Fix**:
+- `BaseScraper.__init__()` agora aceita `ingest_use_case` (opcional, default `None`)
+- `BaseScraper.scrape_novel()` agora persiste no DB quando `ingest_use_case` está definido — lógica movida do `GenericScraper`
+- `GenericScraper` removido: parâmetro `ingest_use_case` duplicado e override de `scrape_novel()` (agora herdado do base)
+- Todos os scrapers dedicados (novelbin, novelfire, wuxiaworld, novelupdates) agora persistem automaticamente quando chamados via `POST /scrape`
+
+**Arquivos modificados:**
+- `app/scrapers/base.py` — `ingest_use_case` no `__init__` + persistência em `scrape_novel()`
+- `app/scrapers/generic.py` — removido parâmetro duplicado e override desnecessário
+
+### FIX-2: Dead Code em build_knowledge_graph.py
+
+**Bug**: `{str(o.id): o for o in orgs}` na linha 68 — dict comprehension descartada (não atribuída a nenhuma variável).
+
+**Fix**: Expressão morta removida.
+
+**Arquivo modificado:** `app/core/use_cases/build_knowledge_graph.py`
+
+### FIX-3: Pacote `app/nlp/` Sem `__init__.py`
+
+**Bug**: Diretório `app/nlp/` não tinha `__init__.py`, impedindo `from app.nlp import ArchetypeClassifier`.
+
+**Fix**: `app/nlp/__init__.py` criado com export de `ArchetypeClassifier`.
+
+**Arquivo criado:** `app/nlp/__init__.py`
+
+### FIX-4: `assert` em Código de Produção
+
+**Bug**: `location_repository.py:132` usava `assert` para verificar estado do ORM — removido em runs com `-O`.
+
+**Fix**: Substituído por `raise RuntimeError(...)`.
+
+**Arquivo modificado:** `app/repositories/location_repository.py`
+
+### Resultado
+
+- 115/115 testes passando
+- Ruff clean (0 erros)
+- Ruff format clean (91 arquivos formatados)
+- Mypy clean (0 erros, 77 arquivos)
+
+**Arquivos modificados:** `app/scrapers/base.py`, `app/scrapers/generic.py`, `app/core/use_cases/build_knowledge_graph.py`, `app/repositories/location_repository.py`
+**Arquivos criados:** `app/nlp/__init__.py`
 
 ---
 

@@ -51,9 +51,11 @@ class BaseScraper(abc.ABC):
         novel_slug: str,
         session: requests.Session | None = None,
         progress_dir: Path | None = None,
+        ingest_use_case: Any | None = None,
     ) -> None:
         self.novel_slug = novel_slug
         self.session = session or self._build_session()
+        self.ingest_use_case = ingest_use_case
 
         self.progress_dir = progress_dir or settings.progress_dir
         self.progress_dir.mkdir(parents=True, exist_ok=True)
@@ -152,9 +154,31 @@ class BaseScraper(abc.ABC):
             yield data
 
     def scrape_novel(self, resume: bool = True) -> list[dict[str, Any]]:
-        """Convenience wrapper that materializes all chapters into memory."""
-        self.chapters = list(self.iter_chapters(resume=resume))
-        logger.info("Scrape complete — %d chapter(s) collected.", len(self.chapters))
+        """Materialize all chapters and persist to DB if ``ingest_use_case`` is set.
+
+        Subclasses may override this method for custom persistence logic.
+        """
+        self.chapters = []
+        if self.ingest_use_case is None:
+            logger.info(
+                "Scrape complete — %d chapter(s) collected (no DB persistence).", len(self.chapters)
+            )
+            self.chapters = list(self.iter_chapters(resume=resume))
+            return self.chapters
+
+        meta = self.get_novel_metadata()
+        logger.info("Novel metadata resolved: %s", meta.get("title"))
+        for chapter_payload in self.iter_chapters(resume=resume):
+            result = self.ingest_use_case.execute(meta, chapter_payload)
+            self.chapters.append(
+                {
+                    **chapter_payload,
+                    "db_novel_id": result.novel_id,
+                    "db_chapter_id": result.chapter_id,
+                    "skipped": result.skipped,
+                }
+            )
+        logger.info("Scrape + ingest complete — %d chapter(s).", len(self.chapters))
         return self.chapters
 
     # ------------------------------------------------------------ progress I/O

@@ -16,7 +16,6 @@ from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup, FeatureNotFound
 
-from app.core.use_cases import IngestChapterUseCase
 from app.scrapers.base import BaseScraper
 
 logger = logging.getLogger(__name__)
@@ -63,7 +62,6 @@ class GenericScraper(BaseScraper):
         novel_slug: str,
         index_url: str,
         base_url: str,
-        ingest_use_case: IngestChapterUseCase | None = None,
         selectors: dict[str, str] | None = None,
         reverse_chapter_list: bool = True,
         **kwargs: Any,
@@ -73,7 +71,6 @@ class GenericScraper(BaseScraper):
             raise ValueError("index_url is required for GenericScraper")
         self.index_url = index_url
         self.base_url = base_url.rstrip("/")
-        self.ingest_use_case = ingest_use_case
         self.selectors = {**DEFAULT_SELECTORS, **(selectors or {})}
         self.reverse_chapter_list = reverse_chapter_list
 
@@ -171,35 +168,3 @@ class GenericScraper(BaseScraper):
             "word_count": len(text.split()),
             "url": url,
         }
-
-    # ----------------------------------------------------------- persistence
-
-    def scrape_novel(self, resume: bool = True) -> list[dict[str, Any]]:
-        """
-        Materialize all chapters and persist them to the DB if a use case was
-        injected. Falls back to plain iteration when ``ingest_use_case`` is
-        ``None`` (useful for dry-runs or local JSON dumps).
-        """
-        self.chapters = []
-        if self.ingest_use_case is None:
-            logger.warning(
-                "GenericScraper running without an IngestChapterUseCase — chapters "
-                "will only be kept in memory and progress JSON."
-            )
-            self.chapters = list(self.iter_chapters(resume=resume))
-            return self.chapters
-
-        meta = self.get_novel_metadata()
-        logger.info("Novel metadata resolved: %s", meta.get("title"))
-        for chapter_payload in self.iter_chapters(resume=resume):
-            result = self.ingest_use_case.execute(meta, chapter_payload)
-            self.chapters.append(
-                {
-                    **chapter_payload,
-                    "db_novel_id": result.novel_id,
-                    "db_chapter_id": result.chapter_id,
-                    "skipped": result.skipped,
-                }
-            )
-        logger.info("Scrape + ingest complete — %d chapter(s).", len(self.chapters))
-        return self.chapters

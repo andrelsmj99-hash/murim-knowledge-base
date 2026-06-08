@@ -65,7 +65,6 @@ class BuildKnowledgeGraphUseCase:
 
         # --- organizations -----------------------------------------------
         orgs = self.uow.organizations.list(limit=10_000)
-        {str(o.id): o for o in orgs}
         for o in orgs:
             graph.add_node(
                 f"org:{o.id}",
