@@ -4,10 +4,14 @@ Página de Busca — free-text query contra a API (lexical + semantic).
 
 from __future__ import annotations
 
+import logging
+
 import pandas as pd
 import streamlit as st
 
 from app.dashboard.api_client import get
+
+logger = logging.getLogger(__name__)
 
 
 def show() -> None:
@@ -28,7 +32,8 @@ def show() -> None:
     with st.spinner("Buscando..."):
         try:
             results = get("api/v1/search", params={"q": query, "limit": 50, "semantic": semantic})
-        except Exception:
+        except Exception as exc:
+            logger.warning("Search query failed: %s", exc)
             st.error("Erro ao executar a busca. Verifique se a API está no ar.")
             return
 

@@ -1,7 +1,7 @@
 # PROJECT_STATUS — Murim Knowledge Base
 
 > Documento vivo que reflete o estado real do workspace.
-> Última atualização: 2026-06-08 (sessão 25 — E2E Dashboard Tests)
+> Última atualização: 2026-06-08 (sessão 26 — CI/Docker/Security Hardening & Bugfixes)
 
 ---
 
@@ -944,6 +944,68 @@ curl -X POST http://localhost:8000/api/v1/scrape \
 - `app/processing/__init__.py` — exports CoreferenceHit, resolve_coreferences
 
 **Resultado:** 84/84 testes passando. Ruff clean. Mypy clean. **Commit:** pendente.
+
+---
+
+## Sessão 26 — CI/Docker/Security Hardening & Bugfixes (2026-06-08)
+
+Revisão completa de segurança, CI pipeline, e correção de bugs encontrados na auditoria do código.
+
+### FIX-1: CI Pipeline Cleanup
+- **Removido** service Postgres do CI (tests usam SQLite in-memory — Postgres era iniciado mas nunca usado)
+- **Removido** `version: "0.15.16"` hardcoded do ruff (usa versão latest do action)
+- **Adicionado** exclusão de E2E tests do pytest: `--ignore=tests/test_dashboard_e2e.py -m "not e2e"`
+- **Adicionado** `[tool.pytest.ini_options]` no `pyproject.toml` com marker `e2e`
+
+### FIX-2: Docker Security Hardening
+- **Non-root user**: Criado `murim` user/group no Dockerfile, app roda como `USER murim`
+- **Signal forwarding**: CMD convertido para `ENTRYPOINT ["sh", "-c"]` + `CMD [...]` para graceful shutdown
+- **Secrets exclusion**: `.env` e `.env.*` adicionados ao `.dockerignore`
+
+### FIX-3: Streamlit Version & CORS
+- **Streamlit**: Version bumped de `>=1.28.0` para `>=1.36.0` (requerido para `st.navigation()`)
+- **CORS fix**: `allow_origins=["*"]` + `allow_credentials=True` viola W3C CORS spec. Agora lê `APP_CORS_ORIGINS` do environment; sem origins configurados, desabilita credentials
+
+### FIX-4: ArchetypeClassifier Multi-Word Keyword Bug (Functional)
+- **Bug**: `classify()` usava `word_counter.get(keyword)` que só funciona para palavras isoladas. Keywords multi-palavra como "main character", "sword technique", "martial arts" nunca matcheavam
+- **Fix**: Novo método `_count_keyword_matches()` usa substring matching para keywords com espaço, word counter para keywords simples
+
+### FIX-5: Silent Exception Swallowing → Logging
+- **Repositories**: 4 blocos `except Exception: pass` em `character_repository.py` agora logam com `logger.debug()`/`logger.warning()`
+- **Scrape endpoint**: `scrape_novel()` agora captura exceções e retorna HTTP 502 com mensagem de erro
+- **Dashboard pages**: Todos os `except Exception` em `overview.py`, `characters.py`, `graph.py`, `search.py` agora logam o erro
+
+### FIX-6: Organization Relationship Duplicate Detection
+- **Bug**: `add_relationship()` retornava `False` para duplicatas mas a route ignorava o return → silently aceitava duplicatas
+- **Fix**: Route agora verifica return e retorna HTTP 409 "Relationship already exists"
+
+### FIX-7: Dead Code Audit
+- Verificado: todos os símbolos mencionados na auditoria (`save`, `create_or_get`, `update_embedding`, `_session`, `create_app`) já estavam em uso ou não existem no codebase. Nenhuma remoção necessária.
+
+### FIX-8: New Test Coverage (11 novos testes)
+- **List pagination**: `test_list_characters_pagination`, `test_list_organizations_pagination`, `test_list_locations_pagination`
+- **404 error paths**: `test_character_not_found_404`, `test_organization_not_found_404`, `test_location_not_found_404`, `test_organization_rivals_not_found_404`, `test_character_patch_not_found_404`, `test_character_delete_not_found_404`
+- **409 duplicate**: `test_organization_relationship_duplicate_409`, `test_organization_relationship_not_found_404`
+
+### Arquivos modificados (sessão 26)
+- `.github/workflows/ci.yml` — CI pipeline cleanup
+- `pyproject.toml` — pytest markers
+- `Dockerfile` — non-root user, exec form CMD
+- `docker-compose.yml` — removed deprecated `version: "3.9"`
+- `.dockerignore` — added `.env` exclusion
+- `requirements.txt` — streamlit bump to `>=1.36.0`
+- `app/main.py` — CORS fix (environment-driven origins)
+- `app/nlp/archetype_classifier.py` — multi-word keyword matching fix
+- `app/repositories/character_repository.py` — logging in exception handlers
+- `app/api/routes/scrape.py` — error handling for scrape_novel()
+- `app/api/routes/organizations.py` — 409 on duplicate relationship
+- `app/dashboard/pages/overview.py` — logging in exception handlers
+- `app/dashboard/pages/characters.py` — logging in exception handlers
+- `app/dashboard/pages/graph.py` — logging in exception handlers
+- `app/dashboard/pages/search.py` — logging in exception handlers
+- `tests/test_api.py` — 11 new tests
+
+**Resultado:** 95/95 testes passando. Ruff clean. Ruff format clean. Mypy clean (0 errors, 76 files). **Commit:** pendente.
 
 ---
 

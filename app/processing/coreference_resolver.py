@@ -51,16 +51,18 @@ _OBJECT_PRONOUNS: frozenset[str] = frozenset({"him", "her", "it", "them"})
 _POSSESSIVE_DETERMINERS: frozenset[str] = frozenset({"his", "her", "its", "their"})
 
 # Reflexive pronouns
-_REFLEXIVE_PRONOUNS: frozenset[str] = frozenset({
-    "himself", "herself", "itself", "themselves",
-})
+_REFLEXIVE_PRONOUNS: frozenset[str] = frozenset(
+    {
+        "himself",
+        "herself",
+        "itself",
+        "themselves",
+    }
+)
 
 # All pronouns we attempt to resolve
 _ALL_PRONOUNS: frozenset[str] = (
-    _SUBJECT_PRONOUNS
-    | _OBJECT_PRONOUNS
-    | _POSSESSIVE_DETERMINERS
-    | _REFLEXIVE_PRONOUNS
+    _SUBJECT_PRONOUNS | _OBJECT_PRONOUNS | _POSSESSIVE_DETERMINERS | _REFLEXIVE_PRONOUNS
 )
 
 # Build a lowercase → canonical mapping for title references
@@ -74,20 +76,26 @@ for _tp in TITLES:
 
 # "The <title>" patterns we look for in text (lowercase for matching)
 _TITLE_PHRASES: list[str] = sorted(
-    {
-        f"the {_canonical}"
-        for _canonical in _TITLE_CANONICALS
-    },
+    {f"the {_canonical}" for _canonical in _TITLE_CANONICALS},
     key=len,
     reverse=True,  # longest first so "the sect master" matches before "the master"
 )
 
 # Generic titles that can refer to the most recent character even without
 # an explicit mention in the same sentence.
-_GENERIC_TITLES: frozenset[str] = frozenset({
-    "elder", "master", "senior", "junior", "protector",
-    "young master", "lord", "lady", "sir",
-})
+_GENERIC_TITLES: frozenset[str] = frozenset(
+    {
+        "elder",
+        "master",
+        "senior",
+        "junior",
+        "protector",
+        "young master",
+        "lord",
+        "lady",
+        "sir",
+    }
+)
 
 # Pattern for a name-like sequence (2-4 capitalized words)
 _NAME_RE = re.compile(r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})\b")
@@ -178,14 +186,14 @@ def resolve_coreferences(
     if nm:
         name_lower = nm.group(1).lower()
         if name_lower in surface_to_canonical:
-            sentence_name_events.insert(
-                0, (nm.start(), nm.end(), surface_to_canonical[name_lower])
-            )
+            sentence_name_events.insert(0, (nm.start(), nm.end(), surface_to_canonical[name_lower]))
 
     # --- Linear scan: track most recent character as we walk the text ---
     all_events = (
-        [(m.start, m.end, "mention", m.canonical.lower(), m.surface.lower())
-         for m in sorted_mentions]
+        [
+            (m.start, m.end, "mention", m.canonical.lower(), m.surface.lower())
+            for m in sorted_mentions
+        ]
         + [(s, e, "pronoun", surf, surf) for s, e, surf in pronoun_events]
         + [(s, e, "title", phrase, phrase) for s, e, phrase in title_events]
         + [(s, e, "sent_name", canonical, "") for s, e, canonical in sentence_name_events]

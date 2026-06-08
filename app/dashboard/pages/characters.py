@@ -4,10 +4,14 @@ Página de Personagens — busca funcional, CRUD completo, paginação.
 
 from __future__ import annotations
 
+import logging
+
 import pandas as pd
 import streamlit as st
 
 from app.dashboard.api_client import delete, get, patch
+
+logger = logging.getLogger(__name__)
 
 
 def show() -> None:
@@ -36,7 +40,8 @@ def show() -> None:
             )
             all_items = data.get("items", [])
             total_count = data.get("meta", {}).get("total", 0)
-    except Exception:
+    except Exception as exc:
+        logger.warning("Failed to load characters data: %s", exc)
         st.warning("Erro ao carregar dados da API.")
         return
 

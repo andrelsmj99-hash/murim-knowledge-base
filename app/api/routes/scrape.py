@@ -38,7 +38,12 @@ def trigger_scrape(
     except KeyError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
-    chapters: list[dict[str, Any]] = scraper.scrape_novel(resume=payload.resume)
+    chapters: list[dict[str, Any]]
+    try:
+        chapters = scraper.scrape_novel(resume=payload.resume)
+    except Exception as exc:
+        logger.error("scrape_novel failed for %s: %s", payload.novel_slug, exc, exc_info=True)
+        raise HTTPException(status_code=502, detail=f"Scraping failed: {exc}")
     items: list[ScrapeChapterItem] = []
     errors: list[str] = []
     novel_id: str | None = None

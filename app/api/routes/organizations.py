@@ -99,8 +99,10 @@ def add_relationship(
         raise HTTPException(status_code=404, detail="Organization not found")
     if uow.organizations.get(payload.related_organization_id) is None:
         raise HTTPException(status_code=404, detail="Related organization not found")
-    uow.organizations.add_relationship(
+    added = uow.organizations.add_relationship(
         org_id, payload.related_organization_id, payload.relationship_type
     )
+    if not added:
+        raise HTTPException(status_code=409, detail="Relationship already exists")
     uow.commit()
     return _to_read(uow.organizations.get(org_id))

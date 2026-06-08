@@ -48,10 +48,23 @@ def create_app() -> FastAPI:
         openapi_url="/openapi.json",
     )
 
+    # CORS: when allow_origins is ["*"] we must NOT set allow_credentials=True
+    # (W3C CORS spec disallows it). For dev we allow all origins without credentials;
+    # set APP_CORS_ORIGINS env var for production.
+    import os
+
+    cors_origins_raw = os.getenv("APP_CORS_ORIGINS", "")
+    if cors_origins_raw:
+        cors_origins = [o.strip() for o in cors_origins_raw.split(",") if o.strip()]
+        allow_creds = True
+    else:
+        cors_origins = ["*"]
+        allow_creds = False
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # tighten in production
-        allow_credentials=True,
+        allow_origins=cors_origins,
+        allow_credentials=allow_creds,
         allow_methods=["*"],
         allow_headers=["*"],
     )

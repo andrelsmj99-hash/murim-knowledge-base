@@ -62,11 +62,7 @@ class TestCoreferenceResolver:
         assert any(h.resolved == "yun chen" for h in hits)
 
     def test_multiple_characters_tracks_most_recent(self):
-        text = (
-            "Lin Lei spoke to Zhang Wei. "
-            "Lin Lei smiled. "
-            "He then left the hall."
-        )
+        text = "Lin Lei spoke to Zhang Wei. Lin Lei smiled. He then left the hall."
         mentions = [
             _make_mention("Lin Lei", "lin lei", 0, 7),
             _make_mention("Zhang Wei", "zhang wei", 21, 30),
@@ -78,10 +74,7 @@ class TestCoreferenceResolver:
         assert he_hits[0].resolved == "lin lei"
 
     def test_pronoun_between_characters_resolves_to_first(self):
-        text = (
-            "Di Shi arrived. He was angry. "
-            "Qing Yan watched silently."
-        )
+        text = "Di Shi arrived. He was angry. Qing Yan watched silently."
         mentions = [
             _make_mention("Di Shi", "di shi", 0, 6),
             _make_mention("Qing Yan", "qing yan", 30, 38),
@@ -131,9 +124,6 @@ class TestCoreferenceResolver:
             [_make_mention("Lin Lei", "lin lei", 0, 7)],
             [_make_mention("Zhang Wei", "zhang wei", 0, 9)],
         ]
-        results = [
-            resolve_coreferences(t, m)
-            for t, m in zip(texts, mentions_list, strict=True)
-        ]
+        results = [resolve_coreferences(t, m) for t, m in zip(texts, mentions_list, strict=True)]
         assert results[0][0].resolved == "lin lei"
         assert results[1][0].resolved == "zhang wei"

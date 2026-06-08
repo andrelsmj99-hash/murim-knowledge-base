@@ -382,6 +382,8 @@ class ArchetypeClassifier:
         # Normalize the text
         words = self._normalize_text(text_corpus)
         word_count = len(words)
+        # Lowercased full text for substring matching of multi-word keywords
+        text_lower = self._preprocess_text(text_corpus)
 
         if word_count == 0:
             # Return default archetype for empty corpus
@@ -402,7 +404,7 @@ class ArchetypeClassifier:
         # Classify narrative role
         narrative_scores = {}
         for role, keywords in self.narrative_keywords.items():
-            matches = sum(word_counter.get(keyword.lower(), 0) for keyword in keywords)
+            matches = self._count_keyword_matches(word_counter, text_lower, keywords)
             narrative_scores[role] = matches / max(1, word_count)  # Normalize
 
         # Find best narrative role
@@ -413,7 +415,7 @@ class ArchetypeClassifier:
         # Classify combat style
         combat_scores = {}
         for style, keywords in self.combat_keywords.items():
-            matches = sum(word_counter.get(keyword.lower(), 0) for keyword in keywords)
+            matches = self._count_keyword_matches(word_counter, text_lower, keywords)
             combat_scores[style] = matches / max(1, word_count)  # Normalize
 
         # Find best combat style
@@ -426,7 +428,7 @@ class ArchetypeClassifier:
         trait_scores = {}
 
         for trait, keywords in self.personality_keywords.items():
-            matches = sum(word_counter.get(keyword.lower(), 0) for keyword in keywords)
+            matches = self._count_keyword_matches(word_counter, text_lower, keywords)
             if matches > 0:  # Only include traits with some evidence
                 trait_scores[trait] = matches / max(1, word_count)
                 if trait_scores[trait] > 0.01:  # Threshold for inclusion
@@ -443,3 +445,25 @@ class ArchetypeClassifier:
             trait_scores={k.value: v for k, v in trait_scores.items()},
             classified_by="rules",
         )
+
+    @staticmethod
+    def _count_keyword_matches(
+        word_counter: Counter,
+        text_lower: str,
+        keywords: list[str],
+    ) -> int:
+        """Count how many keywords appear in the text.
+
+        Single-word keywords use the word counter for exact token matching.
+        Multi-word keywords use substring matching against the full text.
+        """
+        total = 0
+        for keyword in keywords:
+            kw_lower = keyword.lower()
+            if " " in kw_lower:
+                # Multi-word: substring match in the full text
+                total += text_lower.count(kw_lower)
+            else:
+                # Single-word: exact token match via word counter
+                total += word_counter.get(kw_lower, 0)
+        return total

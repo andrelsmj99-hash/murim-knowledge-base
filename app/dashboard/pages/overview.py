@@ -4,6 +4,7 @@ Visão Geral — métricas, cards de estatísticas e resumo dos últimos dados.
 
 from __future__ import annotations
 
+import logging
 import time
 
 import pandas as pd
@@ -11,6 +12,8 @@ import plotly.express as px
 import streamlit as st
 
 from app.dashboard.api_client import get, post
+
+logger = logging.getLogger(__name__)
 
 
 def show() -> None:
@@ -22,26 +25,31 @@ def show() -> None:
         novels = get("api/v1/novels", params={"limit": 1})
         total_novels = novels["meta"]["total"]
     except Exception:
+        logger.debug("Failed to fetch novels KPI", exc_info=True)
         total_novels = 0
     try:
         chars = get("api/v1/characters", params={"limit": 1})
         total_chars = chars["meta"]["total"]
     except Exception:
+        logger.debug("Failed to fetch characters KPI", exc_info=True)
         total_chars = 0
     try:
         orgs = get("api/v1/organizations", params={"limit": 1})
         total_orgs = orgs["meta"]["total"]
     except Exception:
+        logger.debug("Failed to fetch organizations KPI", exc_info=True)
         total_orgs = 0
     try:
         locs = get("api/v1/locations", params={"limit": 1})
         total_locs = locs["meta"]["total"]
     except Exception:
+        logger.debug("Failed to fetch locations KPI", exc_info=True)
         total_locs = 0
     try:
         graph_info = get("api/v1/graph")
         graph_size = graph_info["stats"]
     except Exception:
+        logger.debug("Failed to fetch graph KPI", exc_info=True)
         graph_size = {"nodes": 0, "edges": 0}
 
     kpi = st.columns(5)
@@ -73,7 +81,8 @@ def show() -> None:
                         st.success("Novel adicionada!")
                         time.sleep(0.5)
                         st.rerun()
-                    except Exception:
+                    except Exception as exc:
+                        logger.warning("Failed to add novel: %s", exc)
                         st.warning("Erro ao adicionar novel")
             elif kind == "Personagem":
                 name = st.text_input("Nome", key="qa_char_name")
@@ -83,7 +92,8 @@ def show() -> None:
                         st.success("Personagem adicionado!")
                         time.sleep(0.5)
                         st.rerun()
-                    except Exception:
+                    except Exception as exc:
+                        logger.warning("Failed to add character: %s", exc)
                         st.warning("Erro ao adicionar personagem")
             elif kind == "Organização":
                 name = st.text_input("Nome", key="qa_org_name")
@@ -94,7 +104,8 @@ def show() -> None:
                         st.success("Organização adicionada!")
                         time.sleep(0.5)
                         st.rerun()
-                    except Exception:
+                    except Exception as exc:
+                        logger.warning("Failed to add organization: %s", exc)
                         st.warning("Erro ao adicionar organização")
             elif kind == "Localização":
                 name = st.text_input("Nome", key="qa_loc_name")
@@ -113,7 +124,8 @@ def show() -> None:
                         st.success("Localização adicionada!")
                         time.sleep(0.5)
                         st.rerun()
-                    except Exception:
+                    except Exception as exc:
+                        logger.warning("Failed to add location: %s", exc)
                         st.warning("Erro ao adicionar localização")
 
     with col_left:
@@ -139,7 +151,8 @@ def show() -> None:
                     )
                 else:
                     st.info("Nenhuma novel cadastrada.")
-            except Exception:
+            except Exception as exc:
+                logger.debug("Failed to load novels tab: %s", exc)
                 st.info("Nenhuma novel cadastrada.")
 
         with tabs[1]:
@@ -159,7 +172,8 @@ def show() -> None:
                     )
                 else:
                     st.info("Nenhum personagem cadastrado.")
-            except Exception:
+            except Exception as exc:
+                logger.debug("Failed to load characters tab: %s", exc)
                 st.info("Nenhum personagem cadastrado.")
 
         with tabs[2]:
@@ -171,7 +185,8 @@ def show() -> None:
                     _export(items, "organizations", ["name", "type"])
                 else:
                     st.info("Nenhuma organização cadastrada.")
-            except Exception:
+            except Exception as exc:
+                logger.debug("Failed to load organizations tab: %s", exc)
                 st.info("Nenhuma organização cadastrada.")
 
         with tabs[3]:
@@ -183,7 +198,8 @@ def show() -> None:
                     _export(items, "locations", ["name", "type", "region", "realm"])
                 else:
                     st.info("Nenhuma localização cadastrada.")
-            except Exception:
+            except Exception as exc:
+                logger.debug("Failed to load locations tab: %s", exc)
                 st.info("Nenhuma localização cadastrada.")
 
 
@@ -200,7 +216,8 @@ def _render_graph_summary() -> None:
         fig = px.pie(names=labels, values=values, hole=0.4, title="Nós no Grafo")
         fig.update_layout(height=400)
         st.plotly_chart(fig, use_container_width=True, key="graph_summary_pie")
-    except Exception:
+    except Exception as exc:
+        logger.debug("Failed to render graph summary: %s", exc)
         st.info("Nenhum dado no grafo.")
 
 

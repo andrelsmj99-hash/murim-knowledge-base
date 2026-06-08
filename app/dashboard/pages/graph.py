@@ -4,10 +4,14 @@ Visualizacao do Grafo de Conhecimento (NetworkX -> Plotly) com dark mode.
 
 from __future__ import annotations
 
+import logging
+
 import plotly.graph_objects as go
 import streamlit as st
 
 from app.dashboard.api_client import get
+
+logger = logging.getLogger(__name__)
 
 
 def show() -> None:
@@ -18,7 +22,8 @@ def show() -> None:
         nodes = graph_data["nodes"]
         edges = graph_data["edges"]
         stats = graph_data["stats"]
-    except Exception:
+    except Exception as exc:
+        logger.warning("Failed to load graph data: %s", exc)
         st.error("Erro ao carregar o grafo.")
         return
 
@@ -56,7 +61,8 @@ def show() -> None:
         for e in filtered_edges:
             graph.add_edge(e["source"], e["target"])
         pos = nx.spring_layout(graph, seed=42, k=2 / (max(1, len(filtered_nodes)) ** 0.5))
-    except Exception:
+    except Exception as exc:
+        logger.warning("Failed to generate NetworkX layout: %s", exc)
         st.warning("Erro ao gerar layout via NetworkX.")
         return
 

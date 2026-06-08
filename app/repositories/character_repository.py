@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import builtins
 import json
+import logging
 import math
 import uuid as uuid_module
 
@@ -21,6 +22,8 @@ from app.core.entities import Character
 from app.core.interfaces import ICharacterRepository
 from app.models.character import Alias
 from app.models.character import Character as CharacterORM
+
+logger = logging.getLogger(__name__)
 
 
 def _to_uuid(value: str) -> uuid_module.UUID:
@@ -57,7 +60,7 @@ def _to_entity(orm: CharacterORM) -> Character:
                 else orm.embedding_vec
             )
         except Exception:
-            pass
+            logger.debug("Failed to parse embedding_vec for character %s", orm.id, exc_info=True)
 
     # Handle archetype field if it exists
     archetype = None
@@ -71,7 +74,7 @@ def _to_entity(orm: CharacterORM) -> Character:
             if archetype_data:
                 archetype = CharacterArchetype(**archetype_data)
         except Exception:
-            pass
+            logger.debug("Failed to parse archetype for character %s", orm.id, exc_info=True)
 
     return Character(
         id=str(orm.id),
@@ -270,6 +273,9 @@ class CharacterRepository(ICharacterRepository):
             self.session.flush()
             return True
         except Exception:
+            logger.warning(
+                "Failed to persist archetype for character %s", character_id, exc_info=True
+            )
             return False
 
     def link_location(self, character_id: str, location_id: str) -> bool:
@@ -438,7 +444,7 @@ class CharacterRepository(ICharacterRepository):
                 return characters
         except SQLAlchemyError:
             # pgvector not available or query failed, fall through to Python fallback
-            pass
+            logger.debug("pgvector query failed, falling back to in-Python cosine similarity")
 
         # Fallback: in-Python cosine similarity (for SQLite or if pgvector unavailable)
         all_chars = self.list(limit=10000)  # Get all characters with embeddings
@@ -456,7 +462,11 @@ class CharacterRepository(ICharacterRepository):
                             c._similarity = sim
                             scored.append(c)
                 except Exception:
-                    pass
+                    logger.debug(
+                        "Skipping character %s in cosine fallback: bad embedding data",
+                        c.id,
+                        exc_info=True,
+                    )
 
         scored.sort(key=lambda x: getattr(x, "_similarity", 0.0), reverse=True)
         return scored[:limit]

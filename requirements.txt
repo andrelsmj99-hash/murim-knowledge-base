@@ -22,7 +22,7 @@ sentence-transformers>=2.2.2
 en-core-web-lg @ https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.7.1/en_core_web_lg-3.7.1-py3-none-any.whl
 
 # Dashboard
-streamlit>=1.28.0
+streamlit>=1.36.0
 plotly>=5.18.0
 networkx>=3.2.1
 

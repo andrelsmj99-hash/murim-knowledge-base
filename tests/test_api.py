@@ -386,3 +386,119 @@ def test_graph_serialization(api_client) -> None:
     assert body["stats"]["characters"] >= 1
     assert body["stats"]["organizations"] >= 1
     assert any(e["kind"] == "member_of" for e in body["edges"])
+
+
+# ── List endpoint pagination ──
+
+
+def test_list_characters_pagination(api_client) -> None:
+    client, _ = api_client
+    for i in range(5):
+        client.post("/api/v1/characters", json={"name": f"Char {i}"})
+
+    r = client.get("/api/v1/characters", params={"limit": 2, "offset": 0})
+    assert r.status_code == 200
+    body = r.json()
+    assert len(body["items"]) == 2
+    assert body["meta"]["total"] >= 5
+
+    r2 = client.get("/api/v1/characters", params={"limit": 2, "offset": 4})
+    assert r2.status_code == 200
+    assert len(r2.json()["items"]) >= 1
+
+
+def test_list_organizations_pagination(api_client) -> None:
+    client, _ = api_client
+    for i in range(4):
+        client.post("/api/v1/organizations", json={"name": f"Org {i}", "type": "Sect"})
+
+    r = client.get("/api/v1/organizations", params={"limit": 2, "offset": 0})
+    assert r.status_code == 200
+    body = r.json()
+    assert len(body["items"]) == 2
+    assert body["meta"]["total"] >= 4
+
+
+def test_list_locations_pagination(api_client) -> None:
+    client, _ = api_client
+    for i in range(3):
+        client.post("/api/v1/locations", json={"name": f"Loc {i}", "type": "City"})
+
+    r = client.get("/api/v1/locations", params={"limit": 2, "offset": 0})
+    assert r.status_code == 200
+    body = r.json()
+    assert len(body["items"]) == 2
+    assert body["meta"]["total"] >= 3
+
+
+# ── Error paths ──
+
+
+def test_character_not_found_404(api_client) -> None:
+    client, _ = api_client
+    r = client.get("/api/v1/characters/00000000-0000-0000-0000-000000000000")
+    assert r.status_code == 404
+
+
+def test_organization_not_found_404(api_client) -> None:
+    client, _ = api_client
+    r = client.get("/api/v1/organizations/00000000-0000-0000-0000-000000000000")
+    assert r.status_code == 404
+
+
+def test_location_not_found_404(api_client) -> None:
+    client, _ = api_client
+    r = client.get("/api/v1/locations/00000000-0000-0000-0000-000000000000")
+    assert r.status_code == 404
+
+
+def test_organization_relationship_duplicate_409(api_client) -> None:
+    client, _ = api_client
+    a = client.post("/api/v1/organizations", json={"name": "Sect A", "type": "Sect"}).json()
+    b = client.post("/api/v1/organizations", json={"name": "Sect B", "type": "Sect"}).json()
+
+    r1 = client.post(
+        f"/api/v1/organizations/{a['id']}/relationships",
+        json={"related_organization_id": b["id"], "relationship_type": "rival"},
+    )
+    assert r1.status_code == 201
+
+    r2 = client.post(
+        f"/api/v1/organizations/{a['id']}/relationships",
+        json={"related_organization_id": b["id"], "relationship_type": "rival"},
+    )
+    assert r2.status_code == 409
+
+
+def test_organization_relationship_not_found_404(api_client) -> None:
+    client, _ = api_client
+    a = client.post("/api/v1/organizations", json={"name": "Sect A", "type": "Sect"}).json()
+    r = client.post(
+        f"/api/v1/organizations/{a['id']}/relationships",
+        json={
+            "related_organization_id": "00000000-0000-0000-0000-000000000000",
+            "relationship_type": "rival",
+        },
+    )
+    assert r.status_code == 404
+
+
+def test_organization_rivals_not_found_404(api_client) -> None:
+    client, _ = api_client
+    r = client.get("/api/v1/organizations/00000000-0000-0000-0000-000000000000/rivals")
+    assert r.status_code == 404
+
+
+def test_character_patch_not_found_404(api_client) -> None:
+    client, _ = api_client
+    r = client.patch(
+        "/api/v1/characters/00000000-0000-0000-0000-000000000000",
+        json={"name": "Ghost"},
+    )
+    assert r.status_code == 404
+
+
+def test_character_delete_not_found_404(api_client) -> None:
+    client, _ = api_client
+    r = client.delete("/api/v1/characters/00000000-0000-0000-0000-000000000000")
+    assert r.status_code == 404

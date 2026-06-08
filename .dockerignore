@@ -22,3 +22,6 @@ pip-wheel-metadata
 .cache
 .mypy_cache
 .ruff_cache
+.env
+.env.*
+!.env.example
