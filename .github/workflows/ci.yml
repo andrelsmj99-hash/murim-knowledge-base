@@ -33,7 +33,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install mypy pydantic sqlalchemy types-requests types-python-dotenv
+          pip install mypy pydantic sqlalchemy types-requests
       - name: Run mypy
         run: mypy app/ --ignore-missing-imports
 
