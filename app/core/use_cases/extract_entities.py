@@ -24,6 +24,7 @@ from app.processing import (
     extract_relationships,
     split_title_from_name,
 )
+from app.processing.alias_detector import AliasHit, detect_aliases
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,7 @@ class ChapterExtraction:
     organizations: list[OrgMatch] = field(default_factory=list)
     locations: list[LocationMatch] = field(default_factory=list)
     relationships: list[RelationshipHit] = field(default_factory=list)
+    aliases: list[AliasHit] = field(default_factory=list)
 
     def canonical_characters(self) -> set[str]:
         return {m.canonical for m in self.character_mentions if m.canonical}
@@ -77,6 +79,7 @@ class ExtractEntitiesUseCase:
         orgs = detect_organizations(text)
         locs = detect_locations(text)
         rels = extract_relationships(text)
+        alias_hits = detect_aliases(text)
 
         # Attach title data to mentions whose surface starts with a title
         merged_mentions = self._attach_titles(ner.character_mentions, titles)
@@ -88,15 +91,17 @@ class ExtractEntitiesUseCase:
             organizations=orgs,
             locations=locs,
             relationships=rels,
+            aliases=alias_hits,
         )
         logger.info(
-            "Extracted from chapter %s: %d chars, %d titles, %d orgs, %d locs, %d rels",
+            "Extracted from chapter %s: %d chars, %d titles, %d orgs, %d locs, %d rels, %d aliases",
             chapter_id or "?",
             len(merged_mentions),
             len(titles),
             len(orgs),
             len(locs),
             len(rels),
+            len(alias_hits),
         )
         return result
 

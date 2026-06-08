@@ -76,7 +76,7 @@ app/
 ├── repositories/   # Adaptadores SQLAlchemy
 ├── models/         # ORM (9 tabelas)
 ├── scrapers/       # BaseScraper + 4 scrapers (generic, novelbin, novelfire, novelupdates, wuxiaworld)
-├── processing/     # Pipeline NLP (6 módulos)
+├── processing/     # Pipeline NLP (7 módulos)
 ├── api/            # FastAPI (36 rotas)
 ├── dashboard/      # Streamlit (4 páginas)
 ├── nlp/            # Classificador de arquétipos por keywords

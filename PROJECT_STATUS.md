@@ -1,7 +1,7 @@
 # PROJECT_STATUS — Murim Knowledge Base
 
 > Documento vivo que reflete o estado real do workspace.
-> Última atualização: 2026-06-07 (sessão 20 — Character Archetype Classification System)
+> Última atualização: 2026-06-07 (sessão 22 — Alias Detector)
 
 ---
 
@@ -43,7 +43,7 @@ app/
 ├── repositories/          # Adapters SQLAlchemy (5 implementados)
 ├── models/                # ORM (11 tabelas) + Base + Engine
 ├── scrapers/              # BaseScraper + GenericScraper + registry
-├── processing/            # 7 módulos NLP (patterns, ner, title/loc/org detectors, rel extractor, archetype classifier)
+├── processing/            # 8 módulos NLP (patterns, ner, title/loc/org detectors, rel extractor, archetype classifier, alias detector)
 ├── api/                   # HTTP layer
 │   ├── routes/            # 6 routers (35 rotas)
 │   ├── schemas/           # Pydantic DTOs (28+ schemas)
@@ -58,7 +58,7 @@ app/
 alembic/                  # Migration (1 versão, 11 tabelas)
 data/{raw,processed,exports,progress}/
 logs/                     # Logs rotativos (10MB, 5 backups)
-tests/                    # 4 suítes + conftest.py (50 testes, pytest puro)
+tests/                    # 5 suítes + conftest.py (68 testes, pytest puro)
 ```
 
 ### Stack Tecnológica
@@ -289,6 +289,9 @@ murim_knowledge_base/
 | 87 | `set_archetype` on `ICharacterRepository` + `CharacterRepository` | `app/core/interfaces/character_repository.py`, `app/repositories/character_repository.py` | ✅ Completo |
 | 88 | `chapters` property on `UnitOfWork` | `app/core/unit_of_work.py` | ✅ Completo |
 | 89 | 16 archetype tests (unit + integration + API) | `tests/test_archetype.py` | ✅ Completo |
+| 90 | `AliasHit` dataclass + `detect_aliases()` — alias detection from context phrases | `app/processing/alias_detector.py` | ✅ Completo |
+| 91 | `aliases` field on `ChapterExtraction` + integrated into `ExtractEntitiesUseCase` | `app/core/use_cases/extract_entities.py` | ✅ Completo |
+| 92 | 17 alias detector tests (unit + integration) | `tests/test_alias_detector.py` | ✅ Completo |
 
 ---
 
@@ -307,7 +310,7 @@ murim_knowledge_base/
 - [x] `GenerateEmbeddingsUseCase` — persiste vetor no `Character.embedding`
 - [x] `POST /characters/{id}/embed` — gera embedding sob demanda
 - [x] `POST /characters/embed-all` — gera embeddings em lote
-- [ ] Detector de aliases a partir de contexto ("also known as", "whose real name was", "formerly known as")
+- [x] Detector de aliases a partir de contexto ("also known as", "whose real name was", "formerly known as")
 - [ ] Co-referência ("he" → personagem anterior mencionado)
 - [ ] Modelo spaCy customizado / fine-tuned para Murim
 
@@ -395,7 +398,7 @@ murim_knowledge_base/
 
 ### 🟡 Prioridade MÉDIA (NLP pipeline)
 
-3. **Detector de aliases por contexto** — "also known as", "whose real name was", "formerly known as" → extrai aliases automaticamente.
+3. ~~**Detector de aliases por contexto** — "also known as", "whose real name was", "formerly known as" → extrai aliases automaticamente.~~ **CONCLUÍDO na sessão 21.**
 
 4. **Co-referência básica** — Resolver pronomes ("he", "she", "the elder") → personagem anterior na mesma cena.
 
@@ -845,6 +848,30 @@ curl -X POST http://localhost:8000/api/v1/scrape \
 - `test_search_semantic` — valida o caminho de busca semântica com embeddings
 
 **Resultado:** 51/51 testes passando. **Commit:** `9321b38`.
+
+### Sessão 22 (Alias Detector — Context Phrase Extraction)
+
+**Adicionado:**
+- **Módulo**: `AliasHit` dataclass + `detect_aliases()` — detection of character aliases from context phrases in prose (`app/processing/alias_detector.py`)
+  - Supports 10+ patterns: "also known as", "whose real name was", "whose true name was", "whose name was", "formerly known as", "once called", "born as", "known as", "called", "named"
+  - Confidence scoring per pattern type (0.70–0.95)
+  - Deduplication across overlapping patterns
+  - Context fragment extraction for each hit
+- **Integration**: `aliases: list[AliasHit]` field added to `ChapterExtraction` dataclass
+- **Pipeline**: `detect_aliases()` integrated into `ExtractEntitiesUseCase.execute()`
+- **Tests (17 new)**: Unit (14) + Integration (3)
+  - Empty text, no aliases, known-as, also-known-as, whose-real-name, formerly-known, once-called, born-as, multiple aliases same character, confidence scores, context fragments, canonical names, title prefixes, complex sentences
+  - Integration: alias in extracted entities, empty corpus, dominant character
+
+**Arquivos criados:**
+- `app/processing/alias_detector.py`
+- `tests/test_alias_detector.py`
+
+**Arquivos modificados:**
+- `app/core/use_cases/extract_entities.py` — `aliases` field + integration
+- `app/processing/__init__.py` — exports AliasHit, detect_aliases
+
+**Resultado:** 68/68 testes passando. Ruff clean. **Commit:** pending.
 
 ---
 
