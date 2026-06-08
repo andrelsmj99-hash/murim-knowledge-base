@@ -16,9 +16,7 @@ import logging
 import tempfile
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import MagicMock
 
 from app.core.unit_of_work import UnitOfWork
 from app.core.use_cases import (
@@ -28,7 +26,6 @@ from app.core.use_cases import (
     IngestEntitiesUseCase,
 )
 from app.nlp.archetype_classifier import ArchetypeClassifier
-from app.processing import canonicalize_name
 
 logger = logging.getLogger(__name__)
 
