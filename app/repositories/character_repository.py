@@ -232,6 +232,10 @@ class CharacterRepository(ICharacterRepository):
         orm = self.session.get(CharacterORM, _to_uuid(character_id))
         if orm is None:
             return False
+        # Check for existing alias to make ingestion idempotent
+        existing = [a for a in orm.aliases if a.alias_value == alias_value]
+        if existing:
+            return False
         orm.aliases.append(Alias(alias_type=alias_type, alias_value=alias_value))
         self.session.flush()
         return True
