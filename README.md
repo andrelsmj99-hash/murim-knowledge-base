@@ -74,11 +74,11 @@ Clean Architecture com as camadas:
 app/
 ├── core/           # Domínio (entidades, interfaces, use cases, unit of work)
 ├── repositories/   # Adaptadores SQLAlchemy
-├── models/         # ORM (9 tabelas)
-├── scrapers/       # BaseScraper + 4 scrapers (generic, novelbin, novelfire, novelupdates, wuxiaworld)
-├── processing/     # Pipeline NLP (7 módulos)
+├── models/         # ORM (11 tabelas)
+├── scrapers/       # BaseScraper + 5 scrapers (generic, novelbin, novelfire, novelupdates, wuxiaworld)
+├── processing/     # Pipeline NLP (8 módulos)
 ├── api/            # FastAPI (36 rotas)
-├── dashboard/      # Streamlit (4 páginas)
+├── dashboard/      # Streamlit (5 páginas)
 ├── nlp/            # Classificador de arquétipos por keywords
 └── utils/          # Config + logging
 ```

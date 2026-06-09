@@ -1,7 +1,7 @@
 # PROJECT_STATUS — Murim Knowledge Base
 
 > Documento vivo que reflete o estado real do workspace.
-> Última atualização: 2026-06-09 (sessão 32 — Cross-Novel Dedup Fix + Stats + Novels Dashboard + Batch Ingest)
+> Última atualização: 2026-06-09 (sessão 33 — Documentation fix + cleanup)
 
 ---
 
@@ -427,7 +427,7 @@ murim_knowledge_base/
 
 1. ~~**pgvector / pg_trgm para busca semântica eficiente** — Atualmente O(n) scan linear. Com pgvector: HNSW/IVF index → O(log n). Requer PostgreSQL + extensão.~~ **CONCLUÍDO na sessão 18.**
 
-2. **WuxiaWorldScraper** — Fonte majoritária de novels Murim/Wuxia licenciadas. Estrutura DOM diferente, precisa scraper dedicado.
+2. ~~**WuxiaWorldScraper** — Fonte majoritária de novels Murim/Wuxia licenciadas.~~ **CONCLUÍDO na sessão 19.**
 
 ### 🟡 Prioridade MÉDIA (NLP pipeline)
 
@@ -1320,6 +1320,40 @@ Fixed critical dedup bugs, added novel stats API + dashboard, batch ingest pipel
 - Ruff format clean
 - Mypy clean (0 errors, 81 files)
 - Cross-novel dedup verified: same character name in different novels coexist without merging
+
+---
+
+## Sessão 33 — Documentation Fix + Cleanup (2026-06-09)
+
+Fixed documentation inconsistencies and cleaned up dead artifacts.
+
+### What was done
+
+1. **Fixed PROJECT_STATUS.md** — WuxiaWorldScraper was incorrectly listed as a pending HIGH priority item in "Próximos Passos Prioritários". It was completed in session 19. Marked as done with strikethrough.
+
+2. **Removed dead artifact** — Empty `app/use_cases/` directory (root-level leftover; actual use cases live in `app/core/use_cases/`).
+
+3. **Format fix** — `scripts/batch_ingest.py` reformatted for ruff compliance (committed separately as `8c33304`).
+
+### Audit Summary
+
+| Metric | Value |
+|---|---|
+| Python files in `app/` | 81 |
+| Python files in `tests/` | 13 |
+| Python files in `scripts/` | 3 |
+| Total project Python files | 97 |
+| Registered scrapers | 5 (generic, novelbin, novelupdates, novelfire, wuxiaworld) |
+| Registered API routers | 7 (novels, characters, organizations, locations, search, graph, scrape) |
+| Tests passing | 130/130 |
+| CI status | Green (ruff ✅, format ✅, mypy ✅) |
+
+### Remaining Backlog (all LOW priority)
+
+- Modelo spaCy customizado / fine-tuned para Murim
+- Suporte a sites em português (opção `language="pt"`)
+- Versionamento de schema NLP
+- Testes E2E Dashboard (Playwright) — tests exist, excluded from CI
 
 ---
 
