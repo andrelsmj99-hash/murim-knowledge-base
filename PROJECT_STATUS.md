@@ -1,7 +1,7 @@
 # PROJECT_STATUS — Murim Knowledge Base
 
 > Documento vivo que reflete o estado real do workspace.
-> Última atualização: 2026-06-08 (sessão 29 — Production Extraction: Nano Machine 483 chapters)
+> Última atualização: 2026-06-09 (sessão 30 — Entity Quality: NER filtering, junction tables, canonical name cleanup)
 
 ---
 
@@ -1153,12 +1153,15 @@ Full production extraction of "Nano Machine" (483 chapters) from novelfire.net i
 | Chapters scraped | 483 |
 | Chapters ingested | 483 |
 | Characters extracted | 8,419 |
-| Characters after dedup | 1,355 |
-| Organizations extracted | 157 |
-| Locations extracted | 51 |
-| Dedup merges | 644 |
+| Characters after dedup | 1,355 → 1,766 (re-extraction + false positive removal) |
+| Organizations extracted | 157 → 159 |
+| Locations extracted | 51 → 52 |
+| Char-Org junction links | 2,889 (556 unique characters) |
+| Char-Loc junction links | 283 (153 unique characters) |
+| Aliases detected | 5 |
+| False positives removed | 214 (technique names, org names, etc.) |
 
-### Top Entities
+### Top Entities (post-cleanup)
 
 **Characters (by mention frequency):**
 1. Mun Yu (41 mentions)
@@ -1166,17 +1169,24 @@ Full production extraction of "Nano Machine" (483 chapters) from novelfire.net i
 3. Byeok Liu (31 mentions)
 4. Mun Ku (27 mentions)
 5. Yoon Baek Ho (27 mentions)
+6. Qu Yuan (26 mentions)
+7. Khum (24 mentions)
+8. Dang Pil-Sun (24 mentions)
 
-**Organizations:**
-- Buju Sword Clan, Blade God Six Martial Clan, Great Hung Clan, etc.
+**Organizations (by linked characters):**
+- Demonic Cult (395 chars), Demonic Academy (290), Poison Clan (159), Wise Clan (142), Sword Clan (131)
 
-**Locations:**
-- Central Plains, Changbai Mountain, Death Valley, Demonic Realm, etc.
+**Locations (by linked characters):**
+- Jianghu (126 chars), Flower Mountain (35), Five Wise Peak (31), Yellow River (24)
 
 ### Files Created/Modified
 
-- `scripts/production_extract.py` — New production extraction script
+- `scripts/production_extract.py` — Production extraction script (lint-fixed)
+- `scripts/backfill_entities.py` — Backfill script for junction tables and aliases
 - `app/scrapers/novelfire.py` — Fixed CSS selectors and URL patterns
+- `app/processing/ner.py` — NER false positive filtering (single-token + multi-word phrases + suffix check)
+- `app/processing/patterns.py` — `canonicalize_name()` strips newlines and trailing punctuation
+- `app/core/use_cases/ingest_entities.py` — Junction table co-occurrence + alias ingestion methods
 - `data/exports/` — Exported characters.csv, characters.json, organizations.csv, organizations.json, locations.csv, locations.json
 
 ### Technical Notes
@@ -1185,6 +1195,44 @@ Full production extraction of "Nano Machine" (483 chapters) from novelfire.net i
 - Resume capability: script checks DB for existing chapters before scraping
 - NLP pipeline processes chapters sequentially (spaCy is single-threaded)
 - Character deduplication uses rapidfuzz with 85% similarity threshold
+- NER filter: `_NON_CHARACTER_WORDS` (85 terms) + `_NON_CHARACTER_PHRASES` (18 phrases) + last-token suffix check
+- Junction tables populated via co-occurrence: char linked to org/loc appearing in same chapter
+- 0 dirty canonical names in DB after cleanup
+
+---
+
+## Sessão 30 — Entity Quality: NER Filtering, Junction Tables, Canonical Name Cleanup (2026-06-09)
+
+Post-extraction quality improvements: NER false positive filtering, junction table population, and canonical name cleanup.
+
+### What was done
+
+1. **NER false positive filtering v1** — `_NON_CHARACTER_WORDS` (85 terms: sword, clan, sect, order, force, academy, family, mountain, valley, realm, etc.) + `_is_likely_character()` filter in `app/processing/ner.py` rejects single-token non-character mentions
+
+2. **NER false positive filtering v2** — Added `_NON_CHARACTER_PHRASES` (18 multi-word phrases: "air swords", "sky demon order", "great hung clan", etc.) + last-token suffix check: `_is_likely_character()` now rejects mentions whose last token is in `_NON_CHARACTER_WORDS` (catches "seven demon sword", "black flame sword", "sky demon order", etc.)
+
+3. **`canonicalize_name()` fix** — Now strips `\n`, `\r`, trailing `.,!?\"';:`, collapses whitespace before lowercasing — prevents dirty canonical names in DB
+
+4. **IngestEntitiesUseCase rewrite** — Added `_link_char_org_cooccurrence()`, `_link_char_loc_cooccurrence()`, `_ingest_aliases()` methods for junction table population and alias detection
+
+5. **DB cleanup** — 214 false-positive characters deleted (technique names, org names: "air swords" freq=39, "sky demon order" freq=24, "great hung clan" freq=18, etc.). 6 duplicate characters with dirty canonical names merged into clean counterparts.
+
+6. **CI lint fix** — `production_extract.py` fixed (F841, B007, E741)
+
+### Files modified
+- `app/processing/ner.py` — NER filtering v2
+- `app/processing/patterns.py` — `canonicalize_name()` cleanup
+- `app/core/use_cases/ingest_entities.py` — junction table + alias ingestion
+- `scripts/production_extract.py` — lint fixes
+- `scripts/backfill_entities.py` — backfill script for junction tables
+
+### Result
+- 95/95 unit + API tests passing
+- Ruff clean (0 errors)
+- Ruff format clean
+- Mypy clean (0 errors, 77 files)
+- 0 dirty canonical names in DB
+- 1,766 characters (214 false positives removed)
 
 ---
 
