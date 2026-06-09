@@ -1,7 +1,7 @@
 # PROJECT_STATUS — Murim Knowledge Base
 
 > Documento vivo que reflete o estado real do workspace.
-> Última atualização: 2026-06-09 (sessão 30 — Entity Quality: NER filtering, junction tables, canonical name cleanup)
+> Última atualização: 2026-06-09 (sessão 31 — Semantic Search + Knowledge Graph Traversal)
 
 ---
 
@@ -38,14 +38,14 @@ app/
 ├── core/                  # Domínio (regras de negócio puras)
 │   ├── entities/          # Dataclasses: Character, Novel, Chapter, Location, Organization, CharacterArchetype
 │   ├── interfaces/        # Contratos: IRepository, ICharacterRepository, IChapterRepository, INovelRepository, ILocationRepository, IOrganizationRepository
-│   ├── use_cases/         # 7 use cases implementados
+│   ├── use_cases/         # 9 use cases implementados
 │   └── unit_of_work.py    # UnitOfWork (context manager)
 ├── repositories/          # Adapters SQLAlchemy (5 implementados)
 ├── models/                # ORM (11 tabelas) + Base + Engine
 ├── scrapers/              # BaseScraper + GenericScraper + registry
 ├── processing/            # 8 módulos NLP (patterns, ner, title/loc/org detectors, rel extractor, archetype classifier, alias detector)
 ├── api/                   # HTTP layer
-│   ├── routes/            # 6 routers (35 rotas)
+│   ├── routes/            # 6 routers (41 rotas)
 │   ├── schemas/           # Pydantic DTOs (28+ schemas)
 │   └── dependencies/      # get_uow + encoder lazy
 ├── dashboard/             # Streamlit (4 páginas implementadas)
@@ -162,8 +162,8 @@ murim_knowledge_base/
 │   │       ├── characters.py    # /characters + aliases/titles/relationships/archetypes (11 rotas)
 │   │       ├── organizations.py # /organizations + rivals/allies (6 rotas)
 │   │       ├── locations.py     # /locations + sub-locations (4 rotas)
-│   │       ├── search.py        # /search (lexical + semantic) (1 rota)
-│   │       └── graph.py         # /graph (NetworkX → JSON) (1 rota)
+│   │       ├── search.py        # /search + /search/semantic + /search/similar/{id} + /search/cross-novel (4 rotas)
+│   │       └── graph.py         # /graph + /graph/character/{id} + /graph/path + /graph/stats (4 rotas)
 │   ├── dashboard/
 │   │   ├── __init__.py
 │   │   ├── main.py              # Entry point Streamlit (st.navigation)
@@ -223,13 +223,15 @@ murim_knowledge_base/
 | 17 | DeduplicateCharactersUseCase (rapidfuzz) | `app/core/use_cases/deduplicate_characters.py` | ✅ Completo |
 | 18 | BuildKnowledgeGraphUseCase (NetworkX) | `app/core/use_cases/build_knowledge_graph.py` | ✅ Completo |
 | 19 | IngestEntitiesUseCase (extract → dedup → DB) | `app/core/use_cases/ingest_entities.py` | ✅ Completo |
-| 20 | API REST completa (FastAPI, 35 rotas) | `app/api/` + `app/main.py` | ✅ Completo |
+| 20 | SemanticSearch use case (vector similarity + lexical fallback) | `app/core/use_cases/semantic_search.py` | ✅ Completo |
+| 21 | KnowledgeGraphTraversal use case (shortest path, network extraction, stats) | `app/core/use_cases/knowledge_graph_traversal.py` | ✅ Completo |
+| 21 | API REST completa (FastAPI, 41 rotas) | `app/api/` + `app/main.py` | ✅ Completo |
 | 21 | `/api/v1/novels` + `/chapters` (CRUD) | `app/api/routes/novels.py` | ✅ Completo |
 | 22 | `/api/v1/characters` + alias/title/relationship | `app/api/routes/characters.py` | ✅ Completo |
 | 23 | `/api/v1/organizations` + rivals/allies | `app/api/routes/organizations.py` | ✅ Completo |
 | 24 | `/api/v1/locations` + sub-locations | `app/api/routes/locations.py` | ✅ Completo |
-| 25 | `/api/v1/search` (lexical + embedding) | `app/api/routes/search.py` | ✅ Completo |
-| 26 | `/api/v1/graph` (NetworkX → JSON) | `app/api/routes/graph.py` | ✅ Completo |
+| 26 | `/api/v1/search` (lexical + embedding) + `/semantic` + `/similar/{id}` + `/cross-novel` | `app/api/routes/search.py` | ✅ Completo |
+| 27 | `/api/v1/graph` (NetworkX → JSON) + `/character/{id}` + `/path` + `/stats` | `app/api/routes/graph.py` | ✅ Completo |
 | 27 | `/api/v1/scrape` (trigger scraper) | `app/api/routes/scrape.py` | ✅ Completo |
 | 28 | `/health` (liveness probe) | `app/main.py` | ✅ Completo |
 | 29 | CORS, OpenAPI metadata, lifespan | `app/main.py` | ✅ Completo |
@@ -1198,6 +1200,62 @@ Full production extraction of "Nano Machine" (483 chapters) from novelfire.net i
 - NER filter: `_NON_CHARACTER_WORDS` (85 terms) + `_NON_CHARACTER_PHRASES` (18 phrases) + last-token suffix check
 - Junction tables populated via co-occurrence: char linked to org/loc appearing in same chapter
 - 0 dirty canonical names in DB after cleanup
+
+---
+
+## Sessão 31 — Semantic Search + Knowledge Graph Traversal (2026-06-09)
+
+Added semantic search and knowledge graph traversal use cases with API endpoints and comprehensive tests.
+
+### What was done
+
+1. **SemanticSearch use case** — `app/core/use_cases/semantic_search.py` with:
+   - `search_characters()`: pgvector vector similarity search with lexical fallback
+   - `search_similar_characters()`: Find similar characters by embedding cosine distance
+   - `search_cross_novel()`: Search across all novels
+   - `SemanticSearchConfig`: Configurable weights, thresholds, and limits
+
+2. **KnowledgeGraphTraversal use case** — `app/core/use_cases/knowledge_graph_traversal.py` with:
+   - `find_path()`: Shortest path between characters using NetworkX BFS
+   - `get_character_network()`: BFS extraction of character neighborhoods to configurable depth
+   - `get_graph_stats()`: Graph statistics (nodes, edges, density, degree centrality)
+   - `GraphTraversalConfig`: Configurable depth and max nodes limits
+
+3. **API endpoints** — 6 new routes:
+   - `GET /search/semantic` — Semantic search across characters
+   - `GET /search/similar/{character_id}` — Find similar characters
+   - `GET /search/cross-novel` — Cross-novel semantic search
+   - `GET /graph/character/{character_id}` — Character network extraction
+   - `GET /graph/path` — Shortest path finding
+   - `GET /graph/stats` — Graph statistics
+
+4. **Response schemas** — Added `SemanticSearchHit`, `SemanticSearchResponse`, `CharacterSimilarityHit`, `CharacterSimilarityResponse`, `GraphPathResponse`, `GraphNetworkNode`, `GraphNetworkEdge`, `CharacterNetworkResponse`, `GraphStatsResponse`
+
+5. **Tests** — 22 new tests:
+   - `tests/test_semantic_search.py` (10 tests): search_characters, threshold, limit, result_fields, similar_characters, cross_novel, config
+   - `tests/test_knowledge_graph_traversal.py` (12 tests): find_path (same/no_path/nonexistent), get_character_network (exists/nonexistent/depth), get_graph_stats, synthetic chain/triangle graph
+
+6. **Backward compatibility** — Preserved original `/search` root endpoint for existing consumers
+
+### Files created
+- `app/core/entities/search_result.py` — SemanticSearchResult dataclasses
+- `app/core/use_cases/semantic_search.py` — SemanticSearch use case
+- `app/core/use_cases/knowledge_graph_traversal.py` — KnowledgeGraphTraversal use case
+- `tests/test_semantic_search.py` — 10 tests
+- `tests/test_knowledge_graph_traversal.py` — 12 tests
+
+### Files modified
+- `app/core/use_cases/__init__.py` — Export new use cases
+- `app/api/routes/search.py` — Added /semantic, /similar/{id}, /cross-novel endpoints
+- `app/api/routes/graph.py` — Added /character/{id}, /path, /stats endpoints
+- `app/api/schemas/__init__.py` — Added response schemas
+
+### Result
+- 126/126 unit + API tests passing
+- Ruff check clean (0 errors)
+- Ruff format clean (100 files formatted)
+- Mypy clean for all new code (0 errors)
+- Backward-compatible with existing API consumers
 
 ---
 
