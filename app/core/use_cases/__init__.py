@@ -14,6 +14,8 @@ from .generate_embeddings import (
 )
 from .ingest_chapter import IngestChapterUseCase, IngestResult
 from .ingest_entities import IngestEntitiesResult, IngestEntitiesUseCase
+from .knowledge_graph_traversal import GraphTraversalConfig, KnowledgeGraphTraversal
+from .semantic_search import SemanticSearch, SemanticSearchConfig
 
 __all__ = [
     "IngestChapterUseCase",
@@ -31,4 +33,8 @@ __all__ = [
     "GenerateEmbeddingsUseCase",
     "ClassifyCharacterArchetype",
     "ClassifyAllCharacters",
+    "SemanticSearch",
+    "SemanticSearchConfig",
+    "KnowledgeGraphTraversal",
+    "GraphTraversalConfig",
 ]

@@ -324,3 +324,108 @@ class ClassifyAllResponse(BaseModel):
     total: int
     classified: int
     errors: list[str] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
+# Semantic Search
+# ---------------------------------------------------------------------------
+
+
+class SemanticSearchHit(BaseModel):
+    """A single semantic search result."""
+
+    id: str
+    name: str
+    kind: str
+    score: float
+    canonical_name: str = ""
+    description: str = ""
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class SemanticSearchResponse(BaseModel):
+    """Response from semantic search."""
+
+    query: str
+    total: int
+    results: list[SemanticSearchHit] = Field(default_factory=list)
+    search_type: str = "semantic"
+    novel_id: str | None = None
+
+
+class CharacterSimilarityHit(BaseModel):
+    """A single similar character result."""
+
+    id: str
+    name: str
+    score: float
+    canonical_name: str = ""
+
+
+class CharacterSimilarityResponse(BaseModel):
+    """Response from similar character search."""
+
+    character_id: str
+    character_name: str
+    similar_characters: list[CharacterSimilarityHit] = Field(default_factory=list)
+    similarity_threshold: float
+
+
+# ---------------------------------------------------------------------------
+# Graph Traversal
+# ---------------------------------------------------------------------------
+
+
+class GraphPathResponse(BaseModel):
+    """Response from graph path finding."""
+
+    source_id: str
+    source_name: str
+    target_id: str
+    target_name: str
+    path: list[str] = Field(default_factory=list)
+    path_length: int
+    path_names: list[str] = Field(default_factory=list)
+
+
+class GraphNetworkNode(BaseModel):
+    """A node in the character network."""
+
+    id: str
+    kind: str
+    name: str
+    depth: int
+
+
+class GraphNetworkEdge(BaseModel):
+    """An edge in the character network."""
+
+    source: str
+    target: str
+    kind: str
+    attrs: dict[str, Any] = Field(default_factory=dict)
+
+
+class CharacterNetworkResponse(BaseModel):
+    """Response from character network extraction."""
+
+    center_character_id: str
+    center_character_name: str
+    nodes: list[GraphNetworkNode] = Field(default_factory=list)
+    edges: list[GraphNetworkEdge] = Field(default_factory=list)
+    depth: int
+    node_count: int
+    edge_count: int
+
+
+class GraphStatsResponse(BaseModel):
+    """Response from graph statistics."""
+
+    total_nodes: int
+    total_edges: int
+    characters: int
+    organizations: int
+    locations: int
+    relationships: int
+    memberships: int
+    density: float
