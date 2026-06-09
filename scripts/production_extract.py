@@ -30,10 +30,12 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.core.unit_of_work import UnitOfWork
+from app.core.use_cases.classify_character_archetype import ClassifyAllCharacters
 from app.core.use_cases.deduplicate_characters import DeduplicateCharactersUseCase
 from app.core.use_cases.extract_entities import ExtractEntitiesUseCase
 from app.core.use_cases.ingest_chapter import IngestChapterUseCase
 from app.core.use_cases.ingest_entities import IngestEntitiesUseCase
+from app.nlp.archetype_classifier import ArchetypeClassifier
 from app.scrapers.novelfire import NovelFireScraper
 
 logging.basicConfig(
@@ -197,6 +199,34 @@ def deduplicate_all_characters(uow: UnitOfWork) -> dict:
     return {"before": before, "after": after, "merged": merged}
 
 
+def classify_all_archetypes(uow: UnitOfWork) -> dict:
+    """Classify archetypes for all characters in the database."""
+    classifier = ArchetypeClassifier()
+    classify_uc = ClassifyAllCharacters(
+        character_repository=uow.characters,
+        chapter_repository=uow.chapters,
+        classifier=classifier,
+    )
+
+    results = classify_uc.execute()
+    logger.info("Classified %d character archetypes", len(results))
+
+    # Log summary statistics
+    from collections import Counter
+
+    role_counts = Counter(arch.narrative_role.value for _, arch in results)
+    combat_counts = Counter(arch.combat_style.value for _, arch in results)
+
+    logger.info("Narrative roles: %s", dict(role_counts))
+    logger.info("Combat styles: %s", dict(combat_counts))
+
+    return {
+        "characters_classified": len(results),
+        "narrative_roles": dict(role_counts),
+        "combat_styles": dict(combat_counts),
+    }
+
+
 def export_data(uow: UnitOfWork) -> dict:
     """Export all data to JSON and CSV files."""
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
@@ -209,6 +239,15 @@ def export_data(uow: UnitOfWork) -> dict:
         if not batch:
             break
         for c in batch:
+            archetype_data = None
+            if c.archetype:
+                archetype_data = {
+                    "narrative_role": c.archetype.narrative_role.value,
+                    "combat_style": c.archetype.combat_style.value,
+                    "personality_traits": [t.value for t in c.archetype.personality_traits],
+                    "role_confidence": c.archetype.role_confidence,
+                    "combat_confidence": c.archetype.combat_confidence,
+                }
             chars_data.append(
                 {
                     "id": c.id,
@@ -219,6 +258,7 @@ def export_data(uow: UnitOfWork) -> dict:
                     "titles": c.titles,
                     "aliases": [a.value for a in c.aliases] if hasattr(c, "aliases") else [],
                     "appearance_frequency": c.appearance_frequency,
+                    "archetype": archetype_data,
                 }
             )
         offset += len(batch)
@@ -349,6 +389,10 @@ def main():
             dedup_stats = deduplicate_all_characters(uow)
             logger.info("Deduplication stats: %s", dedup_stats)
 
+            # Archetype Classification
+            archetype_stats = classify_all_archetypes(uow)
+            logger.info("Archetype classification stats: %s", archetype_stats)
+
             # Export
             export_stats = export_data(uow)
     else:
@@ -366,6 +410,7 @@ def main():
             logger.info("Scrape-only mode, skipping NLP")
             entity_stats = {"skipped": True}
             dedup_stats = {"skipped": True}
+            archetype_stats = {"skipped": True}
             export_stats = {}
         elif not args.skip_nlp and chapter_results:
             # Phase 3: NLP extraction
@@ -382,9 +427,16 @@ def main():
         else:
             entity_stats = {"skipped": True}
             dedup_stats = {"skipped": True}
+            archetype_stats = {"skipped": True}
 
-        # Phase 5: Export
-        logger.info("Phase 5: Exporting data...")
+        # Phase 5: Archetype Classification
+        logger.info("Phase 5: Classifying character archetypes...")
+        with UnitOfWork() as uow:
+            archetype_stats = classify_all_archetypes(uow)
+            logger.info("Archetype classification stats: %s", archetype_stats)
+
+        # Phase 6: Export
+        logger.info("Phase 6: Exporting data...")
         with UnitOfWork() as uow:
             export_stats = export_data(uow)
 
@@ -394,6 +446,7 @@ def main():
         "chapters_ingested": len(chapter_results) if not args.nlp_only else 0,
         "entity_extraction": entity_stats,
         "deduplication": dedup_stats,
+        "archetype_classification": archetype_stats,
         "export": export_stats,
         "elapsed_seconds": round(elapsed, 2),
     }

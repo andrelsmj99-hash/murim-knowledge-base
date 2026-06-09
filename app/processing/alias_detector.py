@@ -10,6 +10,9 @@ Recognises patterns like:
 * "known as <alias>"
 * "called <alias>"
 * "named <alias>"
+* Murim-specific: "Title Name" → "Name" (e.g., "Blade Master Dogun" → "Dogun")
+* Murim-specific: "I'm Title Name" → "Name"
+* Murim-specific: "Name the Title" → "Name"
 """
 
 from __future__ import annotations
@@ -176,6 +179,51 @@ _ALIAS_PATTERNS: list[tuple[re.Pattern[str], str, str, float]] = [
         "alias",
         0.70,
     ),
+    # ── Murim: "I'm Title Name" → alias is "Name" ──────────────────────
+    (
+        re.compile(
+            r"""["\u201c\u201d']?\s*I['"]?\s*m\s+"""
+            rf"(?P<alias>{_NAME})"
+            r"""["\u201c\u201d']?\s*[.,;:!\?]""",
+        ),
+        "_self_intro_name",
+        "alias",
+        0.85,
+    ),
+    # ── Murim: "Call me Title Name" → alias is "Name" ──────────────────
+    (
+        re.compile(
+            r"[Cc]all\s+me\s+"
+            rf"(?P<alias>{_NAME})"
+            r"""["\u201c\u201d']?\s*[.,;:!\?]""",
+        ),
+        "_self_intro_name",
+        "alias",
+        0.85,
+    ),
+    # ── Murim: "Title Name" as full phrase → alias is last word ─────────
+    # e.g., "Blade Master Dogun" → "Dogun"
+    (
+        re.compile(
+            r"(?:Blade Master|Blood Master|Doctor|Instructor|Elder|Clan Leader|Young Master|Sect Master|Ancestor|Grand Elder|Director|Head|Commander|Chief|Captain|Prince|Lord|Madam|Lady)\s+"
+            rf"(?P<alias>{_NAME})(?!\w)",
+        ),
+        "_title_prefix_name",
+        "alias",
+        0.80,
+    ),
+    # ── Murim: "Name the Title" → alias is "Name" ──────────────────────
+    # e.g., "Dogun the Blade Master" → "Dogun"
+    (
+        re.compile(
+            rf"(?P<alias>{_NAME})(?!\w)"
+            r"\s+the\s+"
+            r"(?:Blade Master|Blood Master|Doctor|Instructor|Elder|Clan Leader|Young Master|Sect Master|Ancestor|Grand Elder|Director|Head|Commander|Chief|Captain|Prince|Lord|Madam|Lady)(?!\w)",
+        ),
+        "_name_the_title",
+        "alias",
+        0.80,
+    ),
 ]
 
 
@@ -194,7 +242,10 @@ def detect_aliases(text: str) -> list[AliasHit]:
     for pattern, _name_group, alias_group, confidence in _ALIAS_PATTERNS:
         for m in pattern.finditer(text):
             # Resolve the real name
-            real_name = _clean_name(m.group("name")) if "name" in m.groupdict() else ""
+            if _name_group in ("_self_intro_name", "_title_prefix_name", "_name_the_title"):
+                real_name = ""
+            else:
+                real_name = _clean_name(m.group("name")) if "name" in m.groupdict() else ""
 
             # Resolve the alias
             if alias_group == "_follow_alias":
