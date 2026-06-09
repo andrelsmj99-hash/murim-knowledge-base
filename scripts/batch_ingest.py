@@ -512,8 +512,7 @@ def main() -> None:
     # Write summary
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
     summary_path = (
-        EXPORT_DIR
-        / f"batch_ingest_summary_{datetime.now(UTC).date().strftime('%Y%m%d')}.json"
+        EXPORT_DIR / f"batch_ingest_summary_{datetime.now(UTC).date().strftime('%Y%m%d')}.json"
     )
     summary_path.write_text(json.dumps(results, indent=2, ensure_ascii=False))
     logger.info("Summary written to %s", summary_path)
