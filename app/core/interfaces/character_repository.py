@@ -14,8 +14,10 @@ class ICharacterRepository(IRepository[Character], abc.ABC):
     """Persistence operations for :class:`Character` aggregates."""
 
     @abc.abstractmethod
-    def get_by_canonical_name(self, canonical_name: str) -> Character | None:
-        """Look up a character by its deduplication key."""
+    def get_by_canonical_name(
+        self, canonical_name: str, *, novel_id: str | None = None
+    ) -> Character | None:
+        """Look up a character by its deduplication key, optionally scoped to a novel."""
 
     @abc.abstractmethod
     def get_by_alias(self, alias_value: str) -> Character | None:

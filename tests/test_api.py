@@ -49,6 +49,39 @@ def test_novel_crud_and_chapters(api_client) -> None:
     assert r.status_code == 404
 
 
+def test_novel_stats(api_client) -> None:
+    client, _ = api_client
+    r = client.post(
+        "/api/v1/novels",
+        json={"title": "Test Novel", "author": "Author", "language": "en"},
+    )
+    assert r.status_code == 201
+    novel_id = r.json()["id"]
+
+    # Add 2 chapters
+    for n in range(1, 3):
+        client.post(
+            f"/api/v1/novels/{novel_id}/chapters",
+            json={"chapter_number": n, "content": f"Body {n}. " * 50},
+        )
+
+    r = client.get(f"/api/v1/novels/{novel_id}/stats")
+    assert r.status_code == 200
+    stats = r.json()
+    assert stats["novel_id"] == novel_id
+    assert stats["title"] == "Test Novel"
+    assert stats["chapters"] == 2
+    assert stats["total_chapters_expected"] >= 1  # updated by add_chapter
+    assert isinstance(stats["characters"], int)
+    assert isinstance(stats["organizations"], int)
+    assert isinstance(stats["locations"], int)
+    assert isinstance(stats["relationships"], int)
+
+    # 404 for non-existent novel
+    r = client.get("/api/v1/novels/00000000-0000-0000-0000-000000000000/stats")
+    assert r.status_code == 404
+
+
 def test_character_crud_and_extras(api_client) -> None:
     client, _ = api_client
     r1 = client.post("/api/v1/characters", json={"name": "Lin Lei"})

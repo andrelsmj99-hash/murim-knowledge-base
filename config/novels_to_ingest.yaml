@@ -1,0 +1,41 @@
+novels:
+- title: Nano Machine
+  slug: nano-machine
+  source: novelfire
+  url: https://novelfire.net/book/nano-machine
+  status: complete
+  chapters_ingested: 483
+  genre: murim
+  chapter_list_pages: 5
+- title: Rebirth of the Heavenly Demon
+  slug: rebirth-of-the-heavenly-demon
+  source: novelfire
+  url: https://novelfire.net/book/rebirth-of-the-heavenly-demon
+  status: pending
+  genre: murim
+  chapter_list_pages: 2
+- title: Chronicles of the Heavenly Demon
+  slug: chronicles-of-the-heavenly-demon
+  source: novelfire
+  url: https://novelfire.net/book/chronicles-of-the-heavenly-demon
+  status: complete
+  genre: murim
+  chapter_list_pages: 3
+  chapters_ingested: 105
+  last_processed: '2026-06-09'
+- title: Absolute Sword Sense
+  slug: absolute-sword-sense
+  source: novelfire
+  url: https://novelfire.net/book/absolute-sword-sense
+  status: complete
+  genre: murim
+  chapter_list_pages: 4
+  last_processed: '2026-06-09'
+  chapters_ingested: 356
+- title: Myst, Might, Mayhem
+  slug: myst-might-mayhem
+  source: novelfire
+  url: https://novelfire.net/book/myst-might-mayhem
+  status: pending
+  genre: murim
+  chapter_list_pages: 6

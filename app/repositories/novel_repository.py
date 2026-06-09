@@ -12,8 +12,12 @@ from sqlalchemy.orm import Session
 
 from app.core.entities import Chapter, Novel
 from app.core.interfaces import INovelRepository
+from app.models.character import Character as CharacterORM
+from app.models.character import Relationship
+from app.models.location import Location as LocationORM
 from app.models.novel import Chapter as ChapterORM
 from app.models.novel import Novel as NovelORM
+from app.models.organization import Organization as OrganizationORM
 
 
 def _to_uuid(value: str) -> uuid_module.UUID:
@@ -124,6 +128,22 @@ class NovelRepository(INovelRepository):
     def chapters_count(self, novel_id: str) -> int:
         stmt = select(func.count(ChapterORM.id)).where(ChapterORM.novel_id == _to_uuid(novel_id))
         return int(self.session.scalar(stmt) or 0)
+
+    def get_novel_stats(self, novel_id: str) -> dict[str, int]:
+        nid = _to_uuid(novel_id)
+        chapters = int(
+            self.session.scalar(select(func.count(ChapterORM.id)).where(ChapterORM.novel_id == nid))
+            or 0
+        )
+        novel_orm = self.session.get(NovelORM, nid)
+        return {
+            "chapters": chapters,
+            "total_chapters_expected": int(novel_orm.total_chapters) if novel_orm else 0,
+            "characters": int(self.session.scalar(select(func.count(CharacterORM.id))) or 0),
+            "organizations": int(self.session.scalar(select(func.count(OrganizationORM.id))) or 0),
+            "locations": int(self.session.scalar(select(func.count(LocationORM.id))) or 0),
+            "relationships": int(self.session.scalar(select(func.count(Relationship.id))) or 0),
+        }
 
     # --- write ----------------------------------------------------------
 

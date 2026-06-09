@@ -32,7 +32,7 @@ if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
 from app.dashboard import api_client  # noqa: E402
-from app.dashboard.pages import characters, graph, overview, search  # noqa: E402
+from app.dashboard.pages import characters, graph, novels, overview, search  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Bootstrap
@@ -76,9 +76,10 @@ else:
 
 overview_page = st.Page(overview.show, title="Visão Geral", icon="🏠", url_path="overview")
 characters_page = st.Page(characters.show, title="Personagens", icon="⚔️", url_path="characters")
+novels_page = st.Page(novels.show, title="Novels", icon="📚", url_path="novels")
 graph_page = st.Page(graph.show, title="Grafo Pincel", icon="🕸️", url_path="graph")
 search_page = st.Page(search.show, title="Busca", icon="🔍", url_path="search")
 
 # Run the selected page
-pg = st.navigation([overview_page, characters_page, graph_page, search_page])
+pg = st.navigation([overview_page, characters_page, novels_page, graph_page, search_page])
 pg.run()

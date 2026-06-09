@@ -62,13 +62,15 @@ class IngestEntitiesUseCase:
         self.uow = uow
         self.dedup = dedup or DeduplicateCharactersUseCase()
 
-    def execute(self, extraction: ChapterExtraction) -> IngestEntitiesResult:
+    def execute(
+        self, extraction: ChapterExtraction, *, novel_id: str | None = None
+    ) -> IngestEntitiesResult:
         result = IngestEntitiesResult()
 
-        char_index = self._ingest_characters(extraction, result)
+        char_index = self._ingest_characters(extraction, result, novel_id=novel_id)
         org_index = self._ingest_organizations(extraction, result, char_index)
         loc_index = self._ingest_locations(extraction, result, char_index, org_index)
-        self._ingest_relationships(extraction, result, char_index)
+        self._ingest_relationships(extraction, result, char_index, novel_id=novel_id)
 
         # Link characters to organizations and locations via co-occurrence
         self._link_char_org_cooccurrence(char_index, org_index, result)
@@ -87,6 +89,8 @@ class IngestEntitiesUseCase:
         self,
         extraction: ChapterExtraction,
         result: IngestEntitiesResult,
+        *,
+        novel_id: str | None = None,
     ) -> dict[str, str]:
         # Build candidate Character objects from mentions
         freq: dict[str, int] = {}
@@ -102,6 +106,7 @@ class IngestEntitiesUseCase:
                 Character(
                     name=key.title(),
                     canonical_name=key,
+                    novel_id=novel_id,
                     appearance_frequency=count,
                 )
             )
@@ -125,7 +130,9 @@ class IngestEntitiesUseCase:
         # Upsert against the DB
         index: dict[str, str] = {}
         for cand in dedup.canonical_characters:
-            existing = self.uow.characters.get_by_canonical_name(cand.canonical_name)
+            existing = self.uow.characters.get_by_canonical_name(
+                cand.canonical_name, novel_id=novel_id
+            )
             if existing is not None:
                 # Bump frequency
                 existing.appearance_frequency = (
@@ -203,15 +210,17 @@ class IngestEntitiesUseCase:
         extraction: ChapterExtraction,
         result: IngestEntitiesResult,
         char_index: dict[str, str],
+        *,
+        novel_id: str | None = None,
     ) -> None:
         for rel in extraction.relationships:
             src_key = canonicalize_name(rel.source)
             tgt_key = canonicalize_name(rel.target)
             src_id = char_index.get(src_key) or self._ensure_character(
-                src_key, rel.source, result=result
+                src_key, rel.source, result=result, novel_id=novel_id
             )
             tgt_id = char_index.get(tgt_key) or self._ensure_character(
-                tgt_key, rel.target, result=result
+                tgt_key, rel.target, result=result, novel_id=novel_id
             )
             if src_id == tgt_id:
                 continue
@@ -271,16 +280,22 @@ class IngestEntitiesUseCase:
                 result.new_aliases += 1
 
     def _ensure_character(
-        self, canonical_key: str, surface: str, *, result: IngestEntitiesResult
+        self,
+        canonical_key: str,
+        surface: str,
+        *,
+        result: IngestEntitiesResult,
+        novel_id: str | None = None,
     ) -> str:
         """Create a placeholder character on-the-fly when only seen in a relationship."""
-        existing = self.uow.characters.get_by_canonical_name(canonical_key)
+        existing = self.uow.characters.get_by_canonical_name(canonical_key, novel_id=novel_id)
         if existing is not None:
             return existing.id
         created = self.uow.characters.upsert_by_canonical_name(
             Character(
                 name=surface.title() if surface else canonical_key.title(),
                 canonical_name=canonical_key,
+                novel_id=novel_id,
             )
         )
         result.new_characters += 1

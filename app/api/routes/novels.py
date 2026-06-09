@@ -13,6 +13,7 @@ from app.api.schemas import (
     ChapterRead,
     NovelCreate,
     NovelRead,
+    NovelStats,
     Page,
     PageMeta,
 )
@@ -46,6 +47,26 @@ def get_novel(novel_id: str, uow: UnitOfWork = Depends(get_uow)) -> NovelRead:
     if novel is None:
         raise HTTPException(status_code=404, detail="Novel not found")
     return NovelRead.model_validate(novel)
+
+
+@router.get("/{novel_id}/stats", response_model=NovelStats)
+def get_novel_stats(novel_id: str, uow: UnitOfWork = Depends(get_uow)) -> NovelStats:
+    repo = _uow_novels(uow)
+    novel = repo.get(novel_id)
+    if novel is None:
+        raise HTTPException(status_code=404, detail="Novel not found")
+    stats = repo.get_novel_stats(novel_id)
+    return NovelStats(
+        novel_id=novel_id,
+        title=novel.title,
+        author=novel.author,
+        chapters=stats["chapters"],
+        total_chapters_expected=stats["total_chapters_expected"],
+        characters=stats["characters"],
+        organizations=stats["organizations"],
+        locations=stats["locations"],
+        relationships=stats["relationships"],
+    )
 
 
 @router.post("", response_model=NovelRead, status_code=status.HTTP_201_CREATED)

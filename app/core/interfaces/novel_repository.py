@@ -36,3 +36,7 @@ class INovelRepository(IRepository[Novel], abc.ABC):
     @abc.abstractmethod
     def chapters_count(self, novel_id: str) -> int:
         """Return the total number of chapters for a novel."""
+
+    @abc.abstractmethod
+    def get_novel_stats(self, novel_id: str) -> dict[str, int]:
+        """Return aggregated stats for a novel: characters, orgs, locations, relationships, embeddings, archetypes."""

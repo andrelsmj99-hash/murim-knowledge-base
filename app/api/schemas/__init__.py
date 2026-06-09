@@ -160,6 +160,20 @@ class NovelCreate(BaseModel):
     language: str = "en"
 
 
+class NovelStats(BaseModel):
+    """Aggregated statistics for a specific novel."""
+
+    novel_id: str
+    title: str
+    author: str | None = None
+    chapters: int = 0
+    total_chapters_expected: int = 0
+    characters: int = 0
+    organizations: int = 0
+    locations: int = 0
+    relationships: int = 0
+
+
 # ---------------------------------------------------------------------------
 # Organization
 # ---------------------------------------------------------------------------

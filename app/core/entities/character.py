@@ -24,6 +24,7 @@ class Character:
     id: str = field(default_factory=lambda: str(uuid_module.uuid4()))
     name: str = ""
     canonical_name: str = ""  # Normalized for deduplication and linking
+    novel_id: str | None = None  # Scope deduplication to a single novel
     aliases: list[Alias] = field(default_factory=list)
     titles: list[str] = field(default_factory=list)
     epithets: list[str] = field(default_factory=list)

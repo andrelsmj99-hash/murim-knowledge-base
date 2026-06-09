@@ -98,6 +98,7 @@ class DeduplicateCharactersUseCase:
             id=primary.id,
             name=primary.name,
             canonical_name=primary.canonical_name,
+            novel_id=primary.novel_id,
             gender=primary.gender or _first_truthy(c.gender for c in cluster),
             description=primary.description or _first_truthy(c.description for c in cluster),
             first_appearance=primary.first_appearance

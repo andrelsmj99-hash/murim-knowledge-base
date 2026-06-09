@@ -137,6 +137,9 @@ class Character(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(255), index=True, nullable=False)
     canonical_name = Column(String(255), index=True, nullable=False)  # Normalized for dedup
+    novel_id = Column(
+        UUID(as_uuid=True), ForeignKey("novels.id", ondelete="SET NULL"), nullable=True
+    )
     gender = Column(String(50), nullable=True)
     description = Column(Text, nullable=True)
     first_appearance = Column(String(255), nullable=True)  # e.g., "Volume 1, Chapter 5"
@@ -174,7 +177,9 @@ class Character(Base):
     # Character archetype classification (JSON-serialized)
     archetype = Column(Text, nullable=True)
 
-    __table_args__ = (UniqueConstraint("canonical_name", name="uix_canonical_name"),)
+    __table_args__ = (
+        UniqueConstraint("canonical_name", "novel_id", name="uix_canonical_name_novel"),
+    )
 
 
 # ---------------------------------------------------------------------------

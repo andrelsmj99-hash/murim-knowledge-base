@@ -80,6 +80,7 @@ def _to_entity(orm: CharacterORM) -> Character:
         id=str(orm.id),
         name=orm.name,
         canonical_name=orm.canonical_name,
+        novel_id=str(orm.novel_id) if orm.novel_id else None,
         aliases=aliases,
         titles=titles,
         gender=orm.gender,
@@ -106,6 +107,7 @@ def _to_orm(entity: Character) -> CharacterORM:
         id=_to_uuid(entity.id),
         name=entity.name,
         canonical_name=entity.canonical_name,
+        novel_id=_to_uuid(entity.novel_id) if entity.novel_id else None,
         gender=entity.gender,
         first_appearance=entity.first_appearance,
         appearance_frequency=entity.appearance_frequency,
@@ -149,9 +151,13 @@ class CharacterRepository(ICharacterRepository):
 
         return int(self.session.scalar(select(func.count(CharacterORM.id))) or 0)
 
-    def get_by_canonical_name(self, canonical_name: str) -> Character | None:
+    def get_by_canonical_name(
+        self, canonical_name: str, *, novel_id: str | None = None
+    ) -> Character | None:
         key = _canonical_name(canonical_name)
         stmt = select(CharacterORM).where(CharacterORM.canonical_name == key)
+        if novel_id is not None:
+            stmt = stmt.where(CharacterORM.novel_id == _to_uuid(novel_id))
         orm = self.session.execute(stmt).scalar_one_or_none()
         return _to_entity(orm) if orm else None
 
@@ -200,7 +206,7 @@ class CharacterRepository(ICharacterRepository):
 
     def upsert_by_canonical_name(self, character: Character) -> Character:
         character.canonical_name = character.canonical_name or _canonical_name(character.name)
-        existing = self.get_by_canonical_name(character.canonical_name)
+        existing = self.get_by_canonical_name(character.canonical_name, novel_id=character.novel_id)
         if existing:
             return existing
         return self.add(character)
