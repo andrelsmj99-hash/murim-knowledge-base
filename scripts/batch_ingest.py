@@ -19,7 +19,7 @@ import json
 import logging
 import sys
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -420,7 +420,7 @@ def update_config_status(
             novel["status"] = status
             if chapters_ingested is not None:
                 novel["chapters_ingested"] = chapters_ingested
-            novel["last_processed"] = str(datetime.now(datetime.UTC).date())
+            novel["last_processed"] = str(datetime.now(UTC).date())
             break
     save_config(config)
 
@@ -459,7 +459,7 @@ def main() -> None:
 
     # Set up file logging
     file_handler = logging.FileHandler(
-        LOG_DIR / f"batch_ingest_{datetime.now(datetime.UTC).date().strftime('%Y%m%d')}.log",
+        LOG_DIR / f"batch_ingest_{datetime.now(UTC).date().strftime('%Y%m%d')}.log",
         mode="a",
     )
     file_handler.setFormatter(
@@ -513,7 +513,7 @@ def main() -> None:
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
     summary_path = (
         EXPORT_DIR
-        / f"batch_ingest_summary_{datetime.now(datetime.UTC).date().strftime('%Y%m%d')}.json"
+        / f"batch_ingest_summary_{datetime.now(UTC).date().strftime('%Y%m%d')}.json"
     )
     summary_path.write_text(json.dumps(results, indent=2, ensure_ascii=False))
     logger.info("Summary written to %s", summary_path)

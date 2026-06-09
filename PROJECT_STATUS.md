@@ -1,7 +1,7 @@
 # PROJECT_STATUS — Murim Knowledge Base
 
 > Documento vivo que reflete o estado real do workspace.
-> Última atualização: 2026-06-09 (sessão 31 — Semantic Search + Knowledge Graph Traversal)
+> Última atualização: 2026-06-09 (sessão 32 — Cross-Novel Dedup Fix + Stats + Novels Dashboard + Batch Ingest)
 
 ---
 
@@ -58,7 +58,7 @@ app/
 alembic/                  # Migration (1 versão, 11 tabelas)
 data/{raw,processed,exports,progress}/
 logs/                     # Logs rotativos (10MB, 5 backups)
-tests/                    # 8 suítes + conftest.py (95 unit + API, 9 E2E NovelFire = 104 testes, pytest puro)
+tests/                    # 11 suítes + conftest.py (130 unit + API, 9 E2E NovelFire, pytest puro)
 ```
 
 ### Stack Tecnológica
@@ -190,10 +190,13 @@ murim_knowledge_base/
     ├── conftest.py              # Fixtures compartilhadas (sqlite_session_factory, sqlite_uow, sample_chapter, api_client)
     ├── test_pipeline.py         # 5 testes (persistência + scraper)
     ├── test_nlp.py              # 12 testes (NLP pipeline)
-    ├── test_api.py              # 17 testes (API REST)
+    ├── test_api.py              # 18 testes (API REST)
     ├── test_archetype.py        # 16 testes (archetype classification)
     ├── test_alias_detector.py    # 17 testes (alias detection)
     ├── test_coreference_resolver.py # 16 testes (coreference resolver)
+    ├── test_batch_ingest.py      # 3 testes (batch ingest + cross-novel dedup)
+    ├── test_semantic_search.py   # 10 testes (semantic search)
+    ├── test_knowledge_graph_traversal.py # 12 testes (graph traversal)
     ├── test_novelfire_e2e.py        # 9 testes E2E (scrape + ingest + NLP + graph)
     └── test_dashboard_e2e.py        # 20 testes E2E (Playwright + Streamlit)
 ```
@@ -262,7 +265,7 @@ murim_knowledge_base/
 | 54 | `ILocationRepository.get_characters` / `IOrganizationRepository.get_members` | `app/core/interfaces/` | ✅ Completo |
 | 55 | `LocationRepository.get_characters` / `OrganizationRepository.get_members` | `app/repositories/` | ✅ Completo |
 | 56 | BuildKnowledgeGraphUseCase: contagem de locations robusta (explícita) | `app/core/use_cases/build_knowledge_graph.py` | ✅ Completo |
-| 57 | 34 testes passando via `pytest tests/` | `tests/` + `tests/conftest.py` | ✅ Completo |
+| 57 | 130 testes passando via `pytest tests/` | `tests/` + `tests/conftest.py` | ✅ Completo |
 | 58 | `POST /scrape` — trigger scraper via API REST | `app/api/routes/scrape.py` | ✅ Completo |
 | 59 | `ScrapeRequest` / `ScrapeResponse` schemas | `app/api/schemas/__init__.py` | ✅ Completo |
 | 60 | `Dockerfile` multi-stage build (Python 3.12-slim) | `Dockerfile` | ✅ Completo |
@@ -304,6 +307,14 @@ murim_knowledge_base/
 | 96 | `scripts/production_extract.py` — Full extraction pipeline with resume support | `scripts/production_extract.py` | ✅ Completo |
 | 97 | NovelFire CSS selectors fixed for actual DOM structure | `app/scrapers/novelfire.py` | ✅ Completo |
 | 98 | Production extraction of Nano Machine (483 chapters, 1355 characters) | `murim_dev.db` | ✅ Completo |
+| 99 | `NovelStats` schema + `GET /novels/{id}/stats` endpoint | `app/api/routes/novels.py`, `app/api/schemas/__init__.py` | ✅ Completo |
+| 100 | Dashboard: Novels page (KPIs, bar chart, radar chart, detail table) | `app/dashboard/pages/novels.py` | ✅ Completo |
+| 101 | Cross-novel deduplication: `novel_id` on Character entity/ORM | `app/core/entities/character.py`, `app/models/character.py` | ✅ Completo |
+| 102 | Composite unique constraint `(canonical_name, novel_id)` | `app/models/character.py` | ✅ Completo |
+| 103 | `DeduplicateCharactersUseCase._merge_cluster` preserves `novel_id` | `app/core/use_cases/deduplicate_characters.py` | ✅ Completo |
+| 104 | `batch_ingest.py` — multi-novel ingestion pipeline with resume | `scripts/batch_ingest.py` | ✅ Completo |
+| 105 | `tests/test_batch_ingest.py` — 3 tests for batch ingest + cross-novel dedup | `tests/test_batch_ingest.py` | ✅ Completo |
+| 106 | All 5 novels ingested (1680 chapters, 5401 characters) | `murim_dev.db` | ✅ Completo |
 
 ---
 
@@ -1256,6 +1267,59 @@ Added semantic search and knowledge graph traversal use cases with API endpoints
 - Ruff format clean (100 files formatted)
 - Mypy clean for all new code (0 errors)
 - Backward-compatible with existing API consumers
+
+---
+
+## Sessão 32 — Cross-Novel Dedup Fix + Stats + Novels Dashboard + Batch Ingest (2026-06-09)
+
+Fixed critical dedup bugs, added novel stats API + dashboard, batch ingest pipeline, verified all 5 novels.
+
+### What was done
+
+1. **CI lint fix** — Removed unused `date` import in `scripts/batch_ingest.py`. Fixed 3 remaining `datetime.UTC` references (Python 3.11+ alias per ruff UP017).
+
+2. **`GET /novels/{id}/stats` endpoint** — Added `get_novel_stats` to `INovelRepository` + `NovelRepository` impl (returns chapters, characters, organizations, locations counts). Added `NovelStats` Pydantic schema. Added route. Added test.
+
+3. **Dashboard: Novels page** — Created `app/dashboard/pages/novels.py` with KPIs (total novels, chapters, characters), comparative bar chart, radar chart, and detail table. Registered in navigation (`app/dashboard/main.py`).
+
+4. **Cross-novel deduplication** — Added `novel_id` to Character entity/ORM. Updated repository (`upsert_by_canonical_name`, `get_by_canonical_name`), interface, use cases (`ingest_entities`, `deduplicate_characters`), and batch script.
+
+5. **Batch ingest tests** — Created `tests/test_batch_ingest.py` with 3 tests: batch ingest happy path, stats after ingest, cross-novel dedup (same name in different novels → NOT merged).
+
+6. **Critical dedup bug fixes**:
+   - **Bug 1**: Unique constraint on `canonical_name` alone was too broad — same name across different novels caused `IntegrityError`. **Fix**: Changed to composite unique `(canonical_name, novel_id)` in `app/models/character.py:180`.
+   - **Bug 2**: `DeduplicateCharactersUseCase._merge_cluster` dropped `novel_id` during merge. **Fix**: `_merge_cluster` now preserves `novel_id` from primary candidate (`app/core/use_cases/deduplicate_characters.py`).
+   - **Bug 3**: `datetime.UTC` → `timezone.utc` in 3 places in `scripts/batch_ingest.py`. **Fix**: All changed to `datetime.UTC`.
+
+7. **Novel verification** — All 5 novels verified in `murim_dev.db`:
+   - Nano Machine (482 chapters), Absolute Sword Sense (355), Myst Might Mayhem (525), Rebirth of the Heavenly Demon (112), Chronicles of the Heavenly Demon (201)
+   - Total: 1680 chapters, 5401 characters, 498 organizations, 195 locations
+
+### Files created
+- `tests/test_batch_ingest.py` — 3 tests for batch ingest + cross-novel dedup
+- `app/dashboard/pages/novels.py` — Novels statistics dashboard page
+
+### Files modified
+- `scripts/batch_ingest.py` — lint fixes, `datetime.UTC`, `novel_id` passthrough
+- `app/models/character.py` — composite unique `(canonical_name, novel_id)`
+- `app/core/use_cases/deduplicate_characters.py` — `_merge_cluster` preserves `novel_id`
+- `app/core/interfaces/character_repository.py` — `get_by_canonical_name` with `novel_id` param
+- `app/repositories/character_repository.py` — `_to_entity`/`_to_orm`/`upsert_by_canonical_name`/`get_by_canonical_name` updated for `novel_id`
+- `app/core/interfaces/novel_repository.py` — `get_novel_stats` method
+- `app/repositories/novel_repository.py` — `get_novel_stats` implementation
+- `app/api/routes/novels.py` — `GET /{id}/stats` endpoint
+- `app/api/schemas/__init__.py` — `NovelStats` schema
+- `app/core/use_cases/ingest_entities.py` — `execute()`, `_ingest_characters`, `_ingest_relationships`, `_ensure_character` accept `novel_id`
+- `app/dashboard/main.py` — novels page registered
+- `config/novels_to_ingest.yaml` — updated to reflect actual DB state
+- `tests/test_api.py` — `test_novel_stats` test added
+
+### Result
+- 130/130 unit + API tests passing (excluding dashboard E2E)
+- Ruff clean (0 errors)
+- Ruff format clean
+- Mypy clean (0 errors, 81 files)
+- Cross-novel dedup verified: same character name in different novels coexist without merging
 
 ---
 
