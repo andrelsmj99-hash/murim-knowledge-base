@@ -10,6 +10,8 @@ the code — we can:
 * Inspect / export the pattern set for debugging and tuning.
 * Reuse the same patterns across the NER, title, organization and
   relationship extractors.
+
+Supports English (``"en"``) and Portuguese (``"pt"``) patterns.
 """
 
 from __future__ import annotations
@@ -181,6 +183,58 @@ TITLES: list[TitlePattern] = [
     ),
 ]
 
+# ---------------------------------------------------------------------------
+# Titles — Portuguese translations
+# ---------------------------------------------------------------------------
+
+TITLES_PT: list[TitlePattern] = [
+    TitlePattern("Mortal", "rank", ("mortal comum",)),
+    TitlePattern("Artista Marcial", "rank", ("artista marcial",)),
+    TitlePattern("Guerreiro", "rank"),
+    TitlePattern("Mestre", "rank", ("Grande Mestre",)),
+    TitlePattern("Grande Mestre", "rank"),
+    TitlePattern("Sábio", "rank"),
+    TitlePattern("Santo", "rank"),
+    TitlePattern("Imperador", "rank"),
+    TitlePattern("Imperatriz", "rank"),
+    TitlePattern("Progenitor", "rank", ("Ancestral",)),
+    TitlePattern("Ancestral", "rank"),
+    TitlePattern("Imortal", "rank"),
+    TitlePattern("Imortal Verdadeiro", "rank"),
+    TitlePattern("Imortal Dourado", "rank"),
+    TitlePattern("Líder da Seita", "rank", ("Mestre da Seita",)),
+    TitlePattern("Ancião", "rank", ("Grande Ancião", "Primeiro Ancião")),
+    TitlePattern("Discípulo Interno", "rank"),
+    TitlePattern("Discípulo Externo", "rank"),
+    TitlePattern("Discípulo Principal", "rank"),
+    TitlePattern("Discípulo Pessoal", "rank"),
+    TitlePattern("Mestre do Pavilhão", "rank"),
+    TitlePattern("Mestre do Salão", "rank"),
+    TitlePattern("Mestre do Pico", "rank"),
+    TitlePattern("Protetor", "rank"),
+    TitlePattern("Protetor da Lei", "rank"),
+    TitlePattern("Sênior", "respect", ("Irmão Sênior", "Irmã Sênior", "Tio Sênior")),
+    TitlePattern("Júnior", "respect", ("Irmão Júnior", "Irmã Júnior")),
+    TitlePattern("Jovem Senhor", "family", ("Jovem Senhora", "Jovem Damisela")),
+    TitlePattern("Primeiro Jovem Senhor", "family"),
+    TitlePattern("Segundo Jovem Senhor", "family"),
+    TitlePattern("Terceiro Jovem Senhor", "family"),
+    TitlePattern("Fada", "respect", ("Irmã Fada", "Tia Fada", "Fada de Gelo")),
+    TitlePattern("Demônio", "respect", ("Grande Demônio", "Demônio Celestial", "Rei Demônio")),
+    TitlePattern("Velho", "respect", ("Velha", "Velho Ancestral", "Velho Monstro")),
+    TitlePattern("Dama", "family", ("Madame", "Matriarca")),
+    TitlePattern("Senhor", "family"),
+    TitlePattern("Princesa", "family"),
+    TitlePattern("Príncipe", "family"),
+]
+
+
+def titles_for_language(lang: str) -> list[TitlePattern]:
+    """Return title patterns for the given language code."""
+    if lang == "pt":
+        return TITLES_PT
+    return TITLES
+
 
 # ---------------------------------------------------------------------------
 # Organizations (sects / clans / guilds / …)
@@ -217,6 +271,44 @@ ORG_SUFFIXES: tuple[str, ...] = (
     "Kingdom",
     "House",
 )
+
+# Portuguese translations for org suffixes
+ORG_SUFFIXES_PT: tuple[str, ...] = (
+    "Seita",
+    "Clã",
+    "Família",
+    "Salão",
+    "Pavilhão",
+    "Pico",
+    "Montanha",
+    "Vale",
+    "Palácio",
+    "Templo",
+    "Mansão",
+    "Castelo",
+    "Cidade",
+    "Escola",
+    "Academia",
+    "Torre",
+    "Ilha",
+    "Corte",
+    "Guilda",
+    "Aliança",
+    "Sociedade",
+    "Culto",
+    "Terra Sagrada",
+    "Reino Imortal",
+    "Império",
+    "Reino",
+    "Casa",
+)
+
+
+def org_suffixes_for_language(lang: str) -> tuple[str, ...]:
+    """Return org suffixes for the given language code."""
+    if lang == "pt":
+        return ORG_SUFFIXES_PT
+    return ORG_SUFFIXES
 
 
 # Seed organizations (canonical examples — the extractor will also pick up
@@ -349,6 +441,75 @@ RELATIONSHIP_PHRASES: list[RelationshipPhrase] = [
     for rel_type, pattern, groups in _RELATIONSHIP_TEMPLATES
 ]
 
+# ---------------------------------------------------------------------------
+# Relationship phrases — Portuguese
+# ---------------------------------------------------------------------------
+
+_RELATIONSHIP_TEMPLATES_PT: list[tuple[str, str, tuple[int, int]]] = [
+    (
+        "master",
+        r"(?P<s1>[\w\s]+?)\s+(?:é|era)\s+o\s+mestre\s+de\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| e|\s*$)",
+        (1, 2),
+    ),
+    (
+        "master",
+        r"(?P<s1>[\w\s]+?)'s\s+discípulo\s+(?:é|era)\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| e|\s*$)",
+        (1, 2),
+    ),
+    (
+        "disciple",
+        r"(?P<s1>[\w\s]+?)\s+(?:é|era)\s+(?:um|o|a)\s+discípulo\s+de\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| e|\s*$)",
+        (1, 2),
+    ),
+    (
+        "senior_brother",
+        r"(?P<s1>[\w\s]+?)\s+(?:é|era)\s+o\s+irmão\s+sênior\s+de\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| e|\s*$)",
+        (1, 2),
+    ),
+    (
+        "rival",
+        r"(?P<s1>[\w\s]+?)\s+(?:é|era)\s+(?:um|o|a)\s+rival\s+de\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| e|\s*$)",
+        (1, 2),
+    ),
+    (
+        "enemy",
+        r"(?P<s1>[\w\s]+?)\s+(?:é|era)\s+(?:um|o|a)\s+(?:jurado\s+)?inimigo\s+de\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| e|\s*$)",
+        (1, 2),
+    ),
+    (
+        "ally",
+        r"(?P<s1>[\w\s]+?)\s+(?:é|era)\s+(?:um|o|a)\s+aliado\s+de\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| e|\s*$)",
+        (1, 2),
+    ),
+    (
+        "friend",
+        r"(?P<s1>[\w\s]+?)\s+(?:é|era)\s+(?:um|o|a\s+)?amigo\s+de\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| e|\s*$)",
+        (1, 2),
+    ),
+    (
+        "father",
+        r"(?P<s1>[\w\s]+?)\s+(?:é|era)\s+o\s+pai\s+de\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| e|\s*$)",
+        (1, 2),
+    ),
+    (
+        "parent",
+        r"(?P<s1>[\w\s]+?)'s\s+(?:filho|filha)\s+(?:é|era)\s+(?P<t1>[\w\s]+?)(?:[\.,;!\?]| e|\s*$)",
+        (1, 2),
+    ),
+]
+
+RELATIONSHIP_PHRASES_PT: list[RelationshipPhrase] = [
+    RelationshipPhrase(rel_type, re.compile(pattern, re.IGNORECASE), groups)
+    for rel_type, pattern, groups in _RELATIONSHIP_TEMPLATES_PT
+]
+
+
+def relationship_phrases_for_language(lang: str) -> list[RelationshipPhrase]:
+    """Return relationship phrases for the given language code."""
+    if lang == "pt":
+        return RELATIONSHIP_PHRASES_PT
+    return RELATIONSHIP_PHRASES
+
 
 # ---------------------------------------------------------------------------
 # Capitalization heuristic — names are mostly 2-4 capitalized words
@@ -472,10 +633,13 @@ __all__ = [
     "LocationPattern",
     "RelationshipPhrase",
     "TITLES",
+    "TITLES_PT",
     "ORG_SUFFIXES",
+    "ORG_SUFFIXES_PT",
     "ORG_PATTERNS",
     "LOCATION_PATTERNS",
     "RELATIONSHIP_PHRASES",
+    "RELATIONSHIP_PHRASES_PT",
     "TITLE_LOOKUP",
     "ORG_LOOKUP",
     "LOCATION_LOOKUP",
@@ -486,4 +650,7 @@ __all__ = [
     "all_org_keys",
     "all_location_keys",
     "titles_by_category",
+    "titles_for_language",
+    "org_suffixes_for_language",
+    "relationship_phrases_for_language",
 ]

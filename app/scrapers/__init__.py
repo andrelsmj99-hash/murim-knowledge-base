@@ -61,13 +61,14 @@ def make_scraper(
     source: str,
     novel_slug: str,
     uow: UnitOfWork | None = None,
+    language: str = "en",
     **kwargs: Any,
 ) -> BaseScraper:
     """Instantiate a scraper, optionally wiring it to a DB-bound use case."""
     cls = get_scraper_class(source)
     if uow is not None:
         kwargs.setdefault("ingest_use_case", IngestChapterUseCase(uow))
-    return cls(novel_slug=novel_slug, **kwargs)
+    return cls(novel_slug=novel_slug, language=language, **kwargs)
 
 
 def run_scrape(
@@ -75,8 +76,9 @@ def run_scrape(
     novel_slug: str,
     *,
     uow: UnitOfWork,
+    language: str = "en",
     **kwargs: Any,
 ) -> list[dict]:
     """Convenience helper: build a scraper, run it, return the chapter list."""
-    scraper = make_scraper(source, novel_slug, uow=uow, **kwargs)
+    scraper = make_scraper(source, novel_slug, uow=uow, language=language, **kwargs)
     return scraper.scrape_novel()

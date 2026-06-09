@@ -46,15 +46,23 @@ class BaseScraper(abc.ABC):
     #: Human-readable label of the source (e.g. "novelbin", "wuxiaworld").
     source_name: str = "generic"
 
+    #: Supported languages → Accept-Language header values.
+    _ACCEPT_LANGUAGES: dict[str, str] = {
+        "en": "en-US,en;q=0.9",
+        "pt": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+    }
+
     def __init__(
         self,
         novel_slug: str,
         session: requests.Session | None = None,
         progress_dir: Path | None = None,
         ingest_use_case: Any | None = None,
+        language: str = "en",
     ) -> None:
         self.novel_slug = novel_slug
-        self.session = session or self._build_session()
+        self.language = language.lower()
+        self.session = session or self._build_session(language=self.language)
         self.ingest_use_case = ingest_use_case
 
         self.progress_dir = progress_dir or settings.progress_dir
@@ -66,15 +74,16 @@ class BaseScraper(abc.ABC):
     # ------------------------------------------------------------------ session
 
     @staticmethod
-    def _build_session() -> requests.Session:
+    def _build_session(language: str = "en") -> requests.Session:
         session = requests.Session()
+        accept_lang = BaseScraper._ACCEPT_LANGUAGES.get(language, "en-US,en;q=0.9")
         session.headers.update(
             {
                 "User-Agent": (
                     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
                     "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
                 ),
-                "Accept-Language": "en-US,en;q=0.9",
+                "Accept-Language": accept_lang,
             }
         )
         return session

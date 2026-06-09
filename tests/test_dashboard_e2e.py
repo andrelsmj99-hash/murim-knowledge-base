@@ -6,9 +6,15 @@ Streamlit keys are internal and NOT exposed as HTML attributes.
 
 Run:
     pytest tests/test_dashboard_e2e.py -v --base-url http://localhost:8501
+
+CI:
+    The ``dashboard_base_url`` conftest fixture starts a Streamlit server
+    automatically when the ``DASHBOARD_E2E_URL`` env-var is not set.
 """
 
 from __future__ import annotations
+
+import os
 
 import pytest
 
@@ -17,7 +23,8 @@ pytestmark = [
     pytest.mark.timeout(120),
 ]
 
-BASE = "http://localhost:8501"
+# Allow override via env-var (CI sets this to the auto-started server).
+BASE = os.environ.get("DASHBOARD_E2E_URL", "http://localhost:8501")
 WAIT = 8000
 
 
@@ -26,9 +33,14 @@ WAIT = 8000
 # ---------------------------------------------------------------------------
 
 
+def _base_url() -> str:
+    """Return the dashboard base URL, preferring the runtime env-var."""
+    return os.environ.get("DASHBOARD_E2E_URL", BASE)
+
+
 def _open(page, path: str = "/"):
     """Navigate and wait for Streamlit to fully render."""
-    page.goto(f"{BASE}{path}")
+    page.goto(f"{_base_url()}{path}")
     page.wait_for_load_state("networkidle")
     page.wait_for_timeout(WAIT)
 
