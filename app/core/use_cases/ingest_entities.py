@@ -7,6 +7,8 @@ Responsibilities:
 * Upsert organizations, locations and their inter-entity edges.
 * Bump each character's ``appearance_frequency`` by the number of mentions
   in this chapter.
+* Link characters to organizations and locations via co-occurrence.
+* Detect and persist aliases for characters.
 
 This is the natural second half of the NLP pipeline.
 """
@@ -40,6 +42,9 @@ class IngestEntitiesResult:
     new_organizations: int = 0
     new_locations: int = 0
     new_relationships: int = 0
+    new_char_org_links: int = 0
+    new_char_loc_links: int = 0
+    new_aliases: int = 0
     character_ids: list[str] = field(default_factory=list)
     organization_ids: list[str] = field(default_factory=list)
     location_ids: list[str] = field(default_factory=list)
@@ -62,8 +67,15 @@ class IngestEntitiesUseCase:
 
         char_index = self._ingest_characters(extraction, result)
         org_index = self._ingest_organizations(extraction, result, char_index)
-        self._ingest_locations(extraction, result, char_index, org_index)
+        loc_index = self._ingest_locations(extraction, result, char_index, org_index)
         self._ingest_relationships(extraction, result, char_index)
+
+        # Link characters to organizations and locations via co-occurrence
+        self._link_char_org_cooccurrence(char_index, org_index, result)
+        self._link_char_loc_cooccurrence(char_index, loc_index, result)
+
+        # Detect and persist aliases
+        self._ingest_aliases(extraction, char_index, result)
 
         self.uow.commit()
         logger.info("Ingested entities: %s", result)
@@ -170,15 +182,19 @@ class IngestEntitiesUseCase:
         result: IngestEntitiesResult,
         char_index: dict[str, str],
         org_index: dict[str, str],
-    ) -> None:
+    ) -> dict[str, str]:
+        seen: dict[str, str] = {}
         for match in extraction.locations:
             existing = self.uow.locations.get_by_name_type(match.canonical, match.type)
             if existing is not None:
+                seen[match.canonical.lower()] = existing.id
                 result.location_ids.append(existing.id)
             else:
                 loc = self.uow.locations.upsert(Location(name=match.canonical, type=match.type))
+                seen[match.canonical.lower()] = loc.id
                 result.new_locations += 1
                 result.location_ids.append(loc.id)
+        return seen
 
     # ---------------------------------------------------------- rels
 
@@ -205,6 +221,54 @@ class IngestEntitiesUseCase:
                 char = self.uow.characters.get(src_id)
                 if char is not None:
                     char.relationships.setdefault(rel.relationship_type, []).append(tgt_id)
+
+    # ---------------------------------------------------- co-occurrence
+
+    def _link_char_org_cooccurrence(
+        self,
+        char_index: dict[str, str],
+        org_index: dict[str, str],
+        result: IngestEntitiesResult,
+    ) -> None:
+        """Link characters to organizations that appear in the same chapter."""
+        for _char_canonical, char_id in char_index.items():
+            for _org_canonical, org_id in org_index.items():
+                if self.uow.characters.link_organization(char_id, org_id):
+                    result.new_char_org_links += 1
+
+    def _link_char_loc_cooccurrence(
+        self,
+        char_index: dict[str, str],
+        loc_index: dict[str, str],
+        result: IngestEntitiesResult,
+    ) -> None:
+        """Link characters to locations that appear in the same chapter."""
+        for _char_canonical, char_id in char_index.items():
+            for _loc_canonical, loc_id in loc_index.items():
+                if self.uow.characters.link_location(char_id, loc_id):
+                    result.new_char_loc_links += 1
+
+    # -------------------------------------------------------- aliases
+
+    def _ingest_aliases(
+        self,
+        extraction: ChapterExtraction,
+        char_index: dict[str, str],
+        result: IngestEntitiesResult,
+    ) -> None:
+        """Detect and persist aliases from the chapter text."""
+        for alias_hit in extraction.aliases:
+            # Try to match by canonical real name first
+            char_key = canonicalize_name(alias_hit.canonical_real_name)
+            char_id = char_index.get(char_key)
+            if not char_id:
+                # Try matching by canonical alias
+                char_key = canonicalize_name(alias_hit.canonical_alias)
+                char_id = char_index.get(char_key)
+            if not char_id:
+                continue
+            if self.uow.characters.add_alias(char_id, "Alias", alias_hit.alias):
+                result.new_aliases += 1
 
     def _ensure_character(
         self, canonical_key: str, surface: str, *, result: IngestEntitiesResult

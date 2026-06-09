@@ -29,12 +29,11 @@ from typing import Any
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app.models.base import SessionLocal
 from app.core.unit_of_work import UnitOfWork
-from app.core.use_cases.ingest_chapter import IngestChapterUseCase
-from app.core.use_cases.extract_entities import ExtractEntitiesUseCase
-from app.core.use_cases.ingest_entities import IngestEntitiesUseCase
 from app.core.use_cases.deduplicate_characters import DeduplicateCharactersUseCase
+from app.core.use_cases.extract_entities import ExtractEntitiesUseCase
+from app.core.use_cases.ingest_chapter import IngestChapterUseCase
+from app.core.use_cases.ingest_entities import IngestEntitiesUseCase
 from app.scrapers.novelfire import NovelFireScraper
 
 logging.basicConfig(
@@ -78,10 +77,6 @@ def ingest_chapters(
         number = ch_info["chapter_number"]
         # Check if already ingested (resume support)
         if resume:
-            existing = uow.novels.chapter_exists_by_number(
-                meta.get("title", ""), number
-            ) if hasattr(uow.novels, 'chapter_exists_by_number') else None
-            # Fallback: try loading progress file
             progress_file = PROGRESS_DIR / f"progress_novelfire_{NOVEL_SLUG}.json"
             if progress_file.exists():
                 progress = json.loads(progress_file.read_text())
@@ -137,15 +132,15 @@ def extract_and_ingest_entities(
         "total_relationships": 0,
     }
 
-    for ch_info, ingest_result in chapter_results:
+    for _ch_info, ingest_result in chapter_results:
         chapter_id = ingest_result.chapter_id
         # Fetch chapter content from DB
-        chapter = uow.chapters.get(chapter_id) if hasattr(uow.chapters, 'get') else None
+        chapter = uow.chapters.get(chapter_id) if hasattr(uow.chapters, "get") else None
         if not chapter:
             logger.warning("Could not fetch chapter %s from DB, skipping", chapter_id)
             continue
 
-        content = chapter.content if hasattr(chapter, 'content') else ""
+        content = chapter.content if hasattr(chapter, "content") else ""
         if not content:
             continue
 
@@ -154,7 +149,9 @@ def extract_and_ingest_entities(
             entities_result = ingest_entities_uc.execute(extraction)
 
             stats["chapters_processed"] += 1
-            stats["total_characters"] += entities_result.new_characters + entities_result.updated_characters
+            stats["total_characters"] += (
+                entities_result.new_characters + entities_result.updated_characters
+            )
             stats["total_organizations"] += entities_result.new_organizations
             stats["total_locations"] += entities_result.new_locations
             stats["total_relationships"] += entities_result.new_relationships
@@ -212,16 +209,18 @@ def export_data(uow: UnitOfWork) -> dict:
         if not batch:
             break
         for c in batch:
-            chars_data.append({
-                "id": c.id,
-                "name": c.name,
-                "canonical_name": c.canonical_name,
-                "gender": c.gender,
-                "description": c.description,
-                "titles": c.titles,
-                "aliases": [a.value for a in c.aliases] if hasattr(c, 'aliases') else [],
-                "appearance_frequency": c.appearance_frequency,
-            })
+            chars_data.append(
+                {
+                    "id": c.id,
+                    "name": c.name,
+                    "canonical_name": c.canonical_name,
+                    "gender": c.gender,
+                    "description": c.description,
+                    "titles": c.titles,
+                    "aliases": [a.value for a in c.aliases] if hasattr(c, "aliases") else [],
+                    "appearance_frequency": c.appearance_frequency,
+                }
+            )
         offset += len(batch)
 
     # Export organizations (paginate)
@@ -232,11 +231,13 @@ def export_data(uow: UnitOfWork) -> dict:
         if not batch:
             break
         for o in batch:
-            orgs_data.append({
-                "id": o.id,
-                "name": o.name,
-                "type": o.type,
-            })
+            orgs_data.append(
+                {
+                    "id": o.id,
+                    "name": o.name,
+                    "type": o.type,
+                }
+            )
         offset += len(batch)
 
     # Export locations (paginate)
@@ -246,17 +247,23 @@ def export_data(uow: UnitOfWork) -> dict:
         batch = uow.locations.list(limit=1000, offset=offset)
         if not batch:
             break
-        for l in batch:
-            locs_data.append({
-                "id": l.id,
-                "name": l.name,
-                "type": l.type,
-            })
+        for loc in batch:
+            locs_data.append(
+                {
+                    "id": loc.id,
+                    "name": loc.name,
+                    "type": loc.type,
+                }
+            )
         offset += len(batch)
 
     # Write JSON
-    (EXPORT_DIR / "characters.json").write_text(json.dumps(chars_data, indent=2, ensure_ascii=False))
-    (EXPORT_DIR / "organizations.json").write_text(json.dumps(orgs_data, indent=2, ensure_ascii=False))
+    (EXPORT_DIR / "characters.json").write_text(
+        json.dumps(chars_data, indent=2, ensure_ascii=False)
+    )
+    (EXPORT_DIR / "organizations.json").write_text(
+        json.dumps(orgs_data, indent=2, ensure_ascii=False)
+    )
     (EXPORT_DIR / "locations.json").write_text(json.dumps(locs_data, indent=2, ensure_ascii=False))
 
     # Write CSV
@@ -290,11 +297,17 @@ def export_data(uow: UnitOfWork) -> dict:
 
 def main():
     parser = argparse.ArgumentParser(description="Production extraction for Nano Machine")
-    parser.add_argument("--resume", action="store_true", default=True, help="Resume from checkpoint")
-    parser.add_argument("--limit", type=int, default=None, help="Limit number of chapters to process")
+    parser.add_argument(
+        "--resume", action="store_true", default=True, help="Resume from checkpoint"
+    )
+    parser.add_argument(
+        "--limit", type=int, default=None, help="Limit number of chapters to process"
+    )
     parser.add_argument("--skip-nlp", action="store_true", help="Skip NLP entity extraction")
     parser.add_argument("--scrape-only", action="store_true", help="Only scrape chapters, skip NLP")
-    parser.add_argument("--nlp-only", action="store_true", help="Only run NLP on already scraped chapters")
+    parser.add_argument(
+        "--nlp-only", action="store_true", help="Only run NLP on already scraped chapters"
+    )
     args = parser.parse_args()
 
     start_time = time.time()
@@ -308,7 +321,10 @@ def main():
         with UnitOfWork() as uow:
             # Get all chapters
             from sqlalchemy import text
-            result = uow.session.execute(text("SELECT id, novel_id, chapter_number FROM chapters ORDER BY chapter_number"))
+
+            result = uow.session.execute(
+                text("SELECT id, novel_id, chapter_number FROM chapters ORDER BY chapter_number")
+            )
             chapters = result.fetchall()
             logger.info("Found %d chapters in DB", len(chapters))
 
@@ -316,12 +332,14 @@ def main():
             chapter_results = []
             for ch in chapters:
                 chapter_id = str(ch[0])
+
                 # Create a mock ingest_result-like object
                 class MockResult:
                     def __init__(self, chapter_id, chapter_number):
                         self.chapter_id = chapter_id
                         self.chapter_number = chapter_number
                         self.skipped = True
+
                 chapter_results.append(({}, MockResult(chapter_id, ch[2])))
 
             entity_stats = extract_and_ingest_entities(uow, chapter_results)

@@ -121,6 +121,10 @@ def extract_entities(
 
     # Deduplicate overlapping mentions (prefer longer surfaces)
     out.character_mentions = _dedup_overlapping(out.character_mentions)
+
+    # Filter out non-character entities (techniques, organizations, locations)
+    out.character_mentions = [m for m in out.character_mentions if _is_likely_character(m)]
+
     return out
 
 
@@ -220,6 +224,156 @@ _NON_NAME_WORDS: frozenset[str] = frozenset(
         "el",
     }
 )
+
+# Words that indicate a non-character entity (techniques, organizations, locations)
+_NON_CHARACTER_WORDS: frozenset[str] = frozenset(
+    {
+        "sword",
+        "swords",
+        "blade",
+        "clan",
+        "sect",
+        "order",
+        "cult",
+        "force",
+        "forces",
+        "academy",
+        "family",
+        "guild",
+        "alliance",
+        "palace",
+        "pavilion",
+        "mountain",
+        "valley",
+        "river",
+        "lake",
+        "forest",
+        "city",
+        "town",
+        "village",
+        "realm",
+        "domain",
+        "territory",
+        "machine",
+        "technique",
+        "art",
+        "arts",
+        "style",
+        "method",
+        "way",
+        "path",
+        "gate",
+        "tower",
+        "fortress",
+        "castle",
+        "temple",
+        "shrine",
+        "monastery",
+        "dojo",
+        "arena",
+        "school",
+        "university",
+        "college",
+        "institute",
+        "center",
+        "hub",
+        "headquarters",
+        "base",
+        "camp",
+        "campus",
+        "compound",
+        "estate",
+        "manor",
+        "house",
+        "home",
+        "residence",
+        "settlement",
+        "community",
+        "society",
+        "association",
+        "organization",
+        "institution",
+        "foundation",
+        "corporation",
+        "company",
+        "business",
+        "enterprise",
+        "venture",
+        "project",
+        "program",
+        "initiative",
+        "campaign",
+        "movement",
+        "revolution",
+        "rebellion",
+        "uprising",
+        "heaven",
+        "heavenly",
+        "divine",
+        "godly",
+        "immortal",
+        "mortal",
+    }
+)
+
+
+# Multi-word phrases that are clearly not character names
+_NON_CHARACTER_PHRASES: frozenset[str] = frozenset(
+    {
+        "air swords",
+        "sky demon order",
+        "great hung clan",
+        "six swords",
+        "invisible sword",
+        "ice swords",
+        "seven demon sword",
+        "forces of great heaven",
+        "buju sword",
+        "slashing demon emperor",
+        "guardian hall",
+        "wave sword",
+        "black flame sword",
+        "red martial sword clan",
+        "sword family",
+        "forces of yulin",
+        "sky flash air sword",
+        "sky demon force",
+    }
+)
+
+
+def _is_likely_character(mention: CharacterMention) -> bool:
+    """Filter out non-character entities (techniques, organizations, locations).
+
+    Returns True if the mention is likely a character name, False otherwise.
+    """
+    canonical = mention.canonical.lower()
+    tokens = list(canonical.split())
+
+    # Check against multi-word non-character phrases first
+    if canonical in _NON_CHARACTER_PHRASES:
+        return False
+
+    # If the last token is a known non-character word, reject it
+    # This catches "seven demon sword", "black flame sword", "demonic cult", etc.
+    if tokens and tokens[-1] in _NON_CHARACTER_WORDS:
+        return False
+
+    # If any token is a known non-character word, reject it
+    token_set = set(tokens)
+    if token_set & _NON_CHARACTER_WORDS:
+        return False
+
+    # Reject single-word mentions that are common nouns
+    if len(tokens) == 1:
+        word = tokens[0]
+        if word in _NON_CHARACTER_WORDS:
+            return False
+        # Reject words that are clearly not names (all lowercase, common English words)
+        if word.islower() and word in _NON_NAME_WORDS:
+            return False
+
+    return True
 
 
 def _regex_mentions(text: str, *, min_name_tokens: int) -> Iterable[CharacterMention]:

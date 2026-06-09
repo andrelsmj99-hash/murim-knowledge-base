@@ -412,13 +412,21 @@ def canonicalize_name(name: str) -> str:
     """Normalize a character name for dedup.
 
     Steps:
-    * Lowercase
+    * Strip newlines, carriage returns
     * Collapse internal whitespace
+    * Strip trailing punctuation (., !, ?, ', ", ;, :)
+    * Lowercase
     * Strip common honorifics that often precede the name ("Senior ", "Elder ", …)
     """
     if not name:
         return ""
-    cleaned = " ".join(name.split()).strip().lower()
+    # Strip newlines and collapse whitespace
+    cleaned = name.replace("\n", " ").replace("\r", " ")
+    cleaned = " ".join(cleaned.split()).strip()
+    # Strip trailing punctuation (keep internal hyphens/apostrophes)
+    cleaned = cleaned.rstrip(".,!?\"';:")
+    # Lowercase
+    cleaned = cleaned.lower()
     # Strip leading honorifics (longest first to avoid partial matches)
     honorifics = sorted(TITLE_LOOKUP.keys(), key=len, reverse=True)
     for h in honorifics:
