@@ -48,43 +48,43 @@ NOVEL_INDEX_HTML = """
             </a>
           </div>
         </div>
-        <div class="categories">
-          <ul>
-            <li><a class="property-item">Action</a></li>
-            <li><a class="property-item">Fantasy</a></li>
-            <li><a class="property-item">Martial Arts</a></li>
-            <li><a class="property-item">Sci-fi</a></li>
-          </ul>
+        <div class="genres">
+          <a>Action</a>
+          <a>Fantasy</a>
+          <a>Martial Arts</a>
+          <a>Sci-fi</a>
         </div>
       </div>
     </div>
   </header>
   <div class="novel-body container">
-    <div class="summary">
-      <div class="content expand-wrapper">
-        <p>Nanotechnology meets martial arts at the Mashin Academy.
-        Cheon Yeo-un's mother may not be one of the High Priest's six
-        official wives, but his father's blood still qualifies him for
-        a chance at the position of Minor Priest.</p>
-      </div>
-    </div>
-    <div id="chapter-list">
-      <ul class="chapters">
-        <li><a href="/book/nano-machine/chapter-1">Chapter 1 — Nano Machine</a></li>
-        <li><a href="/book/nano-machine/chapter-2">Chapter 2 — The First Challenge</a></li>
-        <li><a href="/book/nano-machine/chapter-3">Chapter 3 — The Secret of the Nanomachines</a></li>
-      </ul>
+    <div class="description">
+      <p>Nanotechnology meets martial arts at the Mashin Academy.
+      Cheon Yeo-un's mother may not be one of the High Priest's six
+      official wives, but his father's blood still qualifies him for
+      a chance at the position of Minor Priest.</p>
     </div>
   </div>
 </article>
 </body></html>
 """
 
+
+CHAPTER_LIST_HTML = """
+<html><body>
+<ul class="chapter-list">
+  <li><a href="/book/nano-machine/chapter-1"><span class="chapter-no">Ch 1</span> <strong class="chapter-title">Nano Machine</strong></a></li>
+  <li><a href="/book/nano-machine/chapter-2"><span class="chapter-no">Ch 2</span> <strong class="chapter-title">The First Challenge</strong></a></li>
+  <li><a href="/book/nano-machine/chapter-3"><span class="chapter-no">Ch 3</span> <strong class="chapter-title">The Secret of the Nanomachines</strong></a></li>
+</ul>
+</body></html>
+"""
+
 CHAPTER_1_HTML = """
 <html><body>
 <article>
-  <h1 class="chapter-title">Chapter 1 — Nano Machine</h1>
-  <div id="chapter-content">
+  <h1 class="titles"><span class="chapter-title">Chapter 1 — Nano Machine</span></h1>
+  <div id="content">
     <p>The sky above the Mashin Academy was a deep shade of crimson as
     Cheon Yeo-un stood at the entrance of the Grand Hall. His father,
     the High Priest of the Demonic Cult, had summoned all of his children
@@ -123,8 +123,8 @@ CHAPTER_1_HTML = """
 CHAPTER_2_HTML = """
 <html><body>
 <article>
-  <h1 class="chapter-title">Chapter 2 — The First Challenge</h1>
-  <div id="chapter-content">
+  <h1 class="titles"><span class="chapter-title">Chapter 2 — The First Challenge</span></h1>
+  <div id="content">
     <p>The first challenge of the selection ceremony took place in the
     Arena of Shadows, a massive colosseum carved into the mountainside
     of the Demonic Cult's headquarters.</p>
@@ -173,6 +173,7 @@ def _build_responses() -> dict[str, str]:
     base = "https://novelfire.net"
     return {
         f"{base}/book/nano-machine": NOVEL_INDEX_HTML,
+        f"{base}/book/nano-machine/chapters?page=1": CHAPTER_LIST_HTML,
         f"{base}/book/nano-machine/chapter-1": CHAPTER_1_HTML,
         f"{base}/book/nano-machine/chapter-2": CHAPTER_2_HTML,
     }
