@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from tests.conftest import requires_encoder
+
 
 def test_health(api_client) -> None:
     client, _ = api_client
@@ -336,6 +338,7 @@ def test_scrape_endpoint_no_chapters(api_client, monkeypatch) -> None:
     assert r.json()["total"] == 0
 
 
+@requires_encoder
 def test_character_embed_single(api_client) -> None:
     client, _ = api_client
     r = client.post(
@@ -349,6 +352,7 @@ def test_character_embed_single(api_client) -> None:
     assert r.json()["has_embedding"] is True
 
 
+@requires_encoder
 def test_character_embed_all(api_client) -> None:
     client, _ = api_client
     client.post("/api/v1/characters", json={"name": "Lin Lei"})
@@ -377,6 +381,7 @@ def test_search_lexical_fallback(api_client) -> None:
     assert "character" in {h["kind"] for h in r.json()["hits"]}
 
 
+@requires_encoder
 def test_search_semantic(api_client) -> None:
     client, _ = api_client
     r1 = client.post(

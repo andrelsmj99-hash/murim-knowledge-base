@@ -7,7 +7,8 @@ Create Date: 2026-06-09 00:00:00.000000
 """
 
 from collections.abc import Sequence
-from contextlib import suppress
+
+import sqlalchemy as sa
 
 from alembic import op
 
@@ -19,22 +20,31 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    # Create HNSW index for efficient cosine similarity search on pgvector.
-    # On SQLite this is a no-op (pgvector is not available).
+    # Create HNSW index on embedding_vec for efficient cosine similarity search.
+    # Uses SAVEPOINT to isolate failures (e.g. pgvector not installed, or column still Text).
+    # On SQLite this is a no-op.
     conn = op.get_bind()
     if conn.dialect.name == "postgresql":
-        with suppress(Exception):
-            # HNSW index for O(log n) approximate nearest neighbor search
-            # using cosine distance operator (<=>)
-            op.execute(
-                "CREATE INDEX IF NOT EXISTS idx_characters_embedding_hnsw "
-                "ON characters USING hnsw (embedding vector_cosine_ops) "
-                "WITH (m = 16, ef_construction = 64)"
+        conn.execute(sa.text("SAVEPOINT create_hnsw_index"))
+        try:
+            conn.execute(
+                sa.text(
+                    "CREATE INDEX IF NOT EXISTS idx_characters_embedding_vec_hnsw "
+                    "ON characters USING hnsw (embedding_vec vector_cosine_ops) "
+                    "WITH (m = 16, ef_construction = 64)"
+                )
             )
+            conn.execute(sa.text("RELEASE SAVEPOINT create_hnsw_index"))
+        except Exception:
+            conn.execute(sa.text("ROLLBACK TO SAVEPOINT create_hnsw_index"))
 
 
 def downgrade() -> None:
     conn = op.get_bind()
     if conn.dialect.name == "postgresql":
-        with suppress(Exception):
-            op.execute("DROP INDEX IF EXISTS idx_characters_embedding_hnsw")
+        conn.execute(sa.text("SAVEPOINT drop_hnsw_index"))
+        try:
+            conn.execute(sa.text("DROP INDEX IF EXISTS idx_characters_embedding_vec_hnsw"))
+            conn.execute(sa.text("RELEASE SAVEPOINT drop_hnsw_index"))
+        except Exception:
+            conn.execute(sa.text("ROLLBACK TO SAVEPOINT drop_hnsw_index"))

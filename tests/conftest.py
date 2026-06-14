@@ -96,6 +96,42 @@ def api_client():
 
 
 # ---------------------------------------------------------------------------
+# Encoder availability (sentence-transformers requires HuggingFace access)
+# ---------------------------------------------------------------------------
+
+
+def _encoder_available() -> bool:
+    """Return True if the sentence-transformers model can be loaded."""
+    try:
+        from sentence_transformers import SentenceTransformer
+
+        SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+        return True
+    except Exception:
+        return False
+
+
+# Lazily evaluated at collection time — cached for the session.
+_ENCODER_AVAILABLE: bool | None = None
+
+
+def encoder_available() -> bool:
+    global _ENCODER_AVAILABLE  # noqa: PLW0603
+    if _ENCODER_AVAILABLE is None:
+        _ENCODER_AVAILABLE = _encoder_available()
+    return _ENCODER_AVAILABLE
+
+
+requires_encoder = pytest.mark.skipif(
+    not encoder_available(),
+    reason=(
+        "sentence-transformers model unavailable (no HuggingFace access). "
+        "Passes in CI where internet is available."
+    ),
+)
+
+
+# ---------------------------------------------------------------------------
 # E2E: Streamlit server fixture
 # ---------------------------------------------------------------------------
 
