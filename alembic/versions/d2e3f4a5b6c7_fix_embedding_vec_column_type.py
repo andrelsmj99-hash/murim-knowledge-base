@@ -7,7 +7,8 @@ Create Date: 2026-06-08 00:00:00.000000
 """
 
 from collections.abc import Sequence
-from contextlib import suppress
+
+import sqlalchemy as sa
 
 from alembic import op
 
@@ -20,13 +21,22 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     # On PostgreSQL with pgvector, alter embedding_vec from Text to vector(384).
-    # On SQLite this is a no-op (pgvector is not available).
+    # Uses SAVEPOINT to avoid aborting the enclosing transaction if the ALTER fails
+    # (e.g. when the pgvector extension is not installed — column stays as Text).
+    # On SQLite this is a no-op.
     conn = op.get_bind()
     if conn.dialect.name == "postgresql":
-        with suppress(Exception):
-            # pgvector extension not installed — column stays as Text,
-            # the ORM's EmbeddingVector type handles the fallback.
-            op.execute("ALTER TABLE characters ALTER COLUMN embedding_vec TYPE vector(384)")
+        conn.execute(sa.text("SAVEPOINT alter_embedding_vec"))
+        try:
+            conn.execute(
+                sa.text(
+                    "ALTER TABLE characters ALTER COLUMN embedding_vec "
+                    "TYPE vector(384) USING embedding_vec::vector"
+                )
+            )
+            conn.execute(sa.text("RELEASE SAVEPOINT alter_embedding_vec"))
+        except Exception:
+            conn.execute(sa.text("ROLLBACK TO SAVEPOINT alter_embedding_vec"))
 
 
 def downgrade() -> None:
